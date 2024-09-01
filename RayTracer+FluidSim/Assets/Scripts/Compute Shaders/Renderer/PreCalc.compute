@@ -1,0 +1,50 @@
+#pragma kernel CalcTriNormals // 0
+
+#include "RendererResources.hlsl"
+
+const uint TrianglesNum;
+
+RWStructuredBuffer<Triangle> Triangles;
+RWStructuredBuffer<Vertex2> Vertices;
+RWStructuredBuffer<SceneObject> SceneObjects;
+
+float3 GetPlaneNormal (Triangle tri)
+{
+    float3 v0 = Vertices[tri.vertex0Index].pos;
+    float3 v1 = Vertices[tri.vertex1Index].pos;
+    float3 v2 = Vertices[tri.vertex2Index].pos;
+
+    float3 ab = v1 - v0;
+    float3 ac = v2 - v0;
+
+    return normalize(cross(ab, ac));
+}
+
+float3 GetPlaneNormalTransformed (Triangle tri, float4x4 transform)
+{
+    float3 v0 = Vertices[tri.vertex0Index].pos;
+    float3 v1 = Vertices[tri.vertex1Index].pos;
+    float3 v2 = Vertices[tri.vertex2Index].pos;
+
+    float3 ab = v1 - v0;
+    float3 ac = v2 - v0;
+
+    float3 localNormal = normalize(cross(ab, ac));
+
+    float3 transformedNormal = normalize(mul(transform, float4(localNormal, 0)).xyz);
+
+    return transformedNormal;
+}
+
+[numthreads(TN_PC,1,1)]
+void CalcTriNormals (uint3 id : SV_DispatchThreadID)
+{
+    uint i = id.x;
+    if (i >= TrianglesNum) return;
+
+    Triangle tri = Triangles[i];
+
+    tri.localNormal = GetPlaneNormal(tri);
+
+    Triangles[i] = tri;
+}

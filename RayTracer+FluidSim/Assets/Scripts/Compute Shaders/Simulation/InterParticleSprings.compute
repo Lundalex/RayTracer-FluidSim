@@ -1,0 +1,188 @@
+#pragma kernel PopulateChunkSizes // 0
+#pragma kernel PopulateSpringCapacities // 1
+#pragma kernel CopySpringCapacities // 2
+#pragma kernel ParallelPrefixSumScan // 3
+#pragma kernel CopySpringStartIndicesBuffer // 4
+
+#include "SimulationResources.hlsl"
+#include "CompositionResources.hlsl"
+
+const uint4 ChunksNum;
+const uint ChunksNumAll;
+const uint ParticlesNum;
+
+// Per-frame-set constants
+const bool FrameBufferCycle;
+const bool StepBufferCycle;
+const uint Offset;
+
+RWStructuredBuffer<int2> SpringCapacities; // [](baseChunkCapacity, neighboorChunksCapacity)
+RWStructuredBuffer<int> SpringStartIndices_dbA; // Result A
+RWStructuredBuffer<int> SpringStartIndices_dbB; // Result B
+RWStructuredBuffer<int> SpringStartIndices_dbC; // Support
+
+RWStructuredBuffer<int2> SpatialLookup; // [SortLength(ParticlesNum)](particleIndex, ChunkKey)
+RWStructuredBuffer<int> StartIndices;
+
+bool ValidChunk(int3 chunk)
+{
+    return chunk.x >= 0 && chunk.x < (int)ChunksNum.x &&
+           chunk.y >= 0 && chunk.y < (int)ChunksNum.y &&
+           chunk.z >= 0 && chunk.z < (int)ChunksNum.z;
+}
+
+int GetChunkKey(int3 chunk)
+{
+    return chunk.x + chunk.y * ChunksNum.x + chunk.z * ChunksNum.w;
+}
+
+int3 DecomposeChunkKey(int chunkKey)
+{
+    uint chunkX = (uint)chunkKey % ChunksNum.x;
+    uint chunkY = (uint)((uint)chunkKey / ChunksNum.x) % ChunksNum.y;
+    uint chunkZ = (uint)((uint)chunkKey / ChunksNum.w);
+    int3 chunk = int3(chunkX, chunkY, chunkZ);
+
+    return chunk;
+}
+
+int GetNeighboorParticlesNum(int chunkKey)
+{
+    int3 baseChunk = DecomposeChunkKey(chunkKey);
+
+    int neighboorParticlesNum = 0;
+    for (int x = -1; x <= 1; x++)
+    {
+        for (int y = -1; y <= 1; y++)
+        {
+            for (int z = -1; z <= 1; z++)
+            {
+                int3 curChunk = baseChunk + int3(x, y, z);
+
+                if (ValidChunk(curChunk))
+                {
+                    int neighboorChunkKey = GetChunkKey(curChunk);
+                    neighboorParticlesNum += SpringCapacities[neighboorChunkKey].x;
+                }
+            }
+        }
+    }
+    return neighboorParticlesNum * SpringCapacities[chunkKey].x;
+}
+
+[numthreads(TN_IPS,1,1)]
+void PopulateChunkSizes (uint3 id : SV_DispatchThreadID)
+{
+    int chunkKey = id.x - 1;
+
+    uint startIndex = chunkKey == -1
+    ? 0
+    : StartIndices[chunkKey];
+
+    uint neighboorCount = 0;
+    uint Index = startIndex; 
+    while (Index < ParticlesNum && chunkKey == SpatialLookup[Index].y)
+    {
+        Index += 1;
+        neighboorCount += 1;
+    }
+    SpringCapacities[chunkKey].x = neighboorCount;
+}
+
+[numthreads(TN_IPS,1,1)]
+void PopulateSpringCapacities (uint3 id : SV_DispatchThreadID)
+{
+    uint chunkKey = id.x;
+
+    uint SpringCapacity = GetNeighboorParticlesNum(chunkKey);
+
+    SpringCapacities[chunkKey].y = SpringCapacity;
+}
+
+[numthreads(TN_IPS,1,1)]
+void CopySpringCapacities (uint3 id : SV_DispatchThreadID)
+{
+    uint chunkKey = id.x;
+    if (chunkKey < ChunksNumAll)
+    {
+        if (FrameBufferCycle)
+        {
+            SpringStartIndices_dbA[chunkKey] = SpringCapacities[chunkKey].y;
+        }
+        else
+        {
+            SpringStartIndices_dbB[chunkKey] = SpringCapacities[chunkKey].y;
+        }
+    }
+}
+
+[numthreads(TN_IPS,1,1)]
+void ParallelPrefixSumScan (uint3 id : SV_DispatchThreadID)
+{
+    uint i = id.x;
+    if (i >= ChunksNumAll) return; 
+    // A <-> C
+    if (FrameBufferCycle)
+    {
+        // A -> C
+        if (StepBufferCycle)
+        {
+            uint curVal = SpringStartIndices_dbA[i];
+            if (i >= Offset)
+            {
+                curVal += SpringStartIndices_dbA[i - Offset];
+            }
+            SpringStartIndices_dbC[i] = curVal;
+        }
+        // C -> A
+        else
+        {
+            uint curVal = SpringStartIndices_dbC[i];
+            if (i >= Offset)
+            {
+                curVal += SpringStartIndices_dbC[i - Offset];
+            }
+            SpringStartIndices_dbA[i] = curVal;
+        }
+    }
+    // B <-> C
+    else
+    {
+        // B -> C
+        if (StepBufferCycle)
+        {
+            uint curVal = SpringStartIndices_dbB[i];
+            if (i >= Offset)
+            {
+                curVal += SpringStartIndices_dbB[i - Offset];
+            }
+            SpringStartIndices_dbC[i] = curVal;
+        }
+        // C -> B
+        else
+        {
+            uint curVal = SpringStartIndices_dbC[i];
+            if (i >= Offset)
+            {
+                curVal += SpringStartIndices_dbC[i - Offset];
+            }
+            SpringStartIndices_dbB[i] = curVal;
+        }
+    }
+}
+
+[numthreads(TN_IPS,1,1)]
+void CopySpringStartIndicesBuffer (uint3 id : SV_DispatchThreadID)
+{
+    uint i = id.x;
+    // C -> A
+    if (FrameBufferCycle)
+    {
+        SpringStartIndices_dbA[i] = SpringStartIndices_dbC[i];
+    }
+    // C -> B
+    else
+    {
+        SpringStartIndices_dbB[i] = SpringStartIndices_dbC[i];
+    }
+}

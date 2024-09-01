@@ -1,0 +1,13 @@
+ReStir paper: https://cdn.pharr.org/ReSTIR.pdf
+ReStir = Reservoir-based SpatioTemporal Importance Resampling
+
+V-CERS-C-1061267062-DKOVG2-D3-DH
+
+!! LightObjects should be kept at a low triangle count for better performance
+
+shift + option + 8 = {}
+option + 8 = []
+fn + Z = undo
+shift + fn + Z = undo an undo
+shift + fn + 7 = comment out / undo comment out
+option + 7 = |
