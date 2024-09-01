@@ -1,2 +1,2 @@
 # RayTracer-FluidSim
-Combination of FluidSim3D and RayTracer projects
+Combination of the FluidSim3D and RayTracer projects
