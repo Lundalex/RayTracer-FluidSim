@@ -121,6 +121,14 @@ struct DebugData
     int triChecks;
     int bvChecks;
 };
+
+// Basic Tri struct for marching cubes shader
+struct MCTri
+{
+    float3 vertex0;
+    float3 vertex1;
+    float3 vertex2;
+};
  
 // --- Init functions ---
  

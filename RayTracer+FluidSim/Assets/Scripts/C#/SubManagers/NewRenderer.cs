@@ -103,7 +103,7 @@ public class NewRenderer : MonoBehaviour
     private bool[] LoggedWarnings = new bool[2];
 #endregion
 
-    private void Start()
+    public void ScriptSetup()
     {
         lastCameraPosition = transform.position;
         lastCameraRotation = transform.rotation;
@@ -115,7 +115,7 @@ public class NewRenderer : MonoBehaviour
         ProgramStarted = true;
     }
  
-    private void Update()
+    public void ScriptUpdate()
     {
         PauseControls();
  
@@ -213,7 +213,8 @@ public class NewRenderer : MonoBehaviour
     {
         FrameCount = 0;
         if (resetBufferData) SetData();
- 
+
+        // Camera & display
         int[] resolutionArray = new int[] { Resolution.x, Resolution.y };
         rtShader.SetInts("Resolution", resolutionArray);
 
@@ -249,7 +250,7 @@ public class NewRenderer : MonoBehaviour
         rtShader.SetFloat("TemporalPrecisionThreshold", TemporalPrecisionThreshold);
         rtShader.SetFloat("VisibilityReuseThreshold", VisibilityReuseThreshold);
 
-        // Multi-compilation
+        // Multi compilation
         if (DoVisibilityReuse) rtShader.EnableKeyword("VIS_REUSE");
         else rtShader.DisableKeyword("VIS_REUSE");
         if (DoWeightRecalc) rtShader.EnableKeyword("WEIGHT_RECALC");

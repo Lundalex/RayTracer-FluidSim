@@ -61,5 +61,6 @@ float GetBRDF(float3 incomingDir, float3 outgoingDir, float3 hitNormal, float me
     float3 diffuse = kD * hitAlbedo / 3.14;
 
     // Final BRDF value
-    return (diffuse + specular) * NdotL * 10;
+    float3 brdf = (diffuse + specular) * NdotL;
+    return (brdf.x + brdf.y + brdf.z) * 0.33 * 15;
 }

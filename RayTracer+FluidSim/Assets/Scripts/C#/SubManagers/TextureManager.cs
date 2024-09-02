@@ -12,6 +12,7 @@ public class TextureManager : MonoBehaviour
     public int NoiseCellSize = 128;
     public float LerpFactor = 0.15f; // TEMP
     public float NoisePixelSize = 0.7f;
+    public bool DoCreateTextures = true;
     public bool RenderNoiseTextures = true;
 
     [Header("References")]
@@ -23,16 +24,21 @@ public class TextureManager : MonoBehaviour
 #region Texture Creator
     public void ScriptSetup ()
     {
-        // textureHelper.UpdateScriptTextures(NoiseResolution, 1);
+        textureHelper.UpdateScriptTextures(NoiseResolution, 1);
+        textureHelper.SetNGShaderTextures(ngShader);
     }
 
-    void Start()
+    private void Update()
     {
-        // InitNoiseTextures();
+        if (DoCreateTextures)
+        {
+            CreateNoiseTextures();
+            DoCreateTextures = false;
+        }
     }
 
     // Creates a Cloud-like 3D texture
-    void InitNoiseTextures()
+    void CreateNoiseTextures()
     {
         // -- CLOUD TEXTURE --
 

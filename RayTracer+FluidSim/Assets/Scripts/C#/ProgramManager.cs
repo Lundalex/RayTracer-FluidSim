@@ -8,9 +8,6 @@ using System;
 public class ProgramManager : MonoBehaviour
 {
 #region Inspector
-    [Header("Primary Processes")]
-    public int TimeStepsPerRenderFrame;
-
     [Header("Data Transfer")]
     public float CellSizeSL;
     public float3 Offset2;
@@ -21,12 +18,15 @@ public class ProgramManager : MonoBehaviour
     public float3 Rot;
 
     [Header("References")]
-    public NewRenderer newRenderer;
+    // Class instances
     public Simulation sim;
+    public MarchingCubes mCubes;
+    public NewRenderer newRenderer;
     public TextureManager textureManager;
+    public ProgramManagerShaderHelper shaderHelper;
+    // Compute shaders
     public ComputeShader dtShader;
     public ComputeShader ssShader;
-    public ProgramManagerShaderHelper shaderHelper;
 #endregion
 
 #region Shader Settings
@@ -35,109 +35,89 @@ public class ProgramManager : MonoBehaviour
 #endregion
 
 #region Run Time Set Variables
-    [NonSerialized] public int4 NumChunks;
-    [NonSerialized] public int NumChunksAll;
     [NonSerialized] public int NumPoints;
     [NonSerialized] public int NumPoints_NextPow2;
 #endregion
 
 #region Buffers
-    public ComputeBuffer B_Points;
-    public ComputeBuffer B_SpatialLookup;
-    public ComputeBuffer B_StartIndices;
+    public ComputeBuffer SpatialLookupBuffer;
+    public ComputeBuffer StartIndicesBuffer;
 #endregion
 
 #region Other
     // private bool ProgramStarted = false;
 #endregion
 
-    void Awake()
+    private void Awake()
     {
-        // InitBuffers();
+        // Manage the setup order of all major class instances
+        sim.ScriptSetup();
+        mCubes.ScriptSetup();
+        newRenderer.ScriptSetup();
+        textureManager.ScriptSetup();
+        ScriptSetup();
+    }
 
-        // sim.ScriptSetup();
-        // textureManager.ScriptSetup();
-        // newRenderer.ScriptSetup();
+    private void ScriptSetup()
+    {
+        InitBuffers();
+        SetBufferData();
+        UpdateSettings();
+    }
 
-        // shaderHelper.SetSSShaderBuffers(ssShader);
-        // shaderHelper.SetSSSettings(ssShader);
+    void InitBuffers()
+    {
+        NumPoints = sim.ParticlesNum;
+        NumPoints_NextPow2 = Func.NextPow2(NumPoints);
+
+        ComputeHelper.CreateStructuredBuffer<int2>(ref SpatialLookupBuffer, Func.NextPow2(NumPoints_NextPow2));
+        ComputeHelper.CreateStructuredBuffer<int>(ref StartIndicesBuffer, mCubes.NumCellsAll);
+    }
+
+    private void SetBufferData()
+    {
+        shaderHelper.SetDTShaderBuffers(dtShader);
+        
+        shaderHelper.SetSSShaderBuffers(ssShader);
+        shaderHelper.SetSSSettings(ssShader);
+    }
+
+    private void UpdateSettings()
+    {
+        dtShader.SetInt("ParticlesNum", sim.ParticlesNum);
+        dtShader.SetInt("ChunksNumAll", sim.ChunksNumAll);
+        dtShader.SetInt("PTypesNum", sim.PTypes.Length);
+        dtShader.SetVector("SimBoundraryDims", new Vector3(sim.Width, sim.Height, sim.Depth));
+
+        dtShader.SetVector("Rot", new Vector3(0, 0, 0));
     }
 
     void Update()
     {
-        // sim.RunTimeSteps(TimeStepsPerRenderFrame);
+        // Run simulation
+        sim.RunTimeSteps();
 
-        // if (!ProgramStarted)
-        // {
-        //     dtShader.SetBuffer(0, "PDataB", sim.PDataBuffer);
-        //     dtShader.SetBuffer(0, "PTypes", sim.PTypesBuffer);
-        //     dtShader.SetBuffer(0, "Points", B_Points);
+        // Tranfer particle position data to dedicated points buffer, and apply spatial sorting
+        PreparePointsData();
 
-        //     dtShader.SetBuffer(1, "Points", B_Points);
-        //     // dtShader.SetBuffer(1, "Spheres", newRenderer.B_Spheres);
+        // Run marching to generate a mesh from the points
+        // mCubes.RunMarchingCubes();
 
-        //     ProgramStarted = !ProgramStarted;
-        // }
-
-        // dtShader.SetFloat("ParticlesNum", sim.ParticlesNum);
-        // dtShader.SetFloat("Radius", ParticleSpheresRadius);
-        // dtShader.SetFloat("ChunksNumAll", sim.ChunksNumAll);
-        // dtShader.SetFloat("PTypesNum", sim.PTypes.Length);
-        // // dtShader.SetVector("ChunkGridOffset", new Vector3(newRenderer.ChunkGridOffset.x, newRenderer.ChunkGridOffset.y, newRenderer.ChunkGridOffset.z));
-
-        // dtShader.SetVector("Offset2", new Vector3(Offset2.x, Offset2.y, Offset2.z)); // TEMP
-
-        // // dtShader.SetInt("ReservedNumSpheres", newRenderer.ReservedNumSpheres);
-        // // dtShader.SetInt("NumSpheres", sim.ParticlesNum + newRenderer.ReservedNumSpheres);
-
-        // Rot.y += RotationSpeed * Time.deltaTime;
-        // dtShader.SetVector("Rot", new Vector3(Rot.x, Rot.y, Rot.z));
-
-        // TransferParticleData();
-
-        // if (render.fluidRenderStyle == FluidRenderStyle.IsoSurfaceMesh) RunSSShader();
-        // else if (render.fluidRenderStyle == FluidRenderStyle.ParticleSpheres) TransferParticleSpheres();
-
-        // render.UpdateRendererData();
+        // Allow renderer to update before rendering a new frame
+        newRenderer.ScriptUpdate();
     }
 
-    // void InitBuffers()
-    // {
-    //     NumPoints = sim.ParticlesNum;
-    //     NumPoints_NextPow2 = Func.NextPow2(NumPoints);
+    void PreparePointsData()
+    {
+        // Transfer particle position data
+        ComputeHelper.DispatchKernel(dtShader, "TransferParticleData", sim.ParticlesNum, dtShaderThreadSize);
 
-    //     // float3 ChunkGridDiff = newRenderer.MaxWorldBounds - newRenderer.MinWorldBounds;
+        // Sort points (for processing by MS shader)
+        ComputeHelper.SpatialSort(ssShader, NumPoints, ssShaderThreadSize);
+    }
 
-    //     // NumChunks = new(Mathf.CeilToInt(ChunkGridDiff.x / CellSizeSL),
-    //     //                 Mathf.CeilToInt(ChunkGridDiff.y / CellSizeSL),
-    //     //                 Mathf.CeilToInt(ChunkGridDiff.z / CellSizeSL), 0);
-    //     // NumChunks.w = NumChunks.x * NumChunks.y;
-    //     // NumChunksAll = NumChunks.x * NumChunks.y * NumChunks.z;
-
-    //     ComputeHelper.CreateStructuredBuffer<float3>(ref B_Points, NumPoints);
-    //     ComputeHelper.CreateStructuredBuffer<int2>(ref B_SpatialLookup, Func.NextPow2(NumPoints_NextPow2));
-    //     ComputeHelper.CreateStructuredBuffer<int>(ref B_StartIndices, NumChunksAll);
-    // }
-
-    // void TransferParticleData()
-    // {
-    //     ComputeHelper.DispatchKernel(dtShader, "TransferParticlePositionData", NumPoints, dtShaderThreadSize);
-    // }
-
-    // public void RunSSShader()
-    // {
-    //     // Sort points (for processing by MS shader)
-    //     ComputeHelper.SpatialSort(ssShader, NumPoints, ssShaderThreadSize);
-    // }
-
-    // public void TransferParticleSpheres()
-    // {
-    //     // newRenderer.UpdateSpheres(sim.ParticlesNum);
-    //     ComputeHelper.DispatchKernel(dtShader, "TransferPointsData", NumPoints, dtShaderThreadSize);
-    // }
-
-    // void OnDestroy()
-    // {
-    //     ComputeHelper.Release(B_SpatialLookup, B_StartIndices, B_Points);
-    // }
+    void OnDestroy()
+    {
+        ComputeHelper.Release(SpatialLookupBuffer, StartIndicesBuffer);
+    }
 }

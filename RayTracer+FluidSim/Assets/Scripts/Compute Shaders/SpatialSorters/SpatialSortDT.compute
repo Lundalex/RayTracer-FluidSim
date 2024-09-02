@@ -6,20 +6,17 @@
 #include "../Constants.hlsl"
 
 // Num constants
-const int4 NumChunks; // x, y, z, x*y
-const uint NumChunksAll;
+const int4 NumCells; // x, y, z, x*y
+const uint NumCellsAll;
+const float CellSize;
 const uint SortLength;
 const uint SortLengthNextPow2;
-
-// World settings
-const float CellSize;
-const float3 ChunkGridOffset;
 
 // Per-iteration-set constants
 const bool BrownPinkSort; // True -> BrownSort, False -> PinkSort
 const uint BlockLen;
 
-RWStructuredBuffer<int2> SpatialLookup; // [NumObjects](pointIndex, ChunkKey)
+RWStructuredBuffer<int2> SpatialLookup; // [NumObjects](pointIndex, CellKey)
 RWStructuredBuffer<int> StartIndices;
 
 RWStructuredBuffer<float3> Points;
@@ -31,14 +28,14 @@ void SwapInt2(inout int2 a, inout int2 b)
     b = temp;
 }
 
-int3 GetChunkFromPos(float3 pos)
+int3 GetCellFromPos(float3 pos)
 {
     return (int3)(pos / CellSize);
 }
 
-uint GetChunkKey(uint3 chunk)
+uint GetCellKey(uint3 cell)
 {
-    return chunk.x + chunk.y*NumChunks.x + chunk.z*NumChunks.w;
+    return cell.x + cell.y*NumCells.x + cell.z*NumCells.w;
 }
 
 [numthreads(TN_SS_DT,1,1)]
@@ -49,17 +46,17 @@ void PopulateSpatialLookup (uint3 id : SV_DispatchThreadID)
 
     float3 point2 = Points[i];
 
-    int3 chunk = GetChunkFromPos(point2);
-    uint chunkKey = GetChunkKey(chunk);
-    int2 chunkPointPair = int2(i, chunkKey);
+    int3 cell = GetCellFromPos(point2);
+    uint cellKey = GetCellKey(cell);
+    int2 cellPointPair = int2(i, cellKey);
 
-    if (chunkPointPair.x != 0 || chunkPointPair.y != 0)
+    if (cellPointPair.x != 0 || cellPointPair.y != 0)
     {
-        SpatialLookup[i] = chunkPointPair;
+        SpatialLookup[i] = cellPointPair;
     }
     else
     {
-        SpatialLookup[i] = int2(-1, NumChunksAll); // No object
+        SpatialLookup[i] = int2(-1, NumCellsAll); // No object
     }
 }
 
@@ -94,18 +91,18 @@ void SortIteration (uint3 id : SV_DispatchThreadID)
 void PopulateStartIndices (uint3 id : SV_DispatchThreadID)
 {
     uint i = id.x;
-    if (i >= NumChunksAll) return;
+    if (i >= NumCellsAll) return;
     
-    int chunkKey = SpatialLookup[i].y;
-    int LastChunkKey = NumChunksAll;
+    int cellKey = SpatialLookup[i].y;
+    int LastCellKey = NumCellsAll;
 
     if (i != 0)
     {
-        LastChunkKey = SpatialLookup[i-1].y;
+        LastCellKey = SpatialLookup[i-1].y;
     }
 
-    if (chunkKey != LastChunkKey)
+    if (cellKey != LastCellKey)
     {
-        StartIndices[chunkKey] = i;
+        StartIndices[cellKey] = i;
     }
 }

@@ -457,5 +457,16 @@ public class TextureHelper : MonoBehaviour
         LastResolution = newResolution;
         LastCellSize = newCellSize;
     }
+
+    public void SetNGShaderTextures (ComputeShader ngShader)
+    {
+        ngShader.SetTexture(0, "VectorMap", T_VectorMap);
+
+        ngShader.SetTexture(1, "VectorMap", T_VectorMap);
+
+        ngShader.SetTexture(2, "PointsMap", T_PointsMap);
+
+        ngShader.SetTexture(3, "PointsMap", T_PointsMap);
+    }
 #endregion
 }

@@ -345,6 +345,7 @@ MonoBehaviour:
   NoiseCellSize: 128
   LerpFactor: 0.15
   NoisePixelSize: 0.73
+  DoCreateTextures: 1
   RenderNoiseTextures: 0
   ngShader: {fileID: 7200000, guid: d9b7282c52027fd4baa5aebc98ffebee, type: 3}
   ppShader: {fileID: 7200000, guid: f9e3a94f33bc9824099153b9d0cc05d3, type: 3}
@@ -703,10 +704,10 @@ MonoBehaviour:
   DesignatedVertices: 0
   MaxAtlasDims: 16384
   MaxDepthSceneBVH: 10
-  SplitResolution: 20
+  SplitResolution: 5
   FileName: 80kScene
   BVUpdateModeSelect: 0
-  FileModeSelect: 0
+  FileModeSelect: 1
   ExtensionModeSelect: 0
   m: {fileID: 868168749}
 --- !u!1 &1060108115 stripped
@@ -744,7 +745,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c64949e5b2df884bb8f7c5f3b908c48, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  TimeStepsPerRenderFrame: 3
   CellSizeSL: 0.3
   Offset2:
     x: -0.36
@@ -756,12 +756,13 @@ MonoBehaviour:
     x: 0
     y: 0
     z: 0
-  newRenderer: {fileID: 868168749}
   sim: {fileID: 2125271849}
+  mCubes: {fileID: 1604392132}
+  newRenderer: {fileID: 868168749}
   textureManager: {fileID: 473926887}
+  shaderHelper: {fileID: 1164272050}
   dtShader: {fileID: 7200000, guid: d1021112b3303574191bcb6a5e085237, type: 3}
   ssShader: {fileID: 7200000, guid: 5eeb9defe7f5a8e47892bd05717d0412, type: 3}
-  shaderHelper: {fileID: 1164272050}
 --- !u!4 &1164272049
 Transform:
   m_ObjectHideFlags: 0
@@ -892,6 +893,52 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!1 &1604392131
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1604392133}
+  - component: {fileID: 1604392132}
+  m_Layer: 0
+  m_Name: Marching Cubes
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1604392132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1604392131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da170071670cb7348adfac942c82272e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  CellSize: 0.15
+  ThresholdMS: 1
+--- !u!4 &1604392133
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1604392131}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2125271846
 GameObject:
   m_ObjectHideFlags: 0
@@ -903,7 +950,6 @@ GameObject:
   - component: {fileID: 2125271847}
   - component: {fileID: 2125271849}
   - component: {fileID: 2125271848}
-  - component: {fileID: 2125271850}
   m_Layer: 0
   m_Name: Simulation
   m_TagString: Untagged
@@ -974,6 +1020,7 @@ MonoBehaviour:
   FixedTimeStep: 1
   TimeStep: 0.04
   ProgramSpeed: 2
+  TimeStepsNum: 0
   SubTimeStepsNum: 3
   MaxInteractionRadius: 40
   InteractionAttractionPower: 5
@@ -983,14 +1030,6 @@ MonoBehaviour:
   pSimShader: {fileID: 7200000, guid: 4c6ba7b69baa30b428d3e81f801e27b8, type: 3}
   ssShader: {fileID: 7200000, guid: 3e99023e342e7f542b3045d213b12c03, type: 3}
   ipsShader: {fileID: 7200000, guid: 4f1bd62c1c0e8804e89857d2d305d0db, type: 3}
---- !u!33 &2125271850
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2125271846}
-  m_Mesh: {fileID: 0}
 --- !u!1001 &2439891451013711599
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1378,9 +1417,10 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 868168748}
+  - {fileID: 1049554301}
+  - {fileID: 1604392133}
   - {fileID: 2125271847}
   - {fileID: 473926886}
-  - {fileID: 1049554301}
   - {fileID: 1164272049}
   - {fileID: 569968698}
   - {fileID: 1560758227}

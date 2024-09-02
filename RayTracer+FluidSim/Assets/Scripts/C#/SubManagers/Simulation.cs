@@ -38,6 +38,7 @@ public class Simulation : MonoBehaviour
     public bool FixedTimeStep = true;
     public float TimeStep = 0.02f;
     public float ProgramSpeed = 2.0f;
+    public int TimeStepsNum;
     public int SubTimeStepsNum = 3;
 
     [Header("Mouse Interaction")]
@@ -90,19 +91,17 @@ public class Simulation : MonoBehaviour
     [NonSerialized] public PType[] PTypes;
     private float DeltaTime;
     private bool FrameBufferCycle = true;
-    private bool ProgramStarted = false;
+    [NonSerialized] public bool ProgramStarted = false;
 #endregion
 
 #region Simulation
-    public void ScriptSetup ()
+    public void ScriptSetup()
     {
         SetConstants();
         InitializeArrays();
         SetPTypesData();
 
-        for (int i = 0; i < ParticlesNum; i++) {
-            PData[i].Position = Utils.GetParticleSpawnPosition(i, ParticlesNum, Width, Height, Depth);
-        }
+        for (int i = 0; i < ParticlesNum; i++) PData[i].Position = Utils.GetParticleSpawnPosition(i, ParticlesNum, Width, Height, Depth);
 
         InitializeBuffers();
         shaderHelper.SetPSimShaderBuffers(pSimShader);
@@ -116,9 +115,9 @@ public class Simulation : MonoBehaviour
         ProgramStarted = true;
     }
 
-    public void RunTimeSteps(int timeStepsNum)
+    public void RunTimeSteps()
     {
-        for (int timeStepCount = 0; timeStepCount < timeStepsNum; timeStepCount++)
+        for (int timeStepCount = 0; timeStepCount < TimeStepsNum; timeStepCount++)
         {
             UpdateShaderTimeStep();
 
