@@ -14,6 +14,8 @@ public class MarchingCubes : MonoBehaviour
 
     // Script references
     public Simulation sim;
+    public new NewRenderer renderer;
+    public TextureManager textureManager;
 
     // Shader references
     public ComputeShader mcShader;
@@ -60,6 +62,10 @@ public class MarchingCubes : MonoBehaviour
         mcShader.SetFloat("CellSize", CellSize);
         mcShader.SetFloat("Threshold", Threshold);
         mcShader.SetVector("NumCells", new Vector4(NumCells.x, NumCells.y, NumCells.z, NumCells.x * NumCells.y));
+
+        // Post processing shader
+        renderer.ppShader.SetVector("NoiseResolution", new Vector3(textureManager.NoiseResolution.x, textureManager.NoiseResolution.y, textureManager.NoiseResolution.z));
+        renderer.ppShader.SetFloat("NoisePixelSize", textureManager.NoisePixelSize);
     }
 
     private void InitBuffers()
@@ -102,7 +108,12 @@ public class MarchingCubes : MonoBehaviour
 
     public void RunMarchingCubes()
     {
-        
+        UpdatePerFrame();
+    }
+
+    private void UpdatePerFrame()
+    {
+        renderer.ppShader.SetInt("FrameCount", renderer.FrameCount);
     }
 
     public void RunMCShader()
@@ -122,6 +133,10 @@ public class MarchingCubes : MonoBehaviour
         bool doFetchACBufferLength = true;
         int fluidTriMeshLength = 0;
         if (doFetchACBufferLength) fluidTriMeshLength = ComputeHelper.GetAppendBufferCount(FluidTriMeshBufferAC);
+
+        MCTri[] test = new MCTri[fluidTriMeshLength];
+        FluidTriMeshBufferAC.GetData(test);
+        int a = 0;
     }
 
     void OnDestroy()

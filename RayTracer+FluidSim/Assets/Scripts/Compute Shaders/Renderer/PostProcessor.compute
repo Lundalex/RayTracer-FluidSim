@@ -47,6 +47,4 @@ void RenderNoiseTextures (uint3 id : SV_DispatchThreadID)
         Result[id.xy] = float4(result, result, result, 0);
         return;
     }
-    // Override the whole rendered image?
-    // Result[id.xy] = float4(0, 0, 0, 0);
 }

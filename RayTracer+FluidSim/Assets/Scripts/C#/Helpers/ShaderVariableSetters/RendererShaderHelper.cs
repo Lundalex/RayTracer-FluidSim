@@ -114,16 +114,6 @@ public class RendererShaderHelper : MonoBehaviour
 //         rmShader.SetTexture(0, "Result", render.T_Result);
 //     }
 
-//     public void SetPPShaderBuffers (ComputeShader ppShader)
-//     {
-//         // Noise textures are set by TextureCreator
-
-//         ppShader.SetTexture(0, "Result", render.T_Result);
-//         ppShader.SetTexture(0, "AccResult", render.renderTexture);
-
-//         ppShader.SetTexture(1, "AccResult", render.renderTexture);
-//     }
-
 //     public void SetPCShaderBuffers (ComputeShader pcShader)
 //     {
 //         pcShader.SetBuffer(0, "TriObjects", render.B_TriObjects);
@@ -226,15 +216,6 @@ public class RendererShaderHelper : MonoBehaviour
 //         rmShader.SetFloat("focalPlaneFactor", render.focalPlaneFactor);
 //     }
 
-//     public void SetPPSettings (ComputeShader ppShader)
-//     {
-//         SetPPShaderBuffers(ppShader);
-
-//         // Noise settings
-//         ppShader.SetVector("NoiseResolution", new Vector3(texture.NoiseResolution.x, texture.NoiseResolution.y, texture.NoiseResolution.z));
-//         ppShader.SetFloat("NoisePixelSize", texture.NoisePixelSize);
-//     }
-
 //     public void SetPCSettings (ComputeShader pcShader)
 //     {
 //         pcShader.SetInt("NumTris", render.NumTris);
@@ -273,12 +254,6 @@ public class RendererShaderHelper : MonoBehaviour
 //         msShader.SetVector("NumChunks", new Vector4(manager.NumChunks.x, manager.NumChunks.y, manager.NumChunks.z, manager.NumChunks.w));
 //         msShader.SetFloat("CellSizeSL", manager.CellSizeSL);
 //         msShader.SetVector("ChunkGridOffset", new Vector3(render.ChunkGridOffset.x, render.ChunkGridOffset.y, render.ChunkGridOffset.z));
-//     }
-
-//     public void UpdatePPVariables (ComputeShader ppShader)
-//     {
-//         // Frame set variables
-//         ppShader.SetInt("FrameCount", render.FrameCount);
 //     }
 
 //     public void UpdateRMVariables (ComputeShader rmShader)

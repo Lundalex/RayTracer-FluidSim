@@ -47,6 +47,7 @@ public class NewRenderer : MonoBehaviour
     public ComputeShader ppShader;
     public ComputeShader pcShader;
     public RendererShaderHelper shaderHelper;
+    public TextureManager textureManager;
     public ObjectManager objectManager;
     public AsciiManager asciiManager;
     public Texture2D EnvironmentMapTexture;
@@ -320,6 +321,7 @@ public class NewRenderer : MonoBehaviour
             RTResultTexture.Create();
             rtShader.SetTexture(4, "Result", RTResultTexture);
             ppShader.SetTexture(0, "Result", RTResultTexture);
+            ppShader.SetTexture(1, "Result", RTResultTexture);
         }
  
         // Accumulated result texture
@@ -328,6 +330,7 @@ public class NewRenderer : MonoBehaviour
             AccumulatedResultTexture = TextureHelper.CreateTexture(Resolution, 4);
             AccumulatedResultTexture.Create();
             ppShader.SetTexture(0, "AccumulatedResult", AccumulatedResultTexture);
+            ppShader.SetTexture(1, "AccumulatedResult", AccumulatedResultTexture);
         }
  
         // Debug overlay texture
@@ -418,7 +421,11 @@ public class NewRenderer : MonoBehaviour
  
     private void RunPostProcessingShader()
     {
+        // Accumulate ray tracer output data between frames
         ComputeHelper.DispatchKernel(ppShader, "AccumulateFrames", Resolution, PostProcesserThreadSize);
+
+        // Render the noise textures
+        if (textureManager.RenderNoiseTextures) ComputeHelper.DispatchKernel(ppShader, "RenderNoiseTextures", Resolution, PostProcesserThreadSize);
     }
  
     private void OnRenderImage(RenderTexture src, RenderTexture dest)

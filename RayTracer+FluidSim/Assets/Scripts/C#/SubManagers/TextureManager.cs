@@ -30,7 +30,7 @@ public class TextureManager : MonoBehaviour
 
     private void Update()
     {
-        if (DoCreateTextures)
+        if (DoCreateTextures && RenderNoiseTextures)
         {
             CreateNoiseTextures();
             DoCreateTextures = false;
@@ -84,8 +84,8 @@ public class TextureManager : MonoBehaviour
         textureHelper.GaussianBlur(ref voronoi0, NoiseResolution, 3, 5);
 
         // Final texture stored in voronoi0
-        ppShader.SetTexture(0, "NoiseA", voronoi0);
-        ppShader.SetTexture(0, "NoiseB", voronoi0);
+        ppShader.SetTexture(1, "NoiseA", voronoi0);
+        ppShader.SetTexture(1, "NoiseB", voronoi0);
     }
 #endregion
 }

@@ -346,7 +346,7 @@ MonoBehaviour:
   LerpFactor: 0.15
   NoisePixelSize: 0.73
   DoCreateTextures: 1
-  RenderNoiseTextures: 0
+  RenderNoiseTextures: 1
   ngShader: {fileID: 7200000, guid: d9b7282c52027fd4baa5aebc98ffebee, type: 3}
   ppShader: {fileID: 7200000, guid: f9e3a94f33bc9824099153b9d0cc05d3, type: 3}
   textureHelper: {fileID: 473926888}
@@ -587,6 +587,7 @@ MonoBehaviour:
   ppShader: {fileID: 7200000, guid: f9e3a94f33bc9824099153b9d0cc05d3, type: 3}
   pcShader: {fileID: 7200000, guid: 8b6e58497c2f7da409da1927d115d6dc, type: 3}
   shaderHelper: {fileID: 868168750}
+  textureManager: {fileID: 473926887}
   objectManager: {fileID: 1049554302}
   asciiManager: {fileID: 569968697}
   EnvironmentMapTexture: {fileID: 2800000, guid: 45c2c1c4ef5242945bc5b3eaa0e9442e, type: 3}
@@ -925,6 +926,8 @@ MonoBehaviour:
   CellSize: 1
   Threshold: 0
   sim: {fileID: 2125271849}
+  renderer: {fileID: 868168749}
+  textureManager: {fileID: 473926887}
   mcShader: {fileID: 7200000, guid: c8b0c0ed857fbca42a6211171c8e8dc1, type: 3}
 --- !u!4 &1604392133
 Transform:
