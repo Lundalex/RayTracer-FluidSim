@@ -129,6 +129,11 @@ struct MCTri
     float3 vertex1;
     float3 vertex2;
 };
+struct NearInfo
+{
+    float val;
+    int materialIndex;
+};
  
 // --- Init functions ---
  

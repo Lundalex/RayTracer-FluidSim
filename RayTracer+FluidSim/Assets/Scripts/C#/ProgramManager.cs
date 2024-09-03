@@ -34,16 +34,6 @@ public class ProgramManager : MonoBehaviour
     private const int ssShaderThreadSize = 512; // /1024
 #endregion
 
-#region Run Time Set Variables
-    [NonSerialized] public int NumPoints;
-    [NonSerialized] public int NumPoints_NextPow2;
-#endregion
-
-#region Buffers
-    public ComputeBuffer SpatialLookupBuffer;
-    public ComputeBuffer StartIndicesBuffer;
-#endregion
-
 #region Other
     // private bool ProgramStarted = false;
 #endregion
@@ -67,11 +57,7 @@ public class ProgramManager : MonoBehaviour
 
     void InitBuffers()
     {
-        NumPoints = sim.ParticlesNum;
-        NumPoints_NextPow2 = Func.NextPow2(NumPoints);
 
-        ComputeHelper.CreateStructuredBuffer<int2>(ref SpatialLookupBuffer, Func.NextPow2(NumPoints_NextPow2));
-        ComputeHelper.CreateStructuredBuffer<int>(ref StartIndicesBuffer, mCubes.NumCellsAll);
     }
 
     private void SetBufferData()
@@ -100,8 +86,8 @@ public class ProgramManager : MonoBehaviour
         // Tranfer particle position data to dedicated points buffer, and apply spatial sorting
         PreparePointsData();
 
-        // Run marching to generate a mesh from the points
-        // mCubes.RunMarchingCubes();
+        // Run marching cubes to generate a mesh from the points
+        mCubes.RunMarchingCubes();
 
         // Allow renderer to update before rendering a new frame
         newRenderer.ScriptUpdate();
@@ -113,11 +99,6 @@ public class ProgramManager : MonoBehaviour
         ComputeHelper.DispatchKernel(dtShader, "TransferParticleData", sim.ParticlesNum, dtShaderThreadSize);
 
         // Sort points (for processing by MS shader)
-        ComputeHelper.SpatialSort(ssShader, NumPoints, ssShaderThreadSize);
-    }
-
-    void OnDestroy()
-    {
-        ComputeHelper.Release(SpatialLookupBuffer, StartIndicesBuffer);
+        ComputeHelper.SpatialSort(ssShader, mCubes.NumPoints, ssShaderThreadSize);
     }
 }

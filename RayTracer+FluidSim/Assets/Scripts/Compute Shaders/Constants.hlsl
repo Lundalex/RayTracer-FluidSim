@@ -17,8 +17,8 @@ static const float SmoothViscosityLaplacianFactor = 45 / PI;
 static const int TN_RT = 8; // RayTracer
 static const int TN_PC = 256; // PreCalc
 static const int TN_PP = 8; // PostProcessing
-static const int TN_MS = 8; // MarchingSquares
-static const int TN_MS2 = 512; // MarchingSquares2
+static const int TN_MC = 8; // MarchingSquares
+static const int TN_MC2 = 512; // MarchingSquares2
 
 static const uint MAX_BVH_DEPTH = 32;
 

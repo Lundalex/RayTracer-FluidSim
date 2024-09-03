@@ -18,12 +18,12 @@ public class ProgramManagerShaderHelper : MonoBehaviour
     public void SetSSShaderBuffers (ComputeShader ssShader)
     {
         ssShader.SetBuffer(0, "Points", manager.mCubes.PointsBuffer);
-        ssShader.SetBuffer(0, "SpatialLookup", manager.SpatialLookupBuffer);
+        ssShader.SetBuffer(0, "SpatialLookup", manager.mCubes.SpatialLookupBuffer);
 
-        ssShader.SetBuffer(1, "SpatialLookup", manager.SpatialLookupBuffer);
+        ssShader.SetBuffer(1, "SpatialLookup", manager.mCubes.SpatialLookupBuffer);
 
-        ssShader.SetBuffer(2, "SpatialLookup", manager.SpatialLookupBuffer);
-        ssShader.SetBuffer(2, "StartIndices", manager.StartIndicesBuffer);
+        ssShader.SetBuffer(2, "SpatialLookup", manager.mCubes.SpatialLookupBuffer);
+        ssShader.SetBuffer(2, "StartIndices", manager.mCubes.StartIndicesBuffer);
     }
 
 // --- SHADER SETTINGS / VARIABLES ---
@@ -34,7 +34,7 @@ public class ProgramManagerShaderHelper : MonoBehaviour
         ssShader.SetVector("NumCells", new Vector4(manager.mCubes.NumCells.x, manager.mCubes.NumCells.y, manager.mCubes.NumCells.z, manager.mCubes.NumCells.w));
         ssShader.SetInt("NumCellsAll", manager.mCubes.NumCellsAll);
         ssShader.SetFloat("CellSize", manager.mCubes.CellSize);
-        ssShader.SetInt("NumPoints", manager.NumPoints);
-        ssShader.SetInt("NumPoints_NextPow2", Func.NextPow2(manager.NumPoints_NextPow2));
+        ssShader.SetInt("NumPoints", manager.mCubes.NumPoints);
+        ssShader.SetInt("NumPoints_NextPow2", Func.NextPow2(manager.mCubes.NumPoints_NextPow2));
     }
 }

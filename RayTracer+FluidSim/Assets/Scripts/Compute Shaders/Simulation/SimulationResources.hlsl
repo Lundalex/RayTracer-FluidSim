@@ -61,7 +61,7 @@ float SmoothViscosityLaplacian_optimised(float dst, float radius)
 {
 	if (dst < radius)
 	{
-		float radius6 = radius*radius*radius*radius*radius*radius;
+		float radius6 = pow(radius, 6);
 		return SmoothViscosityLaplacianFactor * (radius - dst) / radius6;
 	}
 	return 0;
