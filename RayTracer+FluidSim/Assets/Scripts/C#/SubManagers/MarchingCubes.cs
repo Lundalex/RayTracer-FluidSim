@@ -26,7 +26,7 @@ public class MarchingCubes : MonoBehaviour
 #region Run Time Set Variables
     [NonSerialized] public int NumPoints;
     [NonSerialized] public int NumPoints_NextPow2;
-    private int FluidTriMeshLength;
+    private int FluidTriMeshLength = 20000;
 #endregion
 
     // Buffers and textures
@@ -96,6 +96,7 @@ public class MarchingCubes : MonoBehaviour
             mcShader.SetTexture(0, "GridDensities", GridDensitiesTexture);
             mcShader.SetTexture(1, "GridDensities", GridDensitiesTexture);
             mcShader.SetTexture(2, "GridDensities", GridDensitiesTexture);
+            renderer.ppShader.SetTexture(1, "TexA", GridDensitiesTexture);
         }
         if (SurfaceCellsTexture == null)
         {
@@ -103,12 +104,15 @@ public class MarchingCubes : MonoBehaviour
             SurfaceCellsTexture.Create();
             mcShader.SetTexture(1, "SurfaceCells", SurfaceCellsTexture);
             mcShader.SetTexture(2, "SurfaceCells", SurfaceCellsTexture);
+            // renderer.ppShader.SetTexture(1, "TexB", SurfaceCellsTexture);
         }
     }
 
     public void RunMarchingCubes()
     {
         UpdatePerFrame();
+
+        RunMCShader();
     }
 
     private void UpdatePerFrame()
@@ -128,6 +132,7 @@ public class MarchingCubes : MonoBehaviour
         FluidTriMeshBufferAC.SetCounterValue(0);
 
         // Generate the fluid mesh using marching cubes
+        FluidTriMeshLength = 20000;
         ComputeHelper.DispatchKernel(mcShader, "GenerateFluidMesh", FluidTriMeshLength, mcShaderThreadSize2);
 
         bool doFetchACBufferLength = true;
@@ -135,7 +140,13 @@ public class MarchingCubes : MonoBehaviour
         if (doFetchACBufferLength) fluidTriMeshLength = ComputeHelper.GetAppendBufferCount(FluidTriMeshBufferAC);
 
         MCTri[] test = new MCTri[fluidTriMeshLength];
+        float3[] test2 = new float3[sim.ParticlesNum];
+        int2[] test3 = new int2[NumPoints_NextPow2];
+        int[] test4 = new int[NumPoints_NextPow2];
         FluidTriMeshBufferAC.GetData(test);
+        PointsBuffer.GetData(test2);
+        SpatialLookupBuffer.GetData(test3);
+        StartIndicesBuffer.GetData(test4);
         int a = 0;
     }
 

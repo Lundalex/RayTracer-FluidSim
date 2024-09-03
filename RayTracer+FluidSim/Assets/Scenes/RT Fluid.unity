@@ -1025,7 +1025,7 @@ MonoBehaviour:
   FixedTimeStep: 1
   TimeStep: 0.04
   ProgramSpeed: 2
-  TimeStepsNum: 0
+  TimeStepsNum: 1
   SubTimeStepsNum: 3
   MaxInteractionRadius: 40
   InteractionAttractionPower: 5
