@@ -20,9 +20,9 @@ int Extract_PType(int LastChunkKey_PType_POrder)
 }
 
 // Rotates around the center of the sim boundrary dims
-float3 ApplyTransform(float3 rot, inout float3 point2)
+float3 ApplyTransform(float3 rot, float3 point2)
 {
-    rot -= SimBoundraryDims * 0.5;
+    point2 -= SimBoundraryDims * 0.5;
 
     float cosX = cos(rot.x);
     float sinX = sin(rot.x);
@@ -56,6 +56,5 @@ void TransferParticleData (uint3 id : SV_DispatchThreadID)
     PData pData = PDataB[i];
     // PType pType = PTypes[Extract_PType(pData.lastChunkKey_PType_POrder)];
     float3 transformedPos = ApplyTransform(Rot, pData.pos);
-    ApplyTransform(Rot, transformedPos);
-    Points[i] = transformedPos;
+    Points[i] = pData.pos;
 }

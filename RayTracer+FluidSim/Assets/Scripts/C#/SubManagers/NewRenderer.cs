@@ -48,6 +48,7 @@ public class NewRenderer : MonoBehaviour
     public ComputeShader pcShader;
     public RendererShaderHelper shaderHelper;
     public TextureManager textureManager;
+    public MarchingCubes mCubes;
     public ObjectManager objectManager;
     public AsciiManager asciiManager;
     public Texture2D EnvironmentMapTexture;
@@ -425,7 +426,7 @@ public class NewRenderer : MonoBehaviour
         ComputeHelper.DispatchKernel(ppShader, "AccumulateFrames", Resolution, PostProcesserThreadSize);
 
         // Render the noise textures
-        if (textureManager.RenderNoiseTextures) ComputeHelper.DispatchKernel(ppShader, "RenderNoiseTextures", Resolution, PostProcesserThreadSize);
+        ComputeHelper.DispatchKernel(ppShader, "RenderNoiseTextures", Resolution, PostProcesserThreadSize);
     }
  
     private void OnRenderImage(RenderTexture src, RenderTexture dest)
@@ -467,6 +468,9 @@ public class NewRenderer : MonoBehaviour
             case RenderTargetSelect.RayHitPointBTexture:
                 Graphics.Blit(RayHitPointBTexture, dest);
                 break;
+            case RenderTargetSelect.GridDensitiesTexture:
+                Graphics.Blit(mCubes.GridDensitiesTexture, dest);
+                break;
             case RenderTargetSelect.None:
                 Graphics.Blit(BlackTexture, dest);
                 break;
@@ -498,6 +502,9 @@ public class NewRenderer : MonoBehaviour
                 case RenderTargetSelect.RayHitPointBTexture:
                     tex = asciiManager.RenderTextureToTexture2D(RayHitPointBTexture);
                     break;
+                case RenderTargetSelect.GridDensitiesTexture:
+                    tex = asciiManager.RenderTextureToTexture2D(mCubes.GridDensitiesTexture);
+                    break;
                 default:
                     asciiManager.Asciitext.enabled = false;
                     return;
@@ -522,35 +529,8 @@ public class NewRenderer : MonoBehaviour
     }
  
     // --- Test ---
- 
-    bool WeightedRand(float weightA, float weightB)
-    {
-        float totalWeight = weightA + weightB;
-        float randValue = UnityEngine.Random.value * totalWeight;
- 
-        return randValue < weightA;
-    }
-    void ReservoirSamplingTest()
-    {
-        float[] inputArr = new float[] { 3.2f, 9.5f, 8.4f, 5.3f, 233.0f, 7.7f, 5.1f };
-        (int chosenIndex, float chosenWeight, float totWeights) reservoir = new(-1, 0, 0);
- 
-        for (int i = 0; i < inputArr.Length; i++)
-        {
-            float candidateWeight = inputArr[i];
- 
-            bool doReplace = WeightedRand(candidateWeight, reservoir.totWeights);
-            if (doReplace)
-            {
-                reservoir.chosenIndex = i;
-                reservoir.chosenWeight = candidateWeight;
-            }
-            reservoir.totWeights += candidateWeight;
-        }
-        Debug.Log(reservoir);
-    }
- 
-    void GetPixelsFromTexture()
+
+    public void GetPixelsFromTexture()
     {
         // Create a new Texture2D with the same dimensions and format as the RenderTexture
         Texture2D tex = new Texture2D(RayHitPointATexture.width, RayHitPointATexture.height, TextureFormat.RGBA32, false);

@@ -148,6 +148,7 @@ public static class ComputeHelper
         int[] countArr = new int[1];
         countBuffer.GetData(countArr);
         int count = countArr[0];
+        countBuffer.Release();
         return count;
 	}
 

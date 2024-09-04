@@ -344,12 +344,13 @@ MonoBehaviour:
     z: 256
   NoiseCellSize: 128
   LerpFactor: 0.15
-  NoisePixelSize: 0.73
-  DoCreateTextures: 1
+  NoisePixelSize: 2
+  DoCreateTextures: 0
   RenderNoiseTextures: 1
+  renderer: {fileID: 868168749}
+  textureHelper: {fileID: 473926888}
   ngShader: {fileID: 7200000, guid: d9b7282c52027fd4baa5aebc98ffebee, type: 3}
   ppShader: {fileID: 7200000, guid: f9e3a94f33bc9824099153b9d0cc05d3, type: 3}
-  textureHelper: {fileID: 473926888}
 --- !u!114 &473926888
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -588,6 +589,7 @@ MonoBehaviour:
   pcShader: {fileID: 7200000, guid: 8b6e58497c2f7da409da1927d115d6dc, type: 3}
   shaderHelper: {fileID: 868168750}
   textureManager: {fileID: 473926887}
+  mCubes: {fileID: 1604392132}
   objectManager: {fileID: 1049554302}
   asciiManager: {fileID: 569968697}
   EnvironmentMapTexture: {fileID: 2800000, guid: 45c2c1c4ef5242945bc5b3eaa0e9442e, type: 3}
@@ -746,17 +748,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c64949e5b2df884bb8f7c5f3b908c48, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CellSizeSL: 0.3
-  Offset2:
-    x: -0.36
-    y: -4.73
-    z: -41.5
-  RotationSpeed: 0.88
-  ParticleSpheresRadius: 0.17
-  Rot:
-    x: 0
-    y: 0
-    z: 0
   sim: {fileID: 2125271849}
   mCubes: {fileID: 1604392132}
   newRenderer: {fileID: 868168749}
@@ -923,8 +914,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da170071670cb7348adfac942c82272e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CellSize: 1
-  Threshold: 0
+  CellSize: 4
+  DensityRadius: 3
+  Threshold: 0.2
+  DistanceMultiplier: 0.2
+  DensityMultiplier: 0.2
   sim: {fileID: 2125271849}
   renderer: {fileID: 868168749}
   textureManager: {fileID: 473926887}

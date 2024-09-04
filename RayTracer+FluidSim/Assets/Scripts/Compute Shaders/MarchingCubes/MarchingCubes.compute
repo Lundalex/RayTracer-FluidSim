@@ -8,8 +8,17 @@
 
 // Marching squares settings
 const float CellSize;
+const float DensityRadius;
 const float Threshold;
 const uint4 NumCells;
+
+// Mesh generation settings
+const int FluidMeshLength;
+const int ReservedTrisNum;
+const int ReservedVerticesNum;
+
+const float DistanceMultiplier;
+const float DensityMultiplier;
 
 RWStructuredBuffer<int2> SpatialLookup; // [NumObjects](sphereIndex, CellKey)
 RWStructuredBuffer<int> StartIndices;
@@ -18,7 +27,8 @@ RWStructuredBuffer<float3> Points;
 AppendStructuredBuffer<MCTri> FluidTriMeshAPPEND;
 ConsumeStructuredBuffer<MCTri> FluidTriMeshCONSUME;
 
-RWStructuredBuffer<Triangle> Tris;
+RWStructuredBuffer<Triangle> Triangles;
+RWStructuredBuffer<Vertex2> Vertices;
 
 RWTexture3D<float> GridDensities;
 RWTexture3D<float> SurfaceCells;
@@ -104,7 +114,7 @@ NearInfo GetNearDst(float3 pos, int radius)
         }
     }
  
-    nearInfo.val = max(1 - sqrt(nearDstSqr)*1.3, 0);
+    nearInfo.val = max(1 - sqrt(nearDstSqr) * DistanceMultiplier, 0);
  
     return nearInfo;
 }
@@ -151,21 +161,21 @@ NearInfo GetNearDensity(float3 pos, int radius)
         }
     }
  
-    nearInfo.val = min(totDensity*0.01, 1);
+    nearInfo.val = max(totDensity * DensityMultiplier, 0);
  
     return nearInfo;
 }
 
 // Similar to a density map, but cheaper
 [numthreads(TN_MC,TN_MC,TN_MC)]
-void CalcGridDensities (uint3 msCell : SV_DispatchThreadID)
+void CalcGridDensities (uint3 mcCell : SV_DispatchThreadID)
 {
-    if (!ValidCell(msCell)) return;
+    if (!ValidCell(mcCell)) return;
 
-    float3 pos = msCell * CellSize + 0.5 * CellSize;
-    NearInfo nearInfo = GetNearDst(pos, 2);
+    float3 pos = mcCell * CellSize;
+    NearInfo nearInfo = GetNearDst(pos, DensityRadius);
 
-    GridDensities[msCell] = nearInfo.val;
+    GridDensities[mcCell] = nearInfo.val;
 }
 
 [numthreads(TN_MC,TN_MC,TN_MC)]
@@ -195,10 +205,10 @@ float3 interpolateVerts(float d1, float d2, float3 v1, float3 v2, float Threshol
     return lerp(v1, v2, t);
 }
 
-[numthreads(TN_MC2,1,1)]
+[numthreads(TN_MC,TN_MC,TN_MC)]
 void GenerateFluidMesh (uint3 baseCell : SV_DispatchThreadID)
 {
-    if (!ValidCell(baseCell+1) || SurfaceCells[baseCell] == 0) return;
+    if (!ValidCell(baseCell+1) || SurfaceCells[baseCell] != 1) return;
 
     uint3 localPositions[8] = {
         baseCell,
@@ -256,9 +266,9 @@ void GenerateFluidMesh (uint3 baseCell : SV_DispatchThreadID)
         tri.vertex2 = interpolateVerts(densities[a2], densities[b2], localPositions[a2], localPositions[b2], Threshold);
 
         // Transform to render world space
-        tri.vertex0 = tri.vertex0 * CellSize;
-        tri.vertex1 = tri.vertex1 * CellSize;
-        tri.vertex2 = tri.vertex2 * CellSize;
+        tri.vertex0 *= CellSize;
+        tri.vertex1 *= CellSize;
+        tri.vertex2 *= CellSize;
 
         FluidTriMeshAPPEND.Append(tri);
     }
@@ -270,8 +280,40 @@ void DeleteFluidMesh (uint3 id : SV_DispatchThreadID)
     if (id.x >= 999) return;
 }
 
+float GetMCTriArea(MCTri tri)
+{
+    float3 ab = tri.vertex1 - tri.vertex0;
+    float3 ac = tri.vertex2 - tri.vertex0;
+
+    float3 crossProduct = cross(ab, ac);
+    float area = length(crossProduct) * 0.5;
+    return area;
+}
+
+float3 GetPlaneNormal (MCTri tri)
+{
+    float3 ab = tri.vertex1 - tri.vertex0;
+    float3 ac = tri.vertex2 - tri.vertex0;
+
+    return normalize(cross(ab, ac));
+}
+
 [numthreads(TN_MC2,1,1)]
 void TransferFluidMesh (uint3 id : SV_DispatchThreadID)
 {
-    if (id.x >= 999) return;
+    if (id.x >= FluidMeshLength) return;
+    uint i = id.x;
+
+    MCTri mcTri = FluidTriMeshCONSUME.Consume();
+
+    uint vertexBaseIndex = 3 * i + ReservedVerticesNum;
+
+    Vertices[vertexBaseIndex] = InitVertex(mcTri.vertex0, float2(-1, -1));
+    Vertices[vertexBaseIndex + 1] = InitVertex(mcTri.vertex1, float2(-1, -1));
+    Vertices[vertexBaseIndex + 2] = InitVertex(mcTri.vertex2, float2(-1, -1));
+
+    float3 localNormal = GetPlaneNormal(mcTri);
+    float area = GetMCTriArea(mcTri);
+
+    Triangles[i + ReservedTrisNum] = InitTriangle(vertexBaseIndex, vertexBaseIndex + 1, vertexBaseIndex + 2, localNormal, area);
 }

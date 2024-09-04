@@ -136,6 +136,27 @@ struct NearInfo
 };
  
 // --- Init functions ---
+
+Vertex2 InitVertex(float3 pos, float2 uv)
+{
+    Vertex2 vertex;
+    vertex.pos = pos;
+    vertex.uv = uv;
+
+    return vertex;
+}
+
+Triangle InitTriangle(int vertex0Index, int vertex1Index, int vertex2Index, float3 localNormal, float area)
+{
+    Triangle tri;
+    tri.vertex0Index = vertex0Index;
+    tri.vertex1Index = vertex1Index;
+    tri.vertex2Index = vertex2Index;
+    tri.localNormal = localNormal;
+    tri.area = area;
+
+    return tri;
+}
  
 Reservoir InitReservoir(int firstElementIndex, float firstElementWeight)
 {

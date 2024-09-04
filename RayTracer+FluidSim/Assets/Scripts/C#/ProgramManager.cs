@@ -8,14 +8,11 @@ using System;
 public class ProgramManager : MonoBehaviour
 {
 #region Inspector
-    [Header("Data Transfer")]
-    public float CellSizeSL;
-    public float3 Offset2;
 
     [Header("Fluid Object")]
-    public float RotationSpeed;
-    public float ParticleSpheresRadius;
-    public float3 Rot;
+    // public float RotationSpeed;
+    // public float ParticleSpheresRadius;
+    // public float3 Rot;
 
     [Header("References")]
     // Class instances

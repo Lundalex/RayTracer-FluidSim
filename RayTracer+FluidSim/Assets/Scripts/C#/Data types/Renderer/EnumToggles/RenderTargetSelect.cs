@@ -9,5 +9,6 @@ public enum RenderTargetSelect
     TextureAtlas,
     RayHitPointATexture,
     RayHitPointBTexture,
+    GridDensitiesTexture,
     None
 }

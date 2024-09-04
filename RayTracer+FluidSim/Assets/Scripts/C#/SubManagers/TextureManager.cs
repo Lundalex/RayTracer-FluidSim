@@ -10,16 +10,18 @@ public class TextureManager : MonoBehaviour
     [Header("Noise settings")]
     public int3 NoiseResolution = new(512, 512, 256);
     public int NoiseCellSize = 128;
-    public float LerpFactor = 0.15f; // TEMP
+    public float LerpFactor = 0.15f;
     public float NoisePixelSize = 0.7f;
     public bool DoCreateTextures = true;
     public bool RenderNoiseTextures = true;
 
     [Header("References")]
+    public new NewRenderer renderer;
+    public TextureHelper textureHelper;
     public ComputeShader ngShader;
     public ComputeShader ppShader;
-    public TextureHelper textureHelper;
 #endregion
+    private bool ProgramStarted = false;
 
 #region Texture Creator
     public void ScriptSetup ()
@@ -34,6 +36,16 @@ public class TextureManager : MonoBehaviour
         {
             CreateNoiseTextures();
             DoCreateTextures = false;
+        }
+    }
+
+    private void OnValidate()
+    {
+        if (ProgramStarted)
+        {
+            // Post processing shader settings
+            renderer.ppShader.SetVector("NoiseResolution", new Vector3(NoiseResolution.x, NoiseResolution.y, NoiseResolution.z));
+            renderer.ppShader.SetFloat("NoisePixelSize", NoisePixelSize);
         }
     }
 
@@ -85,7 +97,7 @@ public class TextureManager : MonoBehaviour
 
         // Final texture stored in voronoi0
         // ppShader.SetTexture(1, "TexA", voronoi0);
-        ppShader.SetTexture(1, "TexB", voronoi0);
+        // ppShader.SetTexture(1, "TexB", voronoi0);
     }
 #endregion
 }

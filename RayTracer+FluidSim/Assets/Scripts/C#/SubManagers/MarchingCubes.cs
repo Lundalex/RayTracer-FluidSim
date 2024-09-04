@@ -2,15 +2,16 @@ using UnityEngine;
 using Unity.Mathematics;
 using System;
 
+// Import utils from SimResources.cs
 using SimResources;
-using UnityEditor;
 public class MarchingCubes : MonoBehaviour
 {
     // Scene-related variables
     public float CellSize;
+    public float DensityRadius;
     public float Threshold;
-    [NonSerialized] public int4 NumCells;
-    [NonSerialized] public int NumCellsAll;
+    public float DistanceMultiplier;
+    public float DensityMultiplier;
 
     // Script references
     public Simulation sim;
@@ -19,6 +20,9 @@ public class MarchingCubes : MonoBehaviour
 
     // Shader references
     public ComputeShader mcShader;
+    // Run-time set variables
+    [NonSerialized] public int4 NumCells;
+    [NonSerialized] public int NumCellsAll;
 
     // Shader settings
     private const int mcShaderThreadSize = 8;
@@ -26,7 +30,8 @@ public class MarchingCubes : MonoBehaviour
 #region Run Time Set Variables
     [NonSerialized] public int NumPoints;
     [NonSerialized] public int NumPoints_NextPow2;
-    private int FluidTriMeshLength = 20000;
+    private int FluidMeshMaxCapacity = 20000;
+    private int FluidMeshLength = 0;
 #endregion
 
     // Buffers and textures
@@ -37,14 +42,22 @@ public class MarchingCubes : MonoBehaviour
     // private ComputeBuffer AC_SurfaceCells;
     // private ComputeBuffer AC_FluidTriMesh;
     // private ComputeBuffer CB_A;
-    private RenderTexture GridDensitiesTexture;
-    private RenderTexture SurfaceCellsTexture;
+    [NonSerialized] public RenderTexture GridDensitiesTexture;
+    [NonSerialized] public RenderTexture SurfaceCellsTexture;
+    private bool ProgramStarted = false;
 
     public void ScriptSetup()
     {
         UpdateSettings();
         InitBuffers();
         InitTextures();
+
+        ProgramStarted = true;
+    }
+
+    private void OnValidate()
+    {
+        if (ProgramStarted) UpdateSettings();
     }
 
     private void UpdateSettings()
@@ -60,12 +73,12 @@ public class MarchingCubes : MonoBehaviour
         NumCellsAll = NumCells.x * NumCells.y * NumCells.z;
 
         mcShader.SetFloat("CellSize", CellSize);
+        mcShader.SetFloat("DensityRadius", DensityRadius);
         mcShader.SetFloat("Threshold", Threshold);
         mcShader.SetVector("NumCells", new Vector4(NumCells.x, NumCells.y, NumCells.z, NumCells.x * NumCells.y));
 
-        // Post processing shader
-        renderer.ppShader.SetVector("NoiseResolution", new Vector3(textureManager.NoiseResolution.x, textureManager.NoiseResolution.y, textureManager.NoiseResolution.z));
-        renderer.ppShader.SetFloat("NoisePixelSize", textureManager.NoisePixelSize);
+        mcShader.SetFloat("DensityMultiplier", DensityMultiplier);
+        mcShader.SetFloat("DistanceMultiplier", DistanceMultiplier);
     }
 
     private void InitBuffers()
@@ -82,7 +95,7 @@ public class MarchingCubes : MonoBehaviour
         mcShader.SetBuffer(0, "SpatialLookup", SpatialLookupBuffer);
         mcShader.SetBuffer(0, "StartIndices", StartIndicesBuffer);
 
-        ComputeHelper.CreateStructuredBuffer<MCTri>(ref FluidTriMeshBufferAC, FluidTriMeshLength);
+        ComputeHelper.CreateAppendBuffer<MCTri>(ref FluidTriMeshBufferAC, 20000);
         mcShader.SetBuffer(2, "FluidTriMeshAPPEND", FluidTriMeshBufferAC);
         mcShader.SetBuffer(4, "FluidTriMeshCONSUME", FluidTriMeshBufferAC);
     }
@@ -104,7 +117,7 @@ public class MarchingCubes : MonoBehaviour
             SurfaceCellsTexture.Create();
             mcShader.SetTexture(1, "SurfaceCells", SurfaceCellsTexture);
             mcShader.SetTexture(2, "SurfaceCells", SurfaceCellsTexture);
-            // renderer.ppShader.SetTexture(1, "TexB", SurfaceCellsTexture);
+            renderer.ppShader.SetTexture(1, "TexB", SurfaceCellsTexture);
         }
     }
 
@@ -120,8 +133,19 @@ public class MarchingCubes : MonoBehaviour
         renderer.ppShader.SetInt("FrameCount", renderer.FrameCount);
     }
 
+    public void SetMCFluidSettings()
+    {
+        mcShader.SetInt("FluidMeshLength", FluidMeshLength);
+        mcShader.SetInt("ReservedTrisNum", );
+        mcShader.SetInt("ReservedVerticesNum", );
+    }
+
     public void RunMCShader()
     {
+        // Delete previous fluid mesh
+        SetMCFluidSettings();
+        if (FluidMeshLength > 0) ComputeHelper.DispatchKernel(mcShader, "DeleteFluidMesh", FluidMeshLength, mcShaderThreadSize2);
+
         // Calculate grid densities
         ComputeHelper.DispatchKernel(mcShader, "CalcGridDensities", NumCells.xyz, mcShaderThreadSize);
 
@@ -132,22 +156,27 @@ public class MarchingCubes : MonoBehaviour
         FluidTriMeshBufferAC.SetCounterValue(0);
 
         // Generate the fluid mesh using marching cubes
-        FluidTriMeshLength = 20000;
-        ComputeHelper.DispatchKernel(mcShader, "GenerateFluidMesh", FluidTriMeshLength, mcShaderThreadSize2);
+        ComputeHelper.DispatchKernel(mcShader, "GenerateFluidMesh", NumCells.xyz, mcShaderThreadSize);
 
-        bool doFetchACBufferLength = true;
-        int fluidTriMeshLength = 0;
-        if (doFetchACBufferLength) fluidTriMeshLength = ComputeHelper.GetAppendBufferCount(FluidTriMeshBufferAC);
+        // Get new fluid mesh length
+        if (true) FluidMeshLength = ComputeHelper.GetAppendBufferCount(FluidTriMeshBufferAC);
 
-        MCTri[] test = new MCTri[fluidTriMeshLength];
-        float3[] test2 = new float3[sim.ParticlesNum];
-        int2[] test3 = new int2[NumPoints_NextPow2];
-        int[] test4 = new int[NumPoints_NextPow2];
-        FluidTriMeshBufferAC.GetData(test);
-        PointsBuffer.GetData(test2);
-        SpatialLookupBuffer.GetData(test3);
-        StartIndicesBuffer.GetData(test4);
-        int a = 0;
+        // CALCULATE BVH ! ! ! ! ! !  ! ! ! ! ! !  ! ! !   !  ! !  !
+
+        // Transfer fluid mesh to the render triangle buffer
+        ComputeHelper.DispatchKernel(mcShader, "TransferFluidMesh", FluidMeshLength, mcShaderThreadSize2);
+        
+        // DEBUG
+        // Debug.Log(fluidTriMeshLength);
+        // MCTri[] test = new MCTri[fluidTriMeshLength];
+        // FluidTriMeshBufferAC.GetData(test);
+        // float3[] test2 = new float3[sim.ParticlesNum];
+        // int2[] test3 = new int2[NumPoints_NextPow2];
+        // int[] test4 = new int[NumPoints_NextPow2];
+        // PointsBuffer.GetData(test2);
+        // SpatialLookupBuffer.GetData(test3);
+        // StartIndicesBuffer.GetData(test4);
+        // int a = 0;
     }
 
     void OnDestroy()
