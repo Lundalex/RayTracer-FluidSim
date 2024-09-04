@@ -53,6 +53,7 @@ public class MarchingCubes : MonoBehaviour
         InitTextures();
 
         ProgramStarted = true;
+        Debug.Log(FluidMeshMaxCapacity);
     }
 
     private void OnValidate()
@@ -144,7 +145,7 @@ public class MarchingCubes : MonoBehaviour
     {
         // Delete previous fluid mesh
         SetMCFluidSettings();
-        if (FluidMeshLength > 0) ComputeHelper.DispatchKernel(mcShader, "DeleteFluidMesh", FluidMeshLength, mcShaderThreadSize2);
+        // if (FluidMeshLength > 0) ComputeHelper.DispatchKernel(mcShader, "DeleteFluidMesh", FluidMeshLength, mcShaderThreadSize2);
 
         // Calculate grid densities
         ComputeHelper.DispatchKernel(mcShader, "CalcGridDensities", NumCells.xyz, mcShaderThreadSize);
@@ -164,7 +165,7 @@ public class MarchingCubes : MonoBehaviour
         // CALCULATE BVH ! ! ! ! ! !  ! ! ! ! ! !  ! ! !   !  ! !  !
 
         // Transfer fluid mesh to the render triangle buffer
-        ComputeHelper.DispatchKernel(mcShader, "TransferFluidMesh", FluidMeshLength, mcShaderThreadSize2);
+        // ComputeHelper.DispatchKernel(mcShader, "TransferFluidMesh", FluidMeshLength, mcShaderThreadSize2);
         
         // DEBUG
         // Debug.Log(fluidTriMeshLength);
@@ -181,6 +182,6 @@ public class MarchingCubes : MonoBehaviour
 
     void OnDestroy()
     {
-        ComputeHelper.Release(PointsBuffer, SpatialLookupBuffer, StartIndicesBuffer);
+        ComputeHelper.Release(PointsBuffer, SpatialLookupBuffer, StartIndicesBuffer, FluidTriMeshBufferAC);
     }
 }

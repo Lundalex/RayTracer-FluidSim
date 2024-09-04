@@ -13,6 +13,7 @@ public class RendererShaderHelper : MonoBehaviour
         m.rtShader.SetBuffer(0, "Triangles", renderTriangleBuffer);
         m.rtShader.SetBuffer(4, "Triangles", renderTriangleBuffer);
         m.pcShader.SetBuffer(0, "Triangles", renderTriangleBuffer);
+        m.mCubes.mcShader.SetBuffer(3, "Triangles", renderTriangleBuffer);
         m.mCubes.mcShader.SetBuffer(4, "Triangles", renderTriangleBuffer);
 
         m.pcShader.SetInt("TrianglesNum", m.RenderTriangles.Length);

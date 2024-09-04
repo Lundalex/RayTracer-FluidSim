@@ -2,14 +2,19 @@ using UnityEngine;
 using Debug = UnityEngine.Debug;
 using Unity.Mathematics;
 using System;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Denoising;
+using UnityEditor.Build.Reporting;
 public class NewRenderer : MonoBehaviour
 {
 #region Inspector
+    public NewRenderPipelineAsset renderPipelineAsset;
     [Header("Camera interaction settings")]
     public float CameraMoveSpeed;
     public float CameraPanSpeed;
     [Header("Debug settings")]
     public RenderTargetSelect renderTarget;
+    public bool UseDenoiser;
     public bool RenderAsciiArt;
     public int DebugMaxTriChecks;
     public int DebugMaxBVChecks;
@@ -50,6 +55,7 @@ public class NewRenderer : MonoBehaviour
     public TextureManager textureManager;
     public MarchingCubes mCubes;
     public ObjectManager objectManager;
+    public DenoiserUtility denoiser;
     public AsciiManager asciiManager;
     public Texture2D EnvironmentMapTexture;
     public Texture2D BlackTexture;
@@ -62,7 +68,7 @@ public class NewRenderer : MonoBehaviour
 #endregion
 
 #region Private variables
-    private RenderTexture RTResultTexture;
+    [NonSerialized] public RenderTexture RTResultTexture;
     private RenderTexture AccumulatedResultTexture;
     private RenderTexture DebugOverlayTexture;
     private int RayTracerThreadSize = 8; // /32
@@ -105,6 +111,57 @@ public class NewRenderer : MonoBehaviour
     private bool[] LoggedWarnings = new bool[2];
 #endregion
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     public void ScriptSetup()
     {
         lastCameraPosition = transform.position;
@@ -113,8 +170,11 @@ public class NewRenderer : MonoBehaviour
         UpdatePerFrame();
         UpdateSettings(true);
         SetCameraData();
+        CreateTextures();
  
         ProgramStarted = true;
+
+        renderPipelineAsset.renderTexture = RTResultTexture;
     }
  
     public void ScriptUpdate()
@@ -409,8 +469,6 @@ public class NewRenderer : MonoBehaviour
  
     private void RunReSTIRShader()
     {
-        CreateTextures();
- 
         ComputeHelper.DispatchKernel(rtShader, "InitialTrace", Resolution, RayTracerThreadSize);
 
         if (TemporalReuseWeight > 0) ComputeHelper.DispatchKernel(rtShader, "TemporalReuse", Resolution, RayTracerThreadSize);
@@ -428,15 +486,43 @@ public class NewRenderer : MonoBehaviour
         // Render the noise textures
         ComputeHelper.DispatchKernel(ppShader, "RenderNoiseTextures", Resolution, PostProcesserThreadSize);
     }
- 
-    private void OnRenderImage(RenderTexture src, RenderTexture dest)
+
+    public void RenderScene()
     {
         if (RenderThisFrame)
         {
             RunReSTIRShader();
             RunPostProcessingShader();
         }
+    }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private void OnRenderImage(RenderTexture src, RenderTexture dest)
+    {
         // Render relected render target to the camera output
         if (renderTarget == RenderTargetSelect.None || RenderAsciiArt) Graphics.Blit(BlackTexture, dest);
         else switch (renderTarget)

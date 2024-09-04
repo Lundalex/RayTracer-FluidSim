@@ -13,16 +13,17 @@ public class SceneObjectSettings : MonoBehaviour
     {
         lastPosition = transform.position;
         lastRotation = transform.rotation;
+
+        m = GameObject.Find("Renderer")?.GetComponent<NewRenderer>();
+        if (m == null)
+        {
+            Debug.LogError("Renderer GameObject or NewRenderer component not found.");
+        }
     }
 
     private void OnValidate()
     {
-        if (m == null)
-        {
-            m = GameObject.Find("Renderer").GetComponent<NewRenderer>();
-        }
-
-        if (m.ProgramStarted) { m.DoUpdateSettings = true;  m.DoReloadData = true; }
+        if (m != null && m.ProgramStarted) { m.DoUpdateSettings = true;  m.DoReloadData = true; }
     }
     private void LateUpdate()
     {

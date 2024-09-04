@@ -88,6 +88,9 @@ public class ProgramManager : MonoBehaviour
 
         // Allow renderer to update before rendering a new frame
         newRenderer.ScriptUpdate();
+
+        // Render the scene to a texture
+        newRenderer.RenderScene();
     }
 
     void PreparePointsData()

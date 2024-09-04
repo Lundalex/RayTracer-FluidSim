@@ -13,9 +13,9 @@ const float Threshold;
 const uint4 NumCells;
 
 // Mesh generation settings
-const int FluidMeshLength;
-const int ReservedTrisNum;
-const int ReservedVerticesNum;
+const uint FluidMeshLength;
+const uint ReservedTrisNum;
+const uint ReservedVerticesNum;
 
 const float DistanceMultiplier;
 const float DensityMultiplier;
