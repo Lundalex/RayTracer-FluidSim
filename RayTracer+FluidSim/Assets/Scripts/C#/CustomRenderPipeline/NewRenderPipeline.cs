@@ -4,18 +4,17 @@ using UnityEngine.Rendering.Denoising;
 
 public class NewRenderPipeline : RenderPipeline
 {
-    public DenoiserUtility denoiser;
     private RenderTexture renderTexture;
+
     public NewRenderPipeline(RenderTexture renderTexture)
     {
         this.renderTexture = renderTexture;
     }
+
     protected override void Render(ScriptableRenderContext context, Camera[] cameras)
     {
         foreach (var camera in cameras)
         {
-            denoiser.DenoiseRenderTexture(renderTexture, renderTexture.width, renderTexture.height, context);
-
             // Set up the camera and render context
             context.SetupCameraProperties(camera);
 
@@ -47,6 +46,7 @@ public class NewRenderPipeline : RenderPipeline
                 cmd.Clear(); // Clear command buffer after execution
             }
 
+            // Finalize rendering
             context.Submit();
         }
     }

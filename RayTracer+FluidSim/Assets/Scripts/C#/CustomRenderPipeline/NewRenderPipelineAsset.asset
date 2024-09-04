@@ -13,3 +13,4 @@ MonoBehaviour:
   m_Name: NewRenderPipelineAsset
   m_EditorClassIdentifier: 
   renderTexture: {fileID: 0}
+  denoiser: {fileID: 0}
