@@ -277,7 +277,7 @@ void GenerateFluidMesh (uint3 baseCell : SV_DispatchThreadID)
 [numthreads(TN_MC2,1,1)]
 void DeleteFluidMesh (uint3 id : SV_DispatchThreadID)
 {
-    if (id.x >= 999) return;
+    Triangles[id.x + ReservedTrisNum].vertex0Index = -1;
 }
 
 float GetMCTriArea(MCTri tri)
@@ -298,6 +298,7 @@ float3 GetPlaneNormal (MCTri tri)
     return normalize(cross(ab, ac));
 }
 
+// COMBINE DELETE AND TRANSFER KERNELS
 [numthreads(TN_MC2,1,1)]
 void TransferFluidMesh (uint3 id : SV_DispatchThreadID)
 {

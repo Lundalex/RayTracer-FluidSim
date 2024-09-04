@@ -136,8 +136,8 @@ public class MarchingCubes : MonoBehaviour
     public void SetMCFluidSettings()
     {
         mcShader.SetInt("FluidMeshLength", FluidMeshLength);
-        mcShader.SetInt("ReservedTrisNum", );
-        mcShader.SetInt("ReservedVerticesNum", );
+        // mcShader.SetInt("ReservedTrisNum", );
+        // mcShader.SetInt("ReservedVerticesNum", );
     }
 
     public void RunMCShader()
