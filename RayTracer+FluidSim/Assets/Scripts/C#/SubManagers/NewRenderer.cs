@@ -111,57 +111,6 @@ public class NewRenderer : MonoBehaviour
     private bool[] LoggedWarnings = new bool[2];
 #endregion
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public void ScriptSetup()
     {
         lastCameraPosition = transform.position;
@@ -174,7 +123,36 @@ public class NewRenderer : MonoBehaviour
  
         ProgramStarted = true;
 
-        renderPipelineAsset.renderTexture = RTResultTexture;
+        // Render texture
+        switch (renderTarget)
+        {
+            case RenderTargetSelect.RTResultTexture:
+                renderPipelineAsset.renderTexture = RTResultTexture;
+                break;
+            case RenderTargetSelect.AccumulatedResultTexture:
+                renderPipelineAsset.renderTexture = AccumulatedResultTexture;
+                break;
+            case RenderTargetSelect.DebugOverlayTexture:
+                renderPipelineAsset.renderTexture = DebugOverlayTexture;
+                break;
+            case RenderTargetSelect.DepthBufferTexture:
+                renderPipelineAsset.renderTexture = DepthBufferTexture;
+                break;
+            case RenderTargetSelect.NormalsBufferTexture:
+                renderPipelineAsset.renderTexture = NormalsBufferTexture;
+                break;
+            case RenderTargetSelect.RayHitPointATexture:
+                renderPipelineAsset.renderTexture = RayHitPointATexture;
+                break;
+            case RenderTargetSelect.RayHitPointBTexture:
+                renderPipelineAsset.renderTexture = RayHitPointBTexture;
+                break;
+            case RenderTargetSelect.GridDensitiesTexture:
+                renderPipelineAsset.renderTexture = mCubes.GridDensitiesTexture;
+                break;
+            case RenderTargetSelect.None:
+                break;
+        }
     }
  
     public void ScriptUpdate()
@@ -496,72 +474,8 @@ public class NewRenderer : MonoBehaviour
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    private void OnRenderImage(RenderTexture src, RenderTexture dest)
+    private void AsciiOverlay()
     {
-        // Render relected render target to the camera output
-        if (renderTarget == RenderTargetSelect.None || RenderAsciiArt) Graphics.Blit(BlackTexture, dest);
-        else switch (renderTarget)
-        {
-            case RenderTargetSelect.RTResultTexture:
-                Graphics.Blit(RTResultTexture, dest);
-                break;
-            case RenderTargetSelect.AccumulatedResultTexture:
-                Graphics.Blit(AccumulatedResultTexture, dest);
-                break;
-            case RenderTargetSelect.DebugOverlayTexture:
-                Graphics.Blit(DebugOverlayTexture, dest);
-                break;
-            case RenderTargetSelect.DepthBufferTexture:
-                Graphics.Blit(DepthBufferTexture, dest);
-                break;
-            case RenderTargetSelect.NormalsBufferTexture:
-                Graphics.Blit(NormalsBufferTexture, dest);
-                break;
-            case RenderTargetSelect.EnvironmentMapTexture:
-                Graphics.Blit(EnvironmentMapTexture, dest);
-                break;
-            case RenderTargetSelect.TextureAtlas:
-                Graphics.Blit(TextureAtlas, dest);
-                break;
-            case RenderTargetSelect.RayHitPointATexture:
-                Graphics.Blit(RayHitPointATexture, dest);
-                break;
-            case RenderTargetSelect.RayHitPointBTexture:
-                Graphics.Blit(RayHitPointBTexture, dest);
-                break;
-            case RenderTargetSelect.GridDensitiesTexture:
-                Graphics.Blit(mCubes.GridDensitiesTexture, dest);
-                break;
-            case RenderTargetSelect.None:
-                Graphics.Blit(BlackTexture, dest);
-                break;
-        }
-
         if (RenderAsciiArt)
         {
             Texture2D tex;

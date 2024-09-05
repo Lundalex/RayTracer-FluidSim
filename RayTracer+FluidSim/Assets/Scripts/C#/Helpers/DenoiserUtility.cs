@@ -6,22 +6,37 @@ using UnityEngine.Rendering.Denoising;
 public class DenoiserUtility : MonoBehaviour
 {
     // Function to denoise a render texture using the synchronous API
-    public void DenoiseRenderTexture(RenderTexture tex, int width, int height, ScriptableRenderContext context)
+    public void ApplyDenoising(RenderTexture inTex, out RenderTexture outTex, ScriptableRenderContext context)
     {
-        CommandBuffer cmd = new CommandBuffer();
-		var denoiser = new CommandBufferDenoiser();
+        // Initialize command buffer and denoiser
+        CommandBuffer cmd = new CommandBuffer { name = "ApplyDenoising" };
+        var denoiser = new CommandBufferDenoiser();
 
-        Denoiser.State result = denoiser.Init(DenoiserType.OpenImageDenoise, width, height);
-		Assert.AreEqual(Denoiser.State.Success, result);
+        // Initialize the denoiser
+        Denoiser.State result = denoiser.Init(DenoiserType.OpenImageDenoise, inTex.width, inTex.height);
+        Assert.AreEqual(Denoiser.State.Success, result);
 
-        denoiser.DenoiseRequest(cmd, "color", tex);
+        // Request denoising
+        denoiser.DenoiseRequest(cmd, "color", inTex);
 
+        // Execute the command buffer to apply denoising
+        context.ExecuteCommandBuffer(cmd);
+        cmd.Clear(); // Clear after execution
+
+        // Wait for completion of denoising
         result = denoiser.WaitForCompletion(context, cmd);
         Assert.AreEqual(Denoiser.State.Success, result);
 
-        // Get the results
-        var dst = new RenderTexture(tex.descriptor);
-		result = denoiser.GetResults(cmd, dst);
-		Assert.AreEqual(Denoiser.State.Success, result);
+        // Create an output texture and get the results
+        var dst = new RenderTexture(inTex.descriptor);
+        result = denoiser.GetResults(cmd, dst);
+        Assert.AreEqual(Denoiser.State.Success, result);
+        
+        // Set the output texture
+        outTex = dst;
+
+        // Execute the final command buffer and clean up
+        context.ExecuteCommandBuffer(cmd);
+        cmd.Release();
     }
 }

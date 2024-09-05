@@ -5,8 +5,6 @@ public enum RenderTargetSelect
     DebugOverlayTexture,
     DepthBufferTexture,
     NormalsBufferTexture,
-    EnvironmentMapTexture,
-    TextureAtlas,
     RayHitPointATexture,
     RayHitPointBTexture,
     GridDensitiesTexture,
