@@ -8,7 +8,7 @@ using UnityEditor.Build.Reporting;
 public class NewRenderer : MonoBehaviour
 {
 #region Inspector
-    public NewRenderPipelineAsset renderPipelineAsset;
+    public NewRenderPipeline renderPipeline;
     [Header("Camera interaction settings")]
     public float CameraMoveSpeed;
     public float CameraPanSpeed;
@@ -122,33 +122,35 @@ public class NewRenderer : MonoBehaviour
         CreateTextures();
  
         ProgramStarted = true;
+    }
 
-        // Render texture
+    private void SetRenderTargetTexture()
+    {
         switch (renderTarget)
         {
             case RenderTargetSelect.RTResultTexture:
-                renderPipelineAsset.renderTexture = RTResultTexture;
+                renderPipeline.SetRendertexture(RTResultTexture);
                 break;
             case RenderTargetSelect.AccumulatedResultTexture:
-                renderPipelineAsset.renderTexture = AccumulatedResultTexture;
+                renderPipeline.SetRendertexture(AccumulatedResultTexture);
                 break;
             case RenderTargetSelect.DebugOverlayTexture:
-                renderPipelineAsset.renderTexture = DebugOverlayTexture;
+                renderPipeline.SetRendertexture(DebugOverlayTexture);
                 break;
             case RenderTargetSelect.DepthBufferTexture:
-                renderPipelineAsset.renderTexture = DepthBufferTexture;
+                renderPipeline.SetRendertexture(DepthBufferTexture);
                 break;
             case RenderTargetSelect.NormalsBufferTexture:
-                renderPipelineAsset.renderTexture = NormalsBufferTexture;
+                renderPipeline.SetRendertexture(NormalsBufferTexture);
                 break;
             case RenderTargetSelect.RayHitPointATexture:
-                renderPipelineAsset.renderTexture = RayHitPointATexture;
+                renderPipeline.SetRendertexture(RayHitPointATexture);
                 break;
             case RenderTargetSelect.RayHitPointBTexture:
-                renderPipelineAsset.renderTexture = RayHitPointBTexture;
+                renderPipeline.SetRendertexture(RayHitPointBTexture);
                 break;
             case RenderTargetSelect.GridDensitiesTexture:
-                renderPipelineAsset.renderTexture = mCubes.GridDensitiesTexture;
+                renderPipeline.SetRendertexture(mCubes.GridDensitiesTexture);
                 break;
             case RenderTargetSelect.None:
                 break;
@@ -183,6 +185,8 @@ public class NewRenderer : MonoBehaviour
         CameraMovement();
         // CameraPanning();
         SetCameraData();
+
+        ConfigureRenderPipeline();
     }
  
     private void CameraMovement()
@@ -310,6 +314,20 @@ public class NewRenderer : MonoBehaviour
         rtShader.SetTexture(4, "EnvironmentMap", EnvironmentMapTexture);
  
         Debug.Log("Internal program settings updated");
+    }
+
+    private void ConfigureRenderPipeline()
+    {
+        if (RenderPipelineManager.currentPipeline != null)
+        {
+            renderPipeline ??= (NewRenderPipeline)RenderPipelineManager.currentPipeline;
+
+            // Set render texture
+            SetRenderTargetTexture();
+
+            // Set denoiser
+            renderPipeline.SetDenoiser(denoiser);
+        }
     }
  
     private void SetData()

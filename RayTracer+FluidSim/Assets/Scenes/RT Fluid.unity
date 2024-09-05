@@ -557,7 +557,7 @@ MonoBehaviour:
   renderPipelineAsset: {fileID: 11400000, guid: 684314927eeeb8b46bd403d96a8886b9, type: 2}
   CameraMoveSpeed: 8
   CameraPanSpeed: 8
-  renderTarget: 0
+  renderTarget: 1
   UseDenoiser: 0
   RenderAsciiArt: 0
   DebugMaxTriChecks: 10
