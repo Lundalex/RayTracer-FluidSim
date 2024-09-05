@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.37311947, g: 0.38074014, b: 0.3587274, a: 1}
+  m_IndirectSpecularColor: {r: 0.37311953, g: 0.38074014, b: 0.3587274, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -460,7 +460,6 @@ GameObject:
   - component: {fileID: 868168747}
   - component: {fileID: 868168746}
   - component: {fileID: 868168750}
-  - component: {fileID: 868168751}
   m_Layer: 0
   m_Name: Renderer
   m_TagString: MainCamera
@@ -554,10 +553,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1059782422ce97346a2af3422f9d5bbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  renderPipelineAsset: {fileID: 11400000, guid: 684314927eeeb8b46bd403d96a8886b9, type: 2}
   CameraMoveSpeed: 8
   CameraPanSpeed: 8
-  renderTarget: 1
+  renderTarget: 0
   UseDenoiser: 0
   RenderAsciiArt: 0
   DebugMaxTriChecks: 10
@@ -594,7 +592,6 @@ MonoBehaviour:
   textureManager: {fileID: 473926887}
   mCubes: {fileID: 1604392132}
   objectManager: {fileID: 1049554302}
-  denoiser: {fileID: 868168751}
   asciiManager: {fileID: 569968697}
   EnvironmentMapTexture: {fileID: 2800000, guid: 45c2c1c4ef5242945bc5b3eaa0e9442e, type: 3}
   BlackTexture: {fileID: 28268798066460806, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
@@ -611,18 +608,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m: {fileID: 868168749}
---- !u!114 &868168751
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 868168745}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 92daed6539617aa479374b96d663f542, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &926544471 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6805346479807933021, guid: 52f1e2443de37a04ba443fa01d725629, type: 3}

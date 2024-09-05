@@ -55,7 +55,6 @@ public class NewRenderer : MonoBehaviour
     public TextureManager textureManager;
     public MarchingCubes mCubes;
     public ObjectManager objectManager;
-    public DenoiserUtility denoiser;
     public AsciiManager asciiManager;
     public Texture2D EnvironmentMapTexture;
     public Texture2D BlackTexture;
@@ -129,28 +128,28 @@ public class NewRenderer : MonoBehaviour
         switch (renderTarget)
         {
             case RenderTargetSelect.RTResultTexture:
-                renderPipeline.SetRendertexture(RTResultTexture);
+                renderPipeline.SetNecessaryData(RTResultTexture, UseDenoiser);
                 break;
             case RenderTargetSelect.AccumulatedResultTexture:
-                renderPipeline.SetRendertexture(AccumulatedResultTexture);
+                renderPipeline.SetNecessaryData(AccumulatedResultTexture, UseDenoiser);
                 break;
             case RenderTargetSelect.DebugOverlayTexture:
-                renderPipeline.SetRendertexture(DebugOverlayTexture);
+                renderPipeline.SetNecessaryData(DebugOverlayTexture, UseDenoiser);
                 break;
             case RenderTargetSelect.DepthBufferTexture:
-                renderPipeline.SetRendertexture(DepthBufferTexture);
+                renderPipeline.SetNecessaryData(DepthBufferTexture, UseDenoiser);
                 break;
             case RenderTargetSelect.NormalsBufferTexture:
-                renderPipeline.SetRendertexture(NormalsBufferTexture);
+                renderPipeline.SetNecessaryData(NormalsBufferTexture, UseDenoiser);
                 break;
             case RenderTargetSelect.RayHitPointATexture:
-                renderPipeline.SetRendertexture(RayHitPointATexture);
+                renderPipeline.SetNecessaryData(RayHitPointATexture, UseDenoiser);
                 break;
             case RenderTargetSelect.RayHitPointBTexture:
-                renderPipeline.SetRendertexture(RayHitPointBTexture);
+                renderPipeline.SetNecessaryData(RayHitPointBTexture, UseDenoiser);
                 break;
             case RenderTargetSelect.GridDensitiesTexture:
-                renderPipeline.SetRendertexture(mCubes.GridDensitiesTexture);
+                renderPipeline.SetNecessaryData(mCubes.GridDensitiesTexture, UseDenoiser);
                 break;
             case RenderTargetSelect.None:
                 break;
@@ -324,9 +323,6 @@ public class NewRenderer : MonoBehaviour
 
             // Set render texture
             SetRenderTargetTexture();
-
-            // Set denoiser
-            renderPipeline.SetDenoiser(denoiser);
         }
     }
  
@@ -544,6 +540,9 @@ public class NewRenderer : MonoBehaviour
     {
         ComputeHelper.Release(AllBuffers());
         DepthBufferTexture.Release(); // Test release. 9undisposed -> works
+
+        renderPipeline.colorImage.Dispose();
+        renderPipeline.dst.Dispose();
     }
  
     // --- Test ---

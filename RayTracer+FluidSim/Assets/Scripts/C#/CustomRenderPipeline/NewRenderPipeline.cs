@@ -1,71 +1,112 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+using Unity.Collections;
 using UnityEngine.Rendering.Denoising;
+using UnityEngine.Assertions;
+using System.Diagnostics;
+using RendererResources;
 
 public class NewRenderPipeline : RenderPipeline
 {
     private RenderTexture renderTexture;
-    private DenoiserUtility denoiser;
+    private Denoiser denoiser;
+    private bool doDenoisingPass;
 
-    public NewRenderPipeline(RenderTexture renderTexture, DenoiserUtility denoiser)
+    public NativeArray<Vector4> colorImage;
+    private Texture2D tempTexture;
+    public NativeArray<Vector4> dst;
+
+    public NewRenderPipeline() {}
+
+    public void SetNecessaryData(RenderTexture renderTexture, bool doDenoisingPass)
     {
         this.renderTexture = renderTexture;
-        this.denoiser = denoiser;
-    }
+        this.doDenoisingPass = doDenoisingPass;
 
-    public void SetRendertexture(RenderTexture renderTexture)
-    {
-        this.renderTexture = renderTexture;
-    }
-
-    public void SetDenoiser(DenoiserUtility denoiser)
-    {
-        this.denoiser = denoiser;
-    }
-
-protected override void Render(ScriptableRenderContext context, Camera[] cameras)
-{
-    foreach (var camera in cameras)
-    {
-        // Set up the camera and render context
-        context.SetupCameraProperties(camera);
-
-        // Clear the camera's color and depth buffers
-        using (CommandBuffer cmd = new CommandBuffer { name = "Clear" })
+        // Ensure NativeArrays are properly allocated
+        if (!colorImage.IsCreated || colorImage.Length != renderTexture.width * renderTexture.height)
         {
-            cmd.ClearRenderTarget(true, true, Color.black);
-            context.ExecuteCommandBuffer(cmd);
-            cmd.Clear(); // Clear command buffer after execution
+            colorImage.Dispose();
+            colorImage = new NativeArray<Vector4>(renderTexture.width * renderTexture.height, Allocator.Persistent);
         }
 
-        // Set the render target to our RenderTexture
-        using (CommandBuffer cmd = new CommandBuffer { name = "SetRenderTarget" })
+        if (!dst.IsCreated || dst.Length != renderTexture.width * renderTexture.height)
         {
+            dst.Dispose();
+            dst = new NativeArray<Vector4>(renderTexture.width * renderTexture.height, Allocator.Persistent);
+        }
+
+        // Initialize or resize tempTexture if needed
+        if (tempTexture == null || tempTexture.width != renderTexture.width || tempTexture.height != renderTexture.height)
+        {
+            if (tempTexture != null)
+                Object.Destroy(tempTexture); // Clean up previous texture if needed
+
+            tempTexture = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.RGBAFloat, false);
+        }
+
+        denoiser ??= new Denoiser();
+    }
+
+    protected override void Render(ScriptableRenderContext context, Camera[] cameras)
+    {
+        foreach (var camera in cameras)
+        {
+            context.SetupCameraProperties(camera);
+
+            CommandBuffer cmd = new CommandBuffer { name = "Render Scene" };
+            cmd.ClearRenderTarget(true, true, Color.black);
             cmd.SetRenderTarget(renderTexture);
             context.ExecuteCommandBuffer(cmd);
-            cmd.Clear(); // Clear command buffer after execution
-        }
+            cmd.Clear();
 
-        // Render the scene
-        context.DrawSkybox(camera);
+            context.DrawSkybox(camera);
+            context.Submit();
 
-        // Apply denoising if both renderTexture and denoiser are not null
-        if (renderTexture != null && denoiser != null)
-        {
-            denoiser.ApplyDenoising(ref renderTexture, context);
-        }
+            // Immediate API: Convert RenderTexture to NativeArray
+            if (renderTexture != null && doDenoisingPass)
+            {
+            Stopwatch stopwatch = Stopwatch.StartNew();
 
-        // Blit RenderTexture to screen
-        using (CommandBuffer cmd = new CommandBuffer { name = "Blit" })
-        {
-            // Blit from renderTexture to the camera's target texture
+                // Get pixels from RenderTexture (GPU to CPU transfer)
+                RenderTexture.active = renderTexture;
+                tempTexture.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
+                RenderTexture.active = null;
+
+                // Copy pixels to NativeArray
+                colorImage.CopyFrom(tempTexture.GetRawTextureData<Vector4>());
+
+            DebugUtils.LogStopWatch("Denoising 1", ref stopwatch); // 4ms
+            stopwatch = Stopwatch.StartNew();
+
+                // Initialize the denoiser
+                Denoiser.State result = denoiser.Init(DenoiserType.OpenImageDenoise, renderTexture.width, renderTexture.height);
+                Assert.AreEqual(Denoiser.State.Success, result);
+
+                // Denoise the image using Immediate API
+                result = denoiser.DenoiseRequest("color", colorImage);
+                Assert.AreEqual(Denoiser.State.Success, result);
+
+                // Retrieve denoising results
+                result = denoiser.GetResults(dst); // 140ms
+                Assert.AreEqual(Denoiser.State.Success, result);
+
+            DebugUtils.LogStopWatch("Denoising 1", ref stopwatch); // 140ms
+
+                // Copy results back to RenderTexture
+                tempTexture.LoadRawTextureData(dst);
+                tempTexture.Apply();
+
+                // Copy the denoised texture back to the render texture
+                Graphics.Blit(tempTexture, renderTexture);
+            }
+
+            // Blit the denoised RenderTexture to the screen
             cmd.Blit(renderTexture, BuiltinRenderTextureType.CameraTarget);
             context.ExecuteCommandBuffer(cmd);
-            cmd.Clear(); // Clear command buffer after execution
-        }
+            context.Submit();
 
-        // Finalize rendering
-        context.Submit();
+            cmd.Release();
+        }
     }
-}
 }
