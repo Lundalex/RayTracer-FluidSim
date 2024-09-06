@@ -3,8 +3,6 @@ using Debug = UnityEngine.Debug;
 using Unity.Mathematics;
 using System;
 using UnityEngine.Rendering;
-using UnityEngine.Rendering.Denoising;
-using UnityEditor.Build.Reporting;
 public class NewRenderer : MonoBehaviour
 {
 #region Inspector
@@ -14,6 +12,7 @@ public class NewRenderer : MonoBehaviour
     public float CameraPanSpeed;
     [Header("Debug settings")]
     public RenderTargetSelect renderTarget;
+    public bool DoAccumulateFrames;
     public bool UseDenoiser;
     public bool DoLogDenoiserPerformance;
     public bool RenderAsciiArt;
@@ -24,11 +23,13 @@ public class NewRenderer : MonoBehaviour
     public int2 Resolution;
  
     [Header("Ray tracer settings")]
+    public int RaysNum;
     public int MaxBounceCount;
     [Range(0.0f, 1.0f)] public float ScatterProbability;
     [Range(0.0f, 0.2f)] public float DefocusStrength;
     public float FocalPlaneFactor; // FocalPlaneFactor must be positive
     public int FrameCount;
+    public int AccFrameCount;
     [Header("ReStir settings")]
     public int SceneObjectReservoirTestsNum;
     public int TriReservoirTestsNum;
@@ -68,7 +69,7 @@ public class NewRenderer : MonoBehaviour
 #endregion
 
 #region Private variables
-    [NonSerialized] public RenderTexture RTResultTexture;
+    [NonSerialized] public RenderTexture RTPassResultTexture;
     private RenderTexture AccumulatedResultTexture;
     private RenderTexture DebugOverlayTexture;
     private int RayTracerThreadSize = 8; // /32
@@ -128,8 +129,8 @@ public class NewRenderer : MonoBehaviour
     {
         switch (renderTarget)
         {
-            case RenderTargetSelect.RTResultTexture:
-                renderPipeline.SetNecessaryData(RTResultTexture, UseDenoiser, DoLogDenoiserPerformance);
+            case RenderTargetSelect.RTPassResultTexture:
+                renderPipeline.SetNecessaryData(RTPassResultTexture, UseDenoiser, DoLogDenoiserPerformance);
                 break;
             case RenderTargetSelect.AccumulatedResultTexture:
                 renderPipeline.SetNecessaryData(AccumulatedResultTexture, UseDenoiser, DoLogDenoiserPerformance);
@@ -167,7 +168,16 @@ public class NewRenderer : MonoBehaviour
             RenderThisFrame = true;
             FrameStep = false;
  
+            // Per-frame shader settings
             UpdatePerFrame();
+
+            // Camera
+            CameraMovement();
+            // CameraPanning();
+            SetCameraData();
+
+            // Pipeline
+            ConfigureRenderPipeline();
  
             if (DoUpdateSettings) { DoUpdateSettings = false; UpdateSettings(DoReloadData); DoReloadData = false; }
         }
@@ -182,11 +192,9 @@ public class NewRenderer : MonoBehaviour
         rtShader.SetInt("FrameCount", FrameCount);
         ppShader.SetInt("FrameCount", FrameCount);
         FrameCount++;
-        CameraMovement();
-        // CameraPanning();
-        SetCameraData();
 
-        ConfigureRenderPipeline();
+        ppShader.SetInt("AccFrameCount", AccFrameCount);
+        AccFrameCount++;
     }
  
     private void CameraMovement()
@@ -253,9 +261,10 @@ public class NewRenderer : MonoBehaviour
         if (ProgramStarted) { DoUpdateSettings = true; DoReloadData = true; }
     }
  
-    private void UpdateSettings(bool resetBufferData)
+    public void UpdateSettings(bool resetBufferData)
     {
         FrameCount = 0;
+        AccFrameCount = 0;
         if (resetBufferData) SetData();
 
         // Camera & display
@@ -369,13 +378,13 @@ public class NewRenderer : MonoBehaviour
     private void CreateTextures()
     {
         // Ray tracer result texture
-        if (RTResultTexture == null)
+        if (RTPassResultTexture == null)
         {
-            RTResultTexture = TextureHelper.CreateTexture(Resolution, 4);
-            RTResultTexture.Create();
-            rtShader.SetTexture(4, "Result", RTResultTexture);
-            ppShader.SetTexture(0, "Result", RTResultTexture);
-            ppShader.SetTexture(1, "Result", RTResultTexture);
+            RTPassResultTexture = TextureHelper.CreateTexture(Resolution, 4);
+            RTPassResultTexture.Create();
+            rtShader.SetTexture(4, "Result", RTPassResultTexture);
+            ppShader.SetTexture(0, "Result", RTPassResultTexture);
+            ppShader.SetTexture(1, "Result", RTPassResultTexture);
         }
  
         // Accumulated result texture
@@ -484,8 +493,25 @@ public class NewRenderer : MonoBehaviour
     {
         if (RenderThisFrame)
         {
-            RunReSTIRShader();
-            RunPostProcessingShader();
+            // Effectively resets the accumulated result texture
+            if (!DoAccumulateFrames)
+            {
+                AccFrameCount = 0;
+                ppShader.SetInt("AccFrameCount", AccFrameCount++);
+            }
+
+            // Execute the primary 
+            for (int i = 0; i < RaysNum; i++)
+            {
+                // Execute a complete rendering pass
+                RunReSTIRShader();
+                RunPostProcessingShader();
+
+                // Don't update for the last iteration
+                if (i != RaysNum-1) UpdatePerFrame();
+            }
+
+            AsciiOverlay();
         }
     }
 
@@ -496,8 +522,8 @@ public class NewRenderer : MonoBehaviour
             Texture2D tex;
             switch (renderTarget)
             {
-                case RenderTargetSelect.RTResultTexture:
-                    tex = asciiManager.RenderTextureToTexture2D(RTResultTexture);
+                case RenderTargetSelect.RTPassResultTexture:
+                    tex = asciiManager.RenderTextureToTexture2D(RTPassResultTexture);
                     break;
                 case RenderTargetSelect.AccumulatedResultTexture:
                     tex = asciiManager.RenderTextureToTexture2D(AccumulatedResultTexture);

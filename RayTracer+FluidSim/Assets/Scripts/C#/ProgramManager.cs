@@ -24,6 +24,7 @@ public class ProgramManager : MonoBehaviour
     // Compute shaders
     public ComputeShader dtShader;
     public ComputeShader ssShader;
+    private bool ProgramStarted = false;
 #endregion
 
 #region Shader Settings
@@ -50,6 +51,16 @@ public class ProgramManager : MonoBehaviour
         InitBuffers();
         SetBufferData();
         UpdateSettings();
+
+        ProgramStarted = true;
+    }
+
+    private void OnValidate()
+    {
+        if (ProgramStarted)
+        {
+            UpdateSettings();
+        }
     }
 
     void InitBuffers()
@@ -86,7 +97,7 @@ public class ProgramManager : MonoBehaviour
         // Run marching cubes to generate a mesh from the points
         mCubes.RunMarchingCubes();
 
-        // Allow renderer to update before rendering a new frame
+        // Update script before render pass(es)
         newRenderer.ScriptUpdate();
 
         // Render the scene to a texture

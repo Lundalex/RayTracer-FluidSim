@@ -1,7 +1,7 @@
 public enum RenderTargetSelect
 {
-    RTResultTexture,
     AccumulatedResultTexture,
+    RTPassResultTexture,
     DebugOverlayTexture,
     DepthBufferTexture,
     NormalsBufferTexture,
