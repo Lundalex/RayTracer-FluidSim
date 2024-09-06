@@ -11,6 +11,7 @@ public class NewRenderPipeline : RenderPipeline
     private RenderTexture renderTexture;
     private Denoiser denoiser;
     private bool doDenoisingPass;
+    private bool doLogPerformance;
 
     public NativeArray<Vector4> colorImage;
     private Texture2D tempTexture;
@@ -18,10 +19,11 @@ public class NewRenderPipeline : RenderPipeline
 
     public NewRenderPipeline() {}
 
-    public void SetNecessaryData(RenderTexture renderTexture, bool doDenoisingPass)
+    public void SetNecessaryData(RenderTexture renderTexture, bool doDenoisingPass, bool doLogPerformance)
     {
         this.renderTexture = renderTexture;
         this.doDenoisingPass = doDenoisingPass;
+        this.doLogPerformance = doLogPerformance;
 
         // Ensure NativeArrays are properly allocated
         if (!colorImage.IsCreated || colorImage.Length != renderTexture.width * renderTexture.height)
@@ -76,11 +78,12 @@ public class NewRenderPipeline : RenderPipeline
                 // Copy pixels to NativeArray
                 colorImage.CopyFrom(tempTexture.GetRawTextureData<Vector4>());
 
-            DebugUtils.LogStopWatch("Denoising 1", ref stopwatch); // 4ms
+            if (doLogPerformance) DebugUtils.LogStopWatch("Denoiser - read data to NativeArray(s)", ref stopwatch); // 4ms
             stopwatch = Stopwatch.StartNew();
 
                 // Initialize the denoiser
-                Denoiser.State result = denoiser.Init(DenoiserType.OpenImageDenoise, renderTexture.width, renderTexture.height);
+                // TEST OPTIX or RADION FOR NVIDIA CARD
+                Denoiser.State result = denoiser.Init(DenoiserType.Optix, renderTexture.width, renderTexture.height);
                 Assert.AreEqual(Denoiser.State.Success, result);
 
                 // Denoise the image using Immediate API
@@ -91,7 +94,7 @@ public class NewRenderPipeline : RenderPipeline
                 result = denoiser.GetResults(dst); // 140ms
                 Assert.AreEqual(Denoiser.State.Success, result);
 
-            DebugUtils.LogStopWatch("Denoising 1", ref stopwatch); // 140ms
+            if (doLogPerformance) DebugUtils.LogStopWatch("Denoiser - Execute denoising algorithm", ref stopwatch); // 140ms
 
                 // Copy results back to RenderTexture
                 tempTexture.LoadRawTextureData(dst);

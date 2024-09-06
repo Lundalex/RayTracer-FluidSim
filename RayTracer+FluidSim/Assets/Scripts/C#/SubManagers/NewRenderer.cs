@@ -15,6 +15,7 @@ public class NewRenderer : MonoBehaviour
     [Header("Debug settings")]
     public RenderTargetSelect renderTarget;
     public bool UseDenoiser;
+    public bool DoLogDenoiserPerformance;
     public bool RenderAsciiArt;
     public int DebugMaxTriChecks;
     public int DebugMaxBVChecks;
@@ -128,28 +129,28 @@ public class NewRenderer : MonoBehaviour
         switch (renderTarget)
         {
             case RenderTargetSelect.RTResultTexture:
-                renderPipeline.SetNecessaryData(RTResultTexture, UseDenoiser);
+                renderPipeline.SetNecessaryData(RTResultTexture, UseDenoiser, DoLogDenoiserPerformance);
                 break;
             case RenderTargetSelect.AccumulatedResultTexture:
-                renderPipeline.SetNecessaryData(AccumulatedResultTexture, UseDenoiser);
+                renderPipeline.SetNecessaryData(AccumulatedResultTexture, UseDenoiser, DoLogDenoiserPerformance);
                 break;
             case RenderTargetSelect.DebugOverlayTexture:
-                renderPipeline.SetNecessaryData(DebugOverlayTexture, UseDenoiser);
+                renderPipeline.SetNecessaryData(DebugOverlayTexture, UseDenoiser, DoLogDenoiserPerformance);
                 break;
             case RenderTargetSelect.DepthBufferTexture:
-                renderPipeline.SetNecessaryData(DepthBufferTexture, UseDenoiser);
+                renderPipeline.SetNecessaryData(DepthBufferTexture, UseDenoiser, DoLogDenoiserPerformance);
                 break;
             case RenderTargetSelect.NormalsBufferTexture:
-                renderPipeline.SetNecessaryData(NormalsBufferTexture, UseDenoiser);
+                renderPipeline.SetNecessaryData(NormalsBufferTexture, UseDenoiser, DoLogDenoiserPerformance);
                 break;
             case RenderTargetSelect.RayHitPointATexture:
-                renderPipeline.SetNecessaryData(RayHitPointATexture, UseDenoiser);
+                renderPipeline.SetNecessaryData(RayHitPointATexture, UseDenoiser, DoLogDenoiserPerformance);
                 break;
             case RenderTargetSelect.RayHitPointBTexture:
-                renderPipeline.SetNecessaryData(RayHitPointBTexture, UseDenoiser);
+                renderPipeline.SetNecessaryData(RayHitPointBTexture, UseDenoiser, DoLogDenoiserPerformance);
                 break;
             case RenderTargetSelect.GridDensitiesTexture:
-                renderPipeline.SetNecessaryData(mCubes.GridDensitiesTexture, UseDenoiser);
+                renderPipeline.SetNecessaryData(mCubes.GridDensitiesTexture, UseDenoiser, DoLogDenoiserPerformance);
                 break;
             case RenderTargetSelect.None:
                 break;
