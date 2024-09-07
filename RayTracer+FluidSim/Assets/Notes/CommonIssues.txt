@@ -1,0 +1,1 @@
+If V-sync is enabled, the maximum framerate of the program is ~160fps.
