@@ -14,7 +14,6 @@ public class RendererShaderHelper : MonoBehaviour
         m.rtShader.SetBuffer(4, "Triangles", renderTriangleBuffer);
         m.pcShader.SetBuffer(0, "Triangles", renderTriangleBuffer);
         m.mCubes.mcShader.SetBuffer(3, "Triangles", renderTriangleBuffer);
-        m.mCubes.mcShader.SetBuffer(4, "Triangles", renderTriangleBuffer);
 
         m.pcShader.SetInt("TrianglesNum", m.RenderTriangles.Length);
         m.rtShader.SetInt("TrianglesNum", m.RenderTriangles.Length);
@@ -24,7 +23,7 @@ public class RendererShaderHelper : MonoBehaviour
         m.rtShader.SetBuffer(0, "Vertices", vertexBuffer);
         m.rtShader.SetBuffer(4, "Vertices", vertexBuffer);
         m.pcShader.SetBuffer(0, "Vertices", vertexBuffer);
-        m.mCubes.mcShader.SetBuffer(4, "Vertices", vertexBuffer);
+        m.mCubes.mcShader.SetBuffer(3, "Vertices", vertexBuffer);
     }
     public void SetBVBuffer(ComputeBuffer bvBuffer)
     {

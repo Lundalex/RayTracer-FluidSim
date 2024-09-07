@@ -238,6 +238,26 @@ namespace RendererResources
             a = nextPow2;
         }
 
+        public static int LastPow2(int a)
+        {
+            int lastPow2 = 1;
+            while (lastPow2 * 2 < a)
+            {
+                lastPow2 *= 2;
+            }
+            return lastPow2;
+        }
+
+        public static void LastPow2(ref int a)
+        {
+            int lastPow2 = 1;
+            while (lastPow2 * 2 < a)
+            {
+                lastPow2 *= 2;
+            }
+            a = lastPow2;
+        }
+
         /// <summary>Calculates the logarithm (base 2) of the next power of 2</summary>
         public static int NextLog2(int a)
         {
@@ -248,6 +268,18 @@ namespace RendererResources
         public static void NextLog2(ref int a)
         {
             a = Log2(NextPow2(a));
+        }
+
+        /// <summary>Calculates the logarithm (base 2) of the last power of 2</summary>
+        public static int LastLog2(int a)
+        {
+            return Log2(LastPow2(a));
+        }
+
+        /// <summary>Calculates the logarithm (base 2) of the last power of 2</summary>
+        public static void LastLog2(ref int a)
+        {
+            a = Log2(LastPow2(a));
         }
 
         /// <summary>Calculates the next integer divisible by a divisor</summary>

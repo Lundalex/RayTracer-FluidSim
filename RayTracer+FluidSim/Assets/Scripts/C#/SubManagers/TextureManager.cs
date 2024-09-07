@@ -28,6 +28,11 @@ public class TextureManager : MonoBehaviour
     {
         textureHelper.UpdateScriptTextures(NoiseResolution, 1);
         textureHelper.SetNGShaderTextures(ngShader);
+
+        ProgramStarted = true;
+
+        // Temporary
+        SetPostProcessorShaderSettings();
     }
 
     private void Update()
@@ -43,10 +48,14 @@ public class TextureManager : MonoBehaviour
     {
         if (ProgramStarted)
         {
-            // Post processing shader settings
-            renderer.ppShader.SetVector("NoiseResolution", new Vector3(NoiseResolution.x, NoiseResolution.y, NoiseResolution.z));
-            renderer.ppShader.SetFloat("NoisePixelSize", NoisePixelSize);
+            SetPostProcessorShaderSettings();
         }
+    }
+
+    public void SetPostProcessorShaderSettings()
+    {
+        renderer.ppShader.SetVector("NoiseResolution", new Vector3(NoiseResolution.x, NoiseResolution.y, NoiseResolution.z));
+        renderer.ppShader.SetFloat("NoisePixelSize", NoisePixelSize);
     }
 
     // Creates a Cloud-like 3D texture
@@ -94,6 +103,8 @@ public class TextureManager : MonoBehaviour
         textureHelper.AddBrightnessFixed(ref voronoi0, NoiseResolution, -0.2f);
         textureHelper.ChangeBrightness(ref voronoi0, NoiseResolution, 1.25f);
         textureHelper.GaussianBlur(ref voronoi0, NoiseResolution, 3, 5);
+
+        SetPostProcessorShaderSettings();
 
         // Final texture stored in voronoi0
         // ppShader.SetTexture(1, "TexA", voronoi0);

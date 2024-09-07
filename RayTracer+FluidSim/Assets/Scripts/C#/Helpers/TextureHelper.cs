@@ -1,9 +1,9 @@
-
-// This is the TextureHelper class, imported from "Simulation" w/o modifications
-
 using Unity.Mathematics;
 using UnityEngine;
 using System;
+
+using RendererResources;
+
 public class TextureHelper : MonoBehaviour
 {
     public ComputeShader ngShader;
@@ -68,6 +68,25 @@ public class TextureHelper : MonoBehaviour
             return texture;
         }
     }
+    /// <summary>Creates a 3D render texture intended for boolean voxel tree operations</summary>
+    /// <returns>Texture3D without ref</returns>
+    public static RenderTexture CreateVoxelTexture(int3 resolution)
+    {
+        RenderTexture texture = new RenderTexture(Func.NextPow2(resolution.x), Func.NextPow2(resolution.y), 0, RenderTextureFormat.R8)
+        {
+            dimension = UnityEngine.Rendering.TextureDimension.Tex3D,
+            volumeDepth = Func.NextPow2(resolution.z),
+            useMipMap = true,
+            autoGenerateMips = false,
+            enableRandomWrite = true,
+            wrapMode = TextureWrapMode.Clamp,
+            filterMode = FilterMode.Point
+        };
+        texture.Create();
+
+        return texture;
+    }
+
     /// <summary>Creates a 3D render texture</summary>
     /// <remarks>Using (int3)resolution</remarks>
     /// <returns>-> ref texture</returns>

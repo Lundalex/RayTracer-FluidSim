@@ -339,12 +339,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NoiseResolution:
-    x: 512
-    y: 512
+    x: 100
+    y: 100
     z: 256
   NoiseCellSize: 128
   LerpFactor: 0.15
-  NoisePixelSize: 2
+  NoisePixelSize: 4
   DoCreateTextures: 0
   RenderNoiseTextures: 1
   renderer: {fileID: 868168749}
@@ -919,7 +919,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da170071670cb7348adfac942c82272e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CellSize: 4
+  CellSize: 3
   DensityRadius: 3
   Threshold: 0.2
   DistanceMultiplier: 0.2

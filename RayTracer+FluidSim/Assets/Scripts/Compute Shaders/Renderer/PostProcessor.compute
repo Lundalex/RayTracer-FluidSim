@@ -28,25 +28,32 @@ void AccumulateFrames (uint3 id : SV_DispatchThreadID)
     AccumulatedResult[id.xy] = float4(accumulatedCol.x, accumulatedCol.y, accumulatedCol.z, 0);
 }
 
-[numthreads(TN_PP,TN_PP,1)]
+[numthreads(TN_PP, TN_PP, 1)]
 void RenderNoiseTextures (uint3 id : SV_DispatchThreadID)
 {
-    float pS = NoisePixelSize; // pixelSize
-    pS = max(pS, 0.1);
-    uint2 scaledID = id.xy % pS + id.xy / pS;
+    const uint ZScrollSlowness = 20;
+    // Ensure that NoisePixelSize is not too small or zero
+    uint2 scaledID = floor(id.xy / max(NoisePixelSize, 1));
 
+    // Adjust the resolution wrapping based on NoisePixelSize
     uint2 idW = scaledID % NoiseResolution.xy;
+
     if (idW.x == 0 && id.x != 0) return;
 
     float result;
-    result = scaledID.x > NoiseResolution.x
-    ? TexB[uint3(idW.x % pS + idW.x / pS, idW.y % pS + idW.y / pS, FrameCount % NoiseResolution.z)]
-    : TexA[uint3(idW.x % pS + idW.x / pS, idW.y % pS + idW.y / pS, FrameCount % NoiseResolution.z)];
 
-    if (scaledID.x < 2*NoiseResolution.x && scaledID.y < NoiseResolution.y && result > 0.0)
+    // Adjust the texture coordinate calculation based on the NoisePixelSize
+    uint adjustedX = idW.x % NoiseResolution.x;
+    uint adjustedY = idW.y % NoiseResolution.y;
+
+    // Select between TexA and TexB based on scaledID.x
+    if (scaledID.x > NoiseResolution.x) result = TexB[uint3(adjustedX, adjustedY, (FrameCount / ZScrollSlowness) % NoiseResolution.z)];
+    else result = TexA[uint3(adjustedX, adjustedY, (FrameCount / ZScrollSlowness) % NoiseResolution.z)];
+
+    // Write the result if within the resolution bounds
+    if (scaledID.x < 2 * NoiseResolution.x && scaledID.y < NoiseResolution.y)
     {
         Result[id.xy] = float4(result, result, result, 0);
         AccumulatedResult[id.xy] = float4(result, result, result, 0);
-        return;
     }
 }

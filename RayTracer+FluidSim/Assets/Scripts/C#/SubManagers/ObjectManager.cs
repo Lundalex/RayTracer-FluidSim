@@ -662,7 +662,7 @@ public class ObjectManager : MonoBehaviour
         return (sceneBVHStartIndex, totArea);
     }
 
-    public (RenderBV[], Vertex[], RenderTriangle[], SceneObjectData[], LightObject[], Texture2D, Material2[]) ConstructScene()
+    public (RenderBV[], Vertex[], RenderTriangle[], SceneObjectData[], LightObject[], Texture2D, Material2[], int, int) ConstructScene()
     {
         // Pack material textures into atlas
         if (textureAtlas == null || resetMaterials) { (textureAtlas, materials) = ConstructTextureAtlas(); resetMaterials = false; }
@@ -672,7 +672,7 @@ public class ObjectManager : MonoBehaviour
         {
             MultiArrayContainer loadContainer = LoadFromFile(FileName);
 
-            return (loadContainer.loadedBVs, loadContainer.loadedVertices, loadContainer.renderTriangles, loadContainer.sceneObjectDatas, loadContainer.lightObjects, textureAtlas, materials);
+            return (loadContainer.loadedBVs, loadContainer.loadedVertices, loadContainer.renderTriangles, loadContainer.sceneObjectDatas, loadContainer.lightObjects, textureAtlas, materials, loadContainer.loadedVertices.Length, loadContainer.renderTriangles.Length);
         }
 
         // --- Scene object BVHs ---
@@ -733,6 +733,6 @@ public class ObjectManager : MonoBehaviour
         // Save Data
         if (FileModeSelect == DataMode.GenerateNewFile) SaveToFile(FileName, maxBVHDepth, emittingObjectsNum, sceneBVHStartIndex, totArea);
 
-        return (LoadedBVs, LoadedVertices, RenderTriangles, SceneObjectDatas, LightObjects, textureAtlas, materials);
+        return (LoadedBVs, LoadedVertices, RenderTriangles, SceneObjectDatas, LightObjects, textureAtlas, materials, LoadedVertices.Length, RenderTriangles.Length);
     }
 }

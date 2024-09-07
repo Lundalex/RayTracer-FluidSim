@@ -66,6 +66,8 @@ public class NewRenderer : MonoBehaviour
     [NonSerialized] public bool DoUpdateSettings;
     [NonSerialized] public bool DoReloadData = false;
     [NonSerialized] public bool ProgramStarted = false;
+    [NonSerialized] public int StaticVerticesNum;
+    [NonSerialized] public int StaticTrisNum;
 #endregion
 
 #region Private variables
@@ -341,7 +343,7 @@ public class NewRenderer : MonoBehaviour
         ComputeHelper.Release(AllBuffers());
 
         // Construct BVH
-        (BVs, Vertices, RenderTriangles, SceneObjectDatas, LightObjects, TextureAtlas, Material2s) = objectManager.ConstructScene();
+        (BVs, Vertices, RenderTriangles, SceneObjectDatas, LightObjects, TextureAtlas, Material2s, StaticVerticesNum, StaticTrisNum) = objectManager.ConstructScene();
 
         MaterialBuffer = ComputeHelper.CreateStructuredBuffer<Material2>(Material2s);
         shaderHelper.SetMaterialBuffer(MaterialBuffer);

@@ -1,24 +1,28 @@
 #pragma kernel CalcGridDensities // 0
 #pragma kernel FindSurface // 1
 #pragma kernel GenerateFluidMesh // 2
-#pragma kernel DeleteFluidMesh // 3
-#pragma kernel TransferFluidMesh // 4
+#pragma kernel TransferFluidMesh // 3
+#pragma kernel GenerateFluidVoxelBVH // 4
 
 #include "MarchingCubesResources.hlsl"
 
-// Marching squares settings
+// Marching cubes settings
 const float CellSize;
 const float DensityRadius;
 const float Threshold;
 const uint4 NumCells;
 
 // Mesh generation settings
-const uint FluidMeshLength;
-const uint ReservedTrisNum;
-const uint ReservedVerticesNum;
-
 const float DistanceMultiplier;
 const float DensityMultiplier;
+
+// Num variables
+const uint StaticVerticesNum;
+const uint StaticTrisNum;
+const uint FluidVerticesNum;
+const uint FluidTrisNum;
+const uint LastFluidVerticesNum;
+const uint LastFluidTrisNum;
 
 RWStructuredBuffer<int2> SpatialLookup; // [NumObjects](sphereIndex, CellKey)
 RWStructuredBuffer<int> StartIndices;
@@ -32,6 +36,7 @@ RWStructuredBuffer<Vertex2> Vertices;
 
 RWTexture3D<float> GridDensities;
 RWTexture3D<float> SurfaceCells;
+const uint SurfaceCellsMipmapDepth;
 
 bool ValidCell(int3 cell)
 {
@@ -195,11 +200,12 @@ void FindSurface (uint3 baseCell : SV_DispatchThreadID)
     bool isSurfaceCell = (c0_0_0 || c1_0_0 || c0_1_0 || c1_1_0 || c0_0_1 || c1_0_1 || c0_1_1 || c1_1_1)
                           && !(c0_0_0 && c1_0_0 && c0_1_0 && c1_1_0 && c0_0_1 && c1_0_1 && c0_1_1 && c1_1_1);
 
-    SurfaceCells[baseCell] = isSurfaceCell ? 1 : 0;
+    SurfaceCells[baseCell] = isSurfaceCell;
 }
 
 float3 interpolateVerts(float d1, float d2, float3 v1, float3 v2, float Threshold)
 {
+    // Division by 0?
     float t = saturate((Threshold - d1) / (d2 - d1));
     
     return lerp(v1, v2, t);
@@ -221,63 +227,48 @@ void GenerateFluidMesh (uint3 baseCell : SV_DispatchThreadID)
         baseCell + uint3(0,1,1)
     };
 
-    float densities[8] = {
-        GridDensities[localPositions[0]],
-        GridDensities[localPositions[1]],
-        GridDensities[localPositions[2]],
-        GridDensities[localPositions[3]],
-        GridDensities[localPositions[4]],
-        GridDensities[localPositions[5]],
-        GridDensities[localPositions[6]],
-        GridDensities[localPositions[7]]
-    };
+    float densities[8];
+    for (int i = 0; i < 8; i++)
+    {
+        // Will this work for edges?
+        uint3 localPos = localPositions[i];
+        densities[i] = GridDensities[localPos];
+    }
 
     // Calculate unique index for each cube configuration.
     // There are 256 possible values
-    // A value of 0 means cube is entirely inside surface; 255 entirely outside.
-    // The value is used to look up the edge table, which indicates which edges of the cube are cut by the isosurface.
+    // A value of 0 means the cube is entirely inside the surface; 255 entirely outside.
+    // The final cubeIndex value is used to look up corresponding edges from the edge table the edge table, that is how the cube is cut by the isosurface
     int cubeIndex = 0;
-    if (densities[0] > Threshold) cubeIndex |= 1;
-    if (densities[1] > Threshold) cubeIndex |= 2;
-    if (densities[2] > Threshold) cubeIndex |= 4;
-    if (densities[3] > Threshold) cubeIndex |= 8;
-    if (densities[4] > Threshold) cubeIndex |= 16;
-    if (densities[5] > Threshold) cubeIndex |= 32;
-    if (densities[6] > Threshold) cubeIndex |= 64;
-    if (densities[7] > Threshold) cubeIndex |= 128;
+    for (int j = 0; j < 8; j++) if (densities[j] > Threshold) cubeIndex |= (uint)pow(2, j);
 
-    // Create triangles for current cube configuration
-    for (int i = 0; triangulation[cubeIndex][i] != -1; i +=3)
+    // Create triangles from the edges
+    int edges[16] = triangulation[cubeIndex];
+    for (int k = 0; edges[k] != -1; k +=3)
     {
         // Get indices of corner points A and B for each of the three edges
         // of the cube that need to be joined to form the triangle.
-        int a0 = cornerIndexAFromEdge[triangulation[cubeIndex][i]];
-        int b0 = cornerIndexBFromEdge[triangulation[cubeIndex][i]];
+        int a0 = cornerIndexAFromEdge[edges[k]];
+        int b0 = cornerIndexBFromEdge[edges[k]];
 
-        int a1 = cornerIndexAFromEdge[triangulation[cubeIndex][i+1]];
-        int b1 = cornerIndexBFromEdge[triangulation[cubeIndex][i+1]];
+        int a1 = cornerIndexAFromEdge[edges[k+1]];
+        int b1 = cornerIndexBFromEdge[edges[k+1]];
 
-        int a2 = cornerIndexAFromEdge[triangulation[cubeIndex][i+2]];
-        int b2 = cornerIndexBFromEdge[triangulation[cubeIndex][i+2]];
+        int a2 = cornerIndexAFromEdge[edges[k+2]];
+        int b2 = cornerIndexBFromEdge[edges[k+2]];
 
         MCTri tri;
         tri.vertex0 = interpolateVerts(densities[a0], densities[b0], localPositions[a0], localPositions[b0], Threshold);
         tri.vertex1 = interpolateVerts(densities[a1], densities[b1], localPositions[a1], localPositions[b1], Threshold);
         tri.vertex2 = interpolateVerts(densities[a2], densities[b2], localPositions[a2], localPositions[b2], Threshold);
 
-        // Transform to render world space
+        // Transform to world space
         tri.vertex0 *= CellSize;
         tri.vertex1 *= CellSize;
         tri.vertex2 *= CellSize;
 
         FluidTriMeshAPPEND.Append(tri);
     }
-}
-
-[numthreads(TN_MC2,1,1)]
-void DeleteFluidMesh (uint3 id : SV_DispatchThreadID)
-{
-    Triangles[id.x + ReservedTrisNum].vertex0Index = -1;
 }
 
 float GetMCTriArea(MCTri tri)
@@ -302,12 +293,12 @@ float3 GetPlaneNormal (MCTri tri)
 [numthreads(TN_MC2,1,1)]
 void TransferFluidMesh (uint3 id : SV_DispatchThreadID)
 {
-    if (id.x >= FluidMeshLength) return;
+    if (id.x >= FluidTrisNum) return;
     uint i = id.x;
 
     MCTri mcTri = FluidTriMeshCONSUME.Consume();
 
-    uint vertexBaseIndex = 3 * i + ReservedVerticesNum;
+    uint vertexBaseIndex = 3 * i + StaticVerticesNum;
 
     Vertices[vertexBaseIndex] = InitVertex(mcTri.vertex0, float2(-1, -1));
     Vertices[vertexBaseIndex + 1] = InitVertex(mcTri.vertex1, float2(-1, -1));
@@ -316,5 +307,11 @@ void TransferFluidMesh (uint3 id : SV_DispatchThreadID)
     float3 localNormal = GetPlaneNormal(mcTri);
     float area = GetMCTriArea(mcTri);
 
-    Triangles[i + ReservedTrisNum] = InitTriangle(vertexBaseIndex, vertexBaseIndex + 1, vertexBaseIndex + 2, localNormal, area);
+    Triangles[i + StaticTrisNum] = InitTriangle(vertexBaseIndex, vertexBaseIndex + 1, vertexBaseIndex + 2, localNormal, area);
+}
+
+[numthreads(TN_MC,TN_MC,TN_MC)]
+void GenerateFluidVoxelBVH (uint3 id : SV_DispatchThreadID)
+{
+    
 }

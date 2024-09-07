@@ -2,8 +2,8 @@ using UnityEngine;
 using Unity.Mathematics;
 using System;
 
-// Import utils from SimResources.cs
-using SimResources;
+// Import utils from RendererResources.cs
+using RendererResources;
 public class MarchingCubes : MonoBehaviour
 {
     // Scene-related variables
@@ -32,6 +32,7 @@ public class MarchingCubes : MonoBehaviour
     [NonSerialized] public int NumPoints_NextPow2;
     private int FluidMeshMaxCapacity = 20000;
     private int FluidMeshLength = 0;
+    private int LastFluidMeshLength = 0;
 #endregion
 
     // Buffers and textures
@@ -44,6 +45,7 @@ public class MarchingCubes : MonoBehaviour
     // private ComputeBuffer CB_A;
     [NonSerialized] public RenderTexture GridDensitiesTexture;
     [NonSerialized] public RenderTexture SurfaceCellsTexture;
+    private int SurfaceCellsMipmapDepth;
     private bool ProgramStarted = false;
 
     public void ScriptSetup()
@@ -78,6 +80,10 @@ public class MarchingCubes : MonoBehaviour
         mcShader.SetFloat("Threshold", Threshold);
         mcShader.SetVector("NumCells", new Vector4(NumCells.x, NumCells.y, NumCells.z, NumCells.x * NumCells.y));
 
+        // Temporary
+        textureManager.NoiseResolution = NumCells.xyz;
+        textureManager.SetPostProcessorShaderSettings();
+
         mcShader.SetFloat("DensityMultiplier", DensityMultiplier);
         mcShader.SetFloat("DistanceMultiplier", DistanceMultiplier);
     }
@@ -98,7 +104,7 @@ public class MarchingCubes : MonoBehaviour
 
         ComputeHelper.CreateAppendBuffer<MCTri>(ref FluidTriMeshBufferAC, 20000);
         mcShader.SetBuffer(2, "FluidTriMeshAPPEND", FluidTriMeshBufferAC);
-        mcShader.SetBuffer(4, "FluidTriMeshCONSUME", FluidTriMeshBufferAC);
+        mcShader.SetBuffer(3, "FluidTriMeshCONSUME", FluidTriMeshBufferAC);
     }
 
     private void InitTextures()
@@ -119,6 +125,9 @@ public class MarchingCubes : MonoBehaviour
             mcShader.SetTexture(1, "SurfaceCells", SurfaceCellsTexture);
             mcShader.SetTexture(2, "SurfaceCells", SurfaceCellsTexture);
             renderer.ppShader.SetTexture(1, "TexB", SurfaceCellsTexture);
+
+            SurfaceCellsMipmapDepth = Mathf.Min(Func.LastLog2(NumCells.x), Func.LastLog2(NumCells.y), Func.LastLog2(NumCells.z));
+            mcShader.SetInt("SurfaceCellsMipmapDepth", SurfaceCellsMipmapDepth);
         }
     }
 
@@ -134,18 +143,16 @@ public class MarchingCubes : MonoBehaviour
         renderer.ppShader.SetInt("FrameCount", renderer.FrameCount);
     }
 
-    public void SetMCFluidSettings()
+    public void SetMCFluidVariables()
     {
-        mcShader.SetInt("FluidMeshLength", FluidMeshLength);
-        // mcShader.SetInt("ReservedTrisNum", );
-        // mcShader.SetInt("ReservedVerticesNum", );
+        mcShader.SetInt("StaticVerticesNum", renderer.StaticVerticesNum);
+        mcShader.SetInt("StaticTrisNum", renderer.StaticTrisNum);
     }
 
     public void RunMCShader()
     {
         // Delete previous fluid mesh
-        SetMCFluidSettings();
-        // if (FluidMeshLength > 0) ComputeHelper.DispatchKernel(mcShader, "DeleteFluidMesh", FluidMeshLength, mcShaderThreadSize2);
+        SetMCFluidVariables();
 
         // Calculate grid densities
         ComputeHelper.DispatchKernel(mcShader, "CalcGridDensities", NumCells.xyz, mcShaderThreadSize);
@@ -160,9 +167,16 @@ public class MarchingCubes : MonoBehaviour
         ComputeHelper.DispatchKernel(mcShader, "GenerateFluidMesh", NumCells.xyz, mcShaderThreadSize);
 
         // Get new fluid mesh length
-        if (true) FluidMeshLength = ComputeHelper.GetAppendBufferCount(FluidTriMeshBufferAC);
+        FluidMeshLength = ComputeHelper.GetAppendBufferCount(FluidTriMeshBufferAC);
 
-        // CALCULATE BVH ! ! ! ! ! !  ! ! ! ! ! !  ! ! !   !  ! !  !
+        mcShader.SetInt("LastFluidVerticesNum", LastFluidMeshLength * 3);
+        mcShader.SetInt("LastFluidTrisNum", LastFluidMeshLength);
+        LastFluidMeshLength = FluidMeshLength;
+
+        mcShader.SetInt("FluidVerticesNum", FluidMeshLength * 3);
+        mcShader.SetInt("FluidTrisNum", FluidMeshLength);
+
+        ComputeHelper.DispatchKernel(mcShader, "GenerateFluidVoxelBVH", NumCells.xyz, mcShaderThreadSize);
 
         // Transfer fluid mesh to the render triangle buffer
         // ComputeHelper.DispatchKernel(mcShader, "TransferFluidMesh", FluidMeshLength, mcShaderThreadSize2);
