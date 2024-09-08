@@ -12,6 +12,7 @@ const float CellSize;
 const float DensityRadius;
 const float Threshold;
 const uint4 NumCells;
+const uint NumCellsAll;
 
 // Mesh generation settings
 const float DistanceMultiplier;
@@ -294,14 +295,20 @@ float3 GetPlaneNormal (MCTri tri)
     return normalize(cross(ab, ac));
 }
 
+bool IsUnused(MCTri tri)
+{
+    return tri.cellKey == 0 && all(tri.vertex0 == 0) && all(tri.vertex1 == 0) && all(tri.vertex2 == 0);
+}
+
 [numthreads(TN_MC2,1,1)]
 void TransferToSpatialLookup (uint3 id : SV_DispatchThreadID)
 {
     uint i = id.x;
     if (i >= max(FluidTrisNum, LastFluidTrisNum)) return;
 
-    // Unsure if (all properties == 0) when FluidTriMeshCONSUME is empty
     MCTri mcTri = FluidTriMeshCONSUME.Consume();
+
+    if (IsUnused(mcTri)) mcTri.cellKey = NumCellsAll;
 
     FluidTriMeshSL[i] = mcTri;
 }
@@ -312,18 +319,17 @@ void ConstructSpatialLookupTexture (uint3 cellID : SV_DispatchThreadID)
     if (!ValidCell(cellID) || SurfaceCells[cellID] != 1) return;
 
     int cellKey = GetCellKey(cellID);
-    int startIndex = FluidStartIndices[cellKey];
+    uint startIndex = FluidStartIndices[cellKey];
 
-    // int index = startIndex;
-    // while (cellKey == FluidTriMeshSL[index].cellKey)
-    // {
-    //     index += 1;
-    // }
-    int index = startIndex + 1;
+    uint index = startIndex;
+    while (cellKey == FluidTriMeshSL[index].cellKey && index < FluidTrisNum)
+    {
+        index += 1;
+    }
 
-    int celltrisNum = index - startIndex;
+    uint celltrisNum = index - startIndex;
 
-    SurfaceCellsLookup[cellID] = int2(StaticTrisNum + startIndex, celltrisNum);
+    SurfaceCellsLookup[cellID] = uint2(StaticTrisNum + startIndex, celltrisNum);
 }
 
 [numthreads(TN_MC2,1,1)]

@@ -1,10 +1,6 @@
 using UnityEngine;
 using Unity.Mathematics;
 
-// Import utils from SimResources.cs
-using SimResources;
-using System;
-
 public class ProgramManager : MonoBehaviour
 {
 #region Inspector

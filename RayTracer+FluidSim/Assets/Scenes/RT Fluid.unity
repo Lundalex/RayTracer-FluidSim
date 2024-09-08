@@ -344,7 +344,7 @@ MonoBehaviour:
     z: 256
   NoiseCellSize: 128
   LerpFactor: 0.15
-  NoisePixelSize: 4
+  NoisePixelSize: 3
   DoCreateTextures: 0
   RenderNoiseTextures: 1
   renderer: {fileID: 868168749}
@@ -917,12 +917,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da170071670cb7348adfac942c82272e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CellSize: 4
+  CellSize: 2
   DensityRadius: 1
   Threshold: 0.2
   DistanceMultiplier: 0.2
   DensityMultiplier: 0.2
-  FluidTriMeshSortBufferSafety: 1
+  FluidTriMeshSLBufferSafety: 0.2
   sim: {fileID: 2125271849}
   renderer: {fileID: 868168749}
   shaderHelper: {fileID: 1604392134}

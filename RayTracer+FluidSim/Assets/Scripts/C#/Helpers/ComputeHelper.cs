@@ -169,7 +169,7 @@ public static class ComputeHelper
     {
         sortShader.SetInt("SortLength", sortLength);
         int sortLengthNextPow2 = Func.NextPow2(sortLength);
-        sortShader.SetInt("SortLengthNextPow2", Func.NextPow2(sortLength));
+        sortShader.SetInt("SortLengthNextPow2", sortLengthNextPow2);
 
         int threadGroupsNum = Utils.GetThreadGroupsNum(sortLengthNextPow2, threadSize);
 

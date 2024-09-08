@@ -22,6 +22,11 @@ void SwapMCTri(inout MCTri a, inout MCTri b)
     b = temp;
 }
 
+bool IsUnused(MCTri tri)
+{
+    return tri.cellKey == 0 && all(tri.vertex0 == 0) && all(tri.vertex1 == 0) && all(tri.vertex2 == 0);
+}
+
 [numthreads(TN_SS_MC,1,1)]
 void SortIteration (uint3 id : SV_DispatchThreadID)
 {
@@ -37,12 +42,14 @@ void SortIteration (uint3 id : SV_DispatchThreadID)
     ? relBlock * BlockLen + BlockLen - 1 - relPos
     : relBlock * BlockLen + relPos + (uint)(BlockLen * 0.5);
 
-    MCTri lowValue = FluidTriMeshSL[lowIndex];
-    MCTri highValue = FluidTriMeshSL[highIndex];
+    MCTri highTri = FluidTriMeshSL[highIndex];
+    if (IsUnused(highTri)) return;
+    MCTri lowTri = FluidTriMeshSL[lowIndex];
+    if (IsUnused(lowTri)) return;
 
     // Sort by:
     // A: cellKey ascending
-    if (lowValue.cellKey > highValue.cellKey)
+    if (lowTri.cellKey > highTri.cellKey)
     {
         SwapMCTri(FluidTriMeshSL[highIndex], FluidTriMeshSL[lowIndex]);
     }

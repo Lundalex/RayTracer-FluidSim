@@ -77,8 +77,6 @@ public class MarchingCubes : MonoBehaviour
     {
         if (!sim.ProgramStarted) Debug.LogWarning("Marching cubes class initiated before Simulation class. Variables might not be set correctly");
 
-        FluidTriMeshSLLength = (int)(NumCellsAll * MaxTrisPerCell * FluidTriMeshSLBufferSafety);
-
         float3 simMaxBounds = new(sim.Width, sim.Height, sim.Depth);
 
         NumCells = new(Mathf.CeilToInt(simMaxBounds.x / CellSize),
@@ -87,10 +85,13 @@ public class MarchingCubes : MonoBehaviour
         NumCells.w = NumCells.x * NumCells.y;
         NumCellsAll = NumCells.x * NumCells.y * NumCells.z;
 
+        FluidTriMeshSLLength = (int)(NumCellsAll * MaxTrisPerCell * FluidTriMeshSLBufferSafety);
+
         mcShader.SetFloat("CellSize", CellSize);
         mcShader.SetFloat("DensityRadius", DensityRadius);
         mcShader.SetFloat("Threshold", Threshold);
         mcShader.SetVector("NumCells", new Vector4(NumCells.x, NumCells.y, NumCells.z, NumCells.x * NumCells.y));
+        mcShader.SetInt("NumCellsAll", NumCellsAll);
 
         mcShader.SetFloat("DensityMultiplier", DensityMultiplier);
         mcShader.SetFloat("DistanceMultiplier", DistanceMultiplier);
@@ -163,7 +164,7 @@ public class MarchingCubes : MonoBehaviour
     {
         UpdatePerFrame();
 
-        RunMCShader();
+        RunMCShaders();
     }
 
     private void UpdatePerFrame()
@@ -177,9 +178,9 @@ public class MarchingCubes : MonoBehaviour
         mcShader.SetInt("StaticTrisNum", renderer.StaticTrisNum);
     }
 
-    public void RunMCShader()
+    public void RunMCShaders()
     {
-        // Delete previous fluid mesh
+        // Reset static tris & vertices values in case those have been changed between frames
         SetMCFluidVariables();
 
         // Calculate grid densities
@@ -196,7 +197,7 @@ public class MarchingCubes : MonoBehaviour
 
         // Get new fluid mesh length
         // GetAppendBufferCount() IS VERY EXPENIVE. USE ASYNC! ! ! ! !
-        FluidMeshLength = 5000;
+        FluidMeshLength = 5000; // ComputeHelper.GetAppendBufferCount(FluidTriMeshBufferAC);
 
         // Set fluid mesh length settings
         mcShader.SetInt("LastFluidVerticesNum", LastFluidMeshLength * 3);
@@ -210,6 +211,8 @@ public class MarchingCubes : MonoBehaviour
 
         // Set necessary variables, and then run the spatial sort shader
         shaderHelper.UpdateSSShaderVariables(ssShader);
+
+        // Sort the mesh
         RunSSShader();
 
         // Create the spatial lookup texture
@@ -220,21 +223,11 @@ public class MarchingCubes : MonoBehaviour
 
         // Construct the sparse voxel traversal tree mipmap texture for the fluid mesh
         ConstructSparseVoxelTree();
-        
-        // DEBUG
-        // Debug.Log(fluidTriMeshLength);
-        // MCTri[] test = new MCTri[fluidTriMeshLength];
-        // FluidTriMeshBufferAC.GetData(test);
-        // float3[] test2 = new float3[sim.ParticlesNum];
-        // int2[] test3 = new int2[NumPoints_NextPow2];
-        // int[] test4 = new int[NumPoints_NextPow2];
-        // PointsBuffer.GetData(test2);
-        // SpatialLookupBuffer.GetData(test3);
-        // StartIndicesBuffer.GetData(test4);
-        // int a = 0;
+
+        // SurfaceCellsLookup and Triangles[StaticTrisNum < (indices)] can now be used by the renderer
     }
 
-    private void RunSSShader() => ComputeHelper.SpatialSort(ssShader, FluidTriMeshSLLength, ssShaderThreadSize, false);
+    private void RunSSShader() => ComputeHelper.SpatialSort(ssShader, FluidMeshLength, ssShaderThreadSize, false);
 
     private void ConstructSparseVoxelTree()
     {

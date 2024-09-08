@@ -27,7 +27,5 @@ public class MarchingCubesShaderHelper : MonoBehaviour
     public void UpdateSSShaderVariables (ComputeShader ssShader)
     {
         ssShader.SetInt("NumCellsAll", m.NumCellsAll);
-        ssShader.SetInt("SortLength", m.FluidMeshLength);
-        ssShader.SetInt("SortLengthNextPow2", Func.NextPow2(m.FluidMeshLength));
     }
 }
