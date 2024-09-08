@@ -20,7 +20,6 @@ public class NewRenderer : MonoBehaviour
     public int DebugMaxBVChecks;
     [Header("Render settings")]
     public float fieldOfView;
-    public int2 Resolution;
  
     [Header("Ray tracer settings")]
     public int RaysNum;
@@ -111,11 +110,13 @@ public class NewRenderer : MonoBehaviour
     private bool RenderThisFrame = true;
     private Vector3 lastWorldSpaceCameraPos;
     private Matrix4x4 lastCameraTransform;
+    private int2 Resolution;
     private bool[] LoggedWarnings = new bool[2];
 #endregion
 
     public void ScriptSetup()
     {
+        Resolution = new int2(Screen.width, Screen.height);
         lastCameraPosition = transform.position;
         lastCameraRotation = transform.rotation;
         

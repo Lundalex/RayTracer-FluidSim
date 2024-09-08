@@ -55,12 +55,10 @@ public class SimulationShaderHelper : MonoBehaviour
         ssShader.SetBuffer(1, "PDataB", sim.PDataBuffer);
         ssShader.SetBuffer(1, "PTypes", sim.PTypesBuffer);
 
+        ssShader.SetBuffer(2, "SpatialLookup", sim.SpatialLookupBuffer);
         ssShader.SetBuffer(2, "StartIndices", sim.StartIndicesBuffer);
-
-        ssShader.SetBuffer(3, "SpatialLookup", sim.SpatialLookupBuffer);
-        ssShader.SetBuffer(3, "StartIndices", sim.StartIndicesBuffer);
-        ssShader.SetBuffer(3, "PTypes", sim.PTypesBuffer);
-        ssShader.SetBuffer(3, "PDataB", sim.PDataBuffer);
+        ssShader.SetBuffer(2, "PTypes", sim.PTypesBuffer);
+        ssShader.SetBuffer(2, "PDataB", sim.PDataBuffer);
     }
 
     public void SetIPSShaderBuffer (ComputeShader ipsShader)

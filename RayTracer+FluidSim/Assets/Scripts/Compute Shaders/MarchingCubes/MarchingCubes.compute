@@ -1,8 +1,9 @@
 #pragma kernel CalcGridDensities // 0
 #pragma kernel FindSurface // 1
 #pragma kernel GenerateFluidMesh // 2
-#pragma kernel TransferFluidMesh // 3
-#pragma kernel GenerateFluidVoxelBVH // 4
+#pragma kernel TransferToSpatialLookup // 3
+#pragma kernel ConstructSpatialLookupTexture // 4
+#pragma kernel TransferToRenderer // 5
 
 #include "MarchingCubesResources.hlsl"
 
@@ -31,12 +32,15 @@ RWStructuredBuffer<float3> Points;
 AppendStructuredBuffer<MCTri> FluidTriMeshAPPEND;
 ConsumeStructuredBuffer<MCTri> FluidTriMeshCONSUME;
 
+RWStructuredBuffer<MCTri> FluidTriMeshSL;
+RWStructuredBuffer<int> FluidStartIndices;
+
 RWStructuredBuffer<Triangle> Triangles;
 RWStructuredBuffer<Vertex2> Vertices;
 
 RWTexture3D<float> GridDensities;
 RWTexture3D<float> SurfaceCells;
-const uint SurfaceCellsMipmapDepth;
+RWTexture3D<int2> SurfaceCellsLookup;
 
 bool ValidCell(int3 cell)
 {
@@ -74,7 +78,7 @@ NearInfo GetNearDstCheap(float3 pos)
         index += 1;
     }
  
-    nearInfo.val = sqrt(nearDstSqr);
+    nearInfo.val = max(1 - sqrt(nearDstSqr) * DistanceMultiplier, 0);
  
     return nearInfo;
 }
@@ -178,7 +182,7 @@ void CalcGridDensities (uint3 mcCell : SV_DispatchThreadID)
     if (!ValidCell(mcCell)) return;
 
     float3 pos = mcCell * CellSize;
-    NearInfo nearInfo = GetNearDst(pos, DensityRadius);
+    NearInfo nearInfo = GetNearDstCheap(pos);
 
     GridDensities[mcCell] = nearInfo.val;
 }
@@ -258,6 +262,7 @@ void GenerateFluidMesh (uint3 baseCell : SV_DispatchThreadID)
         int b2 = cornerIndexBFromEdge[edges[k+2]];
 
         MCTri tri;
+        tri.cellKey = GetCellKey(baseCell);
         tri.vertex0 = interpolateVerts(densities[a0], densities[b0], localPositions[a0], localPositions[b0], Threshold);
         tri.vertex1 = interpolateVerts(densities[a1], densities[b1], localPositions[a1], localPositions[b1], Threshold);
         tri.vertex2 = interpolateVerts(densities[a2], densities[b2], localPositions[a2], localPositions[b2], Threshold);
@@ -289,14 +294,45 @@ float3 GetPlaneNormal (MCTri tri)
     return normalize(cross(ab, ac));
 }
 
-// COMBINE DELETE AND TRANSFER KERNELS
 [numthreads(TN_MC2,1,1)]
-void TransferFluidMesh (uint3 id : SV_DispatchThreadID)
+void TransferToSpatialLookup (uint3 id : SV_DispatchThreadID)
 {
-    if (id.x >= FluidTrisNum) return;
     uint i = id.x;
+    if (i >= max(FluidTrisNum, LastFluidTrisNum)) return;
 
+    // Unsure if (all properties == 0) when FluidTriMeshCONSUME is empty
     MCTri mcTri = FluidTriMeshCONSUME.Consume();
+
+    FluidTriMeshSL[i] = mcTri;
+}
+
+[numthreads(TN_MC,TN_MC,TN_MC)]
+void ConstructSpatialLookupTexture (uint3 cellID : SV_DispatchThreadID)
+{
+    if (!ValidCell(cellID) || SurfaceCells[cellID] != 1) return;
+
+    int cellKey = GetCellKey(cellID);
+    int startIndex = FluidStartIndices[cellKey];
+
+    // int index = startIndex;
+    // while (cellKey == FluidTriMeshSL[index].cellKey)
+    // {
+    //     index += 1;
+    // }
+    int index = startIndex + 1;
+
+    int celltrisNum = index - startIndex;
+
+    SurfaceCellsLookup[cellID] = int2(StaticTrisNum + startIndex, celltrisNum);
+}
+
+[numthreads(TN_MC2,1,1)]
+void TransferToRenderer (uint3 id : SV_DispatchThreadID)
+{
+    uint i = id.x;
+    if (i >= max(FluidTrisNum, LastFluidTrisNum)) return;
+
+    MCTri mcTri = FluidTriMeshSL[i];
 
     uint vertexBaseIndex = 3 * i + StaticVerticesNum;
 
@@ -307,11 +343,8 @@ void TransferFluidMesh (uint3 id : SV_DispatchThreadID)
     float3 localNormal = GetPlaneNormal(mcTri);
     float area = GetMCTriArea(mcTri);
 
-    Triangles[i + StaticTrisNum] = InitTriangle(vertexBaseIndex, vertexBaseIndex + 1, vertexBaseIndex + 2, localNormal, area);
-}
-
-[numthreads(TN_MC,TN_MC,TN_MC)]
-void GenerateFluidVoxelBVH (uint3 id : SV_DispatchThreadID)
-{
-    
+    // Create an "empty" triangle if i is outside of the current frame's mesh length, but inside the last frame's mesh length
+    // This requires for all unused triangles this frame to be the last elements of the sorted mesh buffer
+    if (i < FluidTrisNum) Triangles[i + StaticTrisNum] = InitTriangle(vertexBaseIndex, vertexBaseIndex + 1, vertexBaseIndex + 2, localNormal, area);
+    else Triangles[i + StaticTrisNum] = InitTriangle();
 }

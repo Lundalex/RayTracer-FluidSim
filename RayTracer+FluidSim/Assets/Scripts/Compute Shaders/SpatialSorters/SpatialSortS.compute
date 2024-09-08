@@ -1,7 +1,6 @@
 #pragma kernel PopulateSpatialLookup // 0
 #pragma kernel SortIteration // 1
-#pragma kernel PrepStartIndices // 2
-#pragma kernel PopulateStartIndices // 3
+#pragma kernel PopulateStartIndices // 2
 
 #include "../Simulation/SimulationResources.hlsl"
 
@@ -56,10 +55,7 @@ void PopulateSpatialLookup (uint3 id : SV_DispatchThreadID)
         uint chunkKey = GetChunkKeyFromPosition(PDataB[i].pos);
         SpatialLookup[i] = int2(i, chunkKey);
     }
-    else
-    {
-        SpatialLookup[i] = int2(SortLength, ChunksNumAll);
-    }
+    else SpatialLookup[i] = int2(SortLength, ChunksNumAll);
 }
 
 [numthreads(TN_SS_S,1,1)]
@@ -87,14 +83,6 @@ void SortIteration (uint3 id : SV_DispatchThreadID)
 }
 
 [numthreads(TN_SS_S,1,1)]
-void PrepStartIndices (uint3 id : SV_DispatchThreadID)
-{
-    uint i = id.x;
-
-    // StartIndices[i] = SortLength;
-}
-
-[numthreads(TN_SS_S,1,1)]
 void PopulateStartIndices (uint3 id : SV_DispatchThreadID)
 {
     uint i = id.x;
@@ -103,13 +91,7 @@ void PopulateStartIndices (uint3 id : SV_DispatchThreadID)
     uint chunkKey = SpatialLookup[i].y;
     uint LastChunkKey = SortLength;
 
-    if (i != 0)
-    {
-        LastChunkKey = SpatialLookup[i-1].y;
-    }
+    if (i != 0) LastChunkKey = SpatialLookup[i-1].y;
 
-    if (chunkKey != LastChunkKey)
-    {
-        StartIndices[chunkKey] = i;
-    }
+    if (chunkKey != LastChunkKey) StartIndices[chunkKey] = i;
 }

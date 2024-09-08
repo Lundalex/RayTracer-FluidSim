@@ -144,7 +144,7 @@ public class Simulation : MonoBehaviour
         }
     }
 
-    public void UpdateSettings()
+    private void UpdateSettings()
     {
         SetPTypesData();
         PTypesBuffer.SetData(PTypes);
@@ -154,11 +154,11 @@ public class Simulation : MonoBehaviour
         shaderHelper.UpdateIPSShaderVariables(ipsShader);
     }
     
-    public void UpdateShaderTimeStep()
+    private void UpdateShaderTimeStep()
     {
         DeltaTime = GetDeltaTime();
         
-        Vector2 mouseWorldPos = Utils.GetMousePosNormalised() * new Vector2(Width, Height);
+        Vector2 mouseWorldPos = Utils.GetMousePosNormalised(new int2(Screen.width, Screen.height)) * new Vector2(Width, Height);
         // bool2(Left?, Right?)
         bool2 mousePressed = Utils.GetMousePressed();
 
@@ -173,14 +173,14 @@ public class Simulation : MonoBehaviour
         pSimShader.SetBool("FrameBufferCycle", FrameBufferCycle);
     }
 
-    float GetDeltaTime()
+    private float GetDeltaTime()
     {
         return FixedTimeStep
         ? TimeStep / SubTimeStepsNum
         : Time.deltaTime * ProgramSpeed / SubTimeStepsNum;
     }
 
-    void SetConstants()
+    private void SetConstants()
     {
         Func.NextDivisible(ref Height, MaxInfluenceRadius);
         Func.NextDivisible(ref Width, MaxInfluenceRadius);
@@ -197,7 +197,7 @@ public class Simulation : MonoBehaviour
         ParticleSpringsCombinedHalfLength = (int)(ParticlesNum * SpringCapacitySafety * 0.5);
     }
 
-    void SetPTypesData()
+    private void SetPTypesData()
     {
         PTypes = new PType[6];
         float IR_1 = 2.0f;
@@ -369,7 +369,7 @@ public class Simulation : MonoBehaviour
         };
     }
 
-    void InitializeArrays()
+    private void InitializeArrays()
     {
         PData = new PData[ParticlesNum];
 
@@ -408,7 +408,7 @@ public class Simulation : MonoBehaviour
         }
     }
 
-    void InitializeBuffers()
+    private void InitializeBuffers()
     {
         ComputeHelper.CreateStructuredBuffer<PData>(ref PDataBuffer, PData);
         ComputeHelper.CreateStructuredBuffer<PType>(ref PTypesBuffer, PTypes);
@@ -422,12 +422,9 @@ public class Simulation : MonoBehaviour
         ComputeHelper.CreateStructuredBuffer<Spring>(ref ParticleSpringsCombinedBuffer, (int)(ParticlesNum * SpringCapacitySafety));
     }
 
-    void RunSSShader()
-    {
-        ComputeHelper.SpatialSort(ssShader, ParticlesNum, ssShaderThreadSize);
-    }
+    private void RunSSShader() => ComputeHelper.SpatialSort(ssShader, ParticlesNum, ssShaderThreadSize);
 
-    void RunIPSShader()
+    private void RunIPSShader()
     {
         int threadGroupsNum = Utils.GetThreadGroupsNum(ChunksNumAll, ssShaderThreadSize);
 
@@ -450,14 +447,14 @@ public class Simulation : MonoBehaviour
         if (StepBufferCycle == true) { ComputeHelper.DispatchKernel (ipsShader, "CopySpringStartIndicesBuffer", threadGroupsNum); } // copy to result buffer if necessary
     }
 
-    void RunPSimShader()
+    private void RunPSimShader()
     {
         ComputeHelper.DispatchKernel (pSimShader, "PreCalculations", ParticlesNum, pSimShaderThreadSize);
         ComputeHelper.DispatchKernel (pSimShader, "CalculateDensities", ParticlesNum, pSimShaderThreadSize);
         ComputeHelper.DispatchKernel (pSimShader, "ParticleForces", ParticlesNum, pSimShaderThreadSize);
     }
 
-    void OnDestroy()
+    private void OnDestroy()
     {
         ComputeHelper.Release(
             SpatialLookupBuffer,

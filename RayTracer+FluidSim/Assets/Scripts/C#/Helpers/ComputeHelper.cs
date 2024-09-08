@@ -165,7 +165,7 @@ public static class ComputeHelper
 
     /// <summary>Sorts a given spatial lookup / start indices pair of buffers</summary>
     /// <remarks>Sorts the spatial lookup in ascending order, prioritising the x-component over the y-component. Sorts the buffers associated with the given sorting shader</remarks>
-    public static void SpatialSort(ComputeShader sortShader, int sortLength, int threadSize)
+    public static void SpatialSort(ComputeShader sortShader, int sortLength, int threadSize, bool DoPopulateSpatialLookup = true)
     {
         sortShader.SetInt("SortLength", sortLength);
         int sortLengthNextPow2 = Func.NextPow2(sortLength);
@@ -173,7 +173,7 @@ public static class ComputeHelper
 
         int threadGroupsNum = Utils.GetThreadGroupsNum(sortLengthNextPow2, threadSize);
 
-        DispatchKernel(sortShader, "PopulateSpatialLookup", threadGroupsNum);
+        if (DoPopulateSpatialLookup) DispatchKernel(sortShader, "PopulateSpatialLookup", threadGroupsNum);
 
         // Primary sorting loop
         int basebBlockLen = 2;

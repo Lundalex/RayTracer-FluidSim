@@ -31,7 +31,7 @@ void AccumulateFrames (uint3 id : SV_DispatchThreadID)
 [numthreads(TN_PP, TN_PP, 1)]
 void RenderNoiseTextures (uint3 id : SV_DispatchThreadID)
 {
-    const uint ZScrollSlowness = 20;
+    const uint ZScrollSlowness = 40;
     // Ensure that NoisePixelSize is not too small or zero
     uint2 scaledID = floor(id.xy / max(NoisePixelSize, 1));
 

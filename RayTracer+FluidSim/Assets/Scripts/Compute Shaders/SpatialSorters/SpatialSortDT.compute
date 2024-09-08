@@ -50,14 +50,8 @@ void PopulateSpatialLookup (uint3 id : SV_DispatchThreadID)
     uint cellKey = GetCellKey(cell);
     int2 cellPointPair = int2(i, cellKey);
 
-    if (cellPointPair.x != 0 || cellPointPair.y != 0)
-    {
-        SpatialLookup[i] = cellPointPair;
-    }
-    else
-    {
-        SpatialLookup[i] = int2(-1, NumCellsAll); // No object
-    }
+    if (cellPointPair.x != 0 || cellPointPair.y != 0) SpatialLookup[i] = cellPointPair;
+    else SpatialLookup[i] = int2(-1, NumCellsAll); // No object
 }
 
 [numthreads(TN_SS_DT,1,1)]
@@ -96,13 +90,7 @@ void PopulateStartIndices (uint3 id : SV_DispatchThreadID)
     int cellKey = SpatialLookup[i].y;
     int LastCellKey = NumCellsAll;
 
-    if (i != 0)
-    {
-        LastCellKey = SpatialLookup[i-1].y;
-    }
+    if (i != 0) LastCellKey = SpatialLookup[i-1].y;
 
-    if (cellKey != LastCellKey)
-    {
-        StartIndices[cellKey] = i;
-    }
+    if (cellKey != LastCellKey) StartIndices[cellKey] = i;
 }

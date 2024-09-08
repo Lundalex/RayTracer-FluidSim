@@ -38,10 +38,10 @@ namespace SimResources
             return MousePressed;
         }
 
-        public static Vector2 GetMousePosNormalised()
+        public static Vector2 GetMousePosNormalised(int2 resolution)
         {
             Vector3 mousePos = Input.mousePosition;
-            Vector2 mouseWorldPos = new Vector2(mousePos.x / 3840, mousePos.y / 2160);
+            Vector2 mouseWorldPos = new Vector2(mousePos.x / resolution.x, mousePos.y / resolution.y);
 
             return mouseWorldPos;
         }

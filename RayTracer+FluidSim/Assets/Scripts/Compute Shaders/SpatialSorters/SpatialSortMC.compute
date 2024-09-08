@@ -1,0 +1,63 @@
+#pragma kernel SortIteration // 0
+#pragma kernel PopulateStartIndices // 1
+
+#include "../MarchingCubes/MarchingCubesResources.hlsl"
+
+// Num constants
+const uint NumCellsAll;
+const uint SortLength;
+const uint SortLengthNextPow2;
+
+// Per-iteration-set constants
+const bool BrownPinkSort; // True -> BrownSort, False -> PinkSort
+const uint BlockLen;
+
+RWStructuredBuffer<MCTri> FluidTriMeshSL;
+RWStructuredBuffer<int> FluidStartIndices;
+
+void SwapMCTri(inout MCTri a, inout MCTri b)
+{
+    MCTri temp = a;
+    a = b;
+    b = temp;
+}
+
+[numthreads(TN_SS_MC,1,1)]
+void SortIteration (uint3 id : SV_DispatchThreadID)
+{
+    uint lowRef = id.x;
+    if (lowRef >= SortLength) return;
+
+    uint relBlock = (uint)(2 * lowRef / (uint)BlockLen);
+    uint relPos = lowRef % (0.5 * BlockLen);
+
+    uint lowIndex = relBlock * BlockLen + relPos;
+
+    uint highIndex = BrownPinkSort
+    ? relBlock * BlockLen + BlockLen - 1 - relPos
+    : relBlock * BlockLen + relPos + (uint)(BlockLen * 0.5);
+
+    MCTri lowValue = FluidTriMeshSL[lowIndex];
+    MCTri highValue = FluidTriMeshSL[highIndex];
+
+    // Sort by:
+    // A: cellKey ascending
+    if (lowValue.cellKey > highValue.cellKey)
+    {
+        SwapMCTri(FluidTriMeshSL[highIndex], FluidTriMeshSL[lowIndex]);
+    }
+}
+
+[numthreads(TN_SS_MC,1,1)]
+void PopulateStartIndices (uint3 id : SV_DispatchThreadID)
+{
+    uint i = id.x;
+    if (i >= NumCellsAll) return;
+    
+    int cellKey = FluidTriMeshSL[i].cellKey;
+    int LastCellKey = NumCellsAll;
+
+    if (i != 0) LastCellKey = FluidTriMeshSL[i-1].cellKey;
+
+    if (cellKey != LastCellKey) FluidStartIndices[cellKey] = i;
+}

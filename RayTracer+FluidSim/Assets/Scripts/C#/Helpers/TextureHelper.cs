@@ -68,25 +68,6 @@ public class TextureHelper : MonoBehaviour
             return texture;
         }
     }
-    /// <summary>Creates a 3D render texture intended for boolean voxel tree operations</summary>
-    /// <returns>Texture3D without ref</returns>
-    public static RenderTexture CreateVoxelTexture(int3 resolution)
-    {
-        RenderTexture texture = new RenderTexture(Func.NextPow2(resolution.x), Func.NextPow2(resolution.y), 0, RenderTextureFormat.R8)
-        {
-            dimension = UnityEngine.Rendering.TextureDimension.Tex3D,
-            volumeDepth = Func.NextPow2(resolution.z),
-            useMipMap = true,
-            autoGenerateMips = false,
-            enableRandomWrite = true,
-            wrapMode = TextureWrapMode.Clamp,
-            filterMode = FilterMode.Point
-        };
-        texture.Create();
-
-        return texture;
-    }
-
     /// <summary>Creates a 3D render texture</summary>
     /// <remarks>Using (int3)resolution</remarks>
     /// <returns>-> ref texture</returns>
@@ -212,40 +193,185 @@ public class TextureHelper : MonoBehaviour
             texture.Create();
         }
     }
+    /// <summary>Creates a 3D int render texture</summary>
+    /// <remarks>Using (int3)resolution</remarks>
+    /// <returns>-> ref texture</returns>
+    public static void CreateIntTexture(ref RenderTexture texture, int3 resolution, int channels)
+    {
+        if (channels == 1)
+        {
+            texture = texture != null ? texture : new RenderTexture(resolution.x, resolution.y, 0, RenderTextureFormat.RInt)
+            {
+                dimension = UnityEngine.Rendering.TextureDimension.Tex3D,
+                volumeDepth = resolution.z,
+                enableRandomWrite = true,
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear
+            };
+            texture.Create();
+        }
 
-    // public static Color[,] ColorMapFromRenderTexture(RenderTexture rt)
-    // {
-    //     // Set the RenderTexture as the active RenderTexture
-    //     RenderTexture.active = rt;
+        else // channels == 2
+        {
+            texture = texture != null ? texture : new RenderTexture(resolution.x, resolution.y, 0, RenderTextureFormat.RGInt)
+            {
+                dimension = UnityEngine.Rendering.TextureDimension.Tex3D,
+                volumeDepth = resolution.z,
+                enableRandomWrite = true,
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear
+            };
+            texture.Create();
+        }
+    }
+    /// <summary>Creates a 3D int render texture</summary>
+    /// <remarks>Using (int2)resolution</remarks>
+    /// <returns>Without ref</returns>
+    public static RenderTexture CreateIntTexture(int3 resolution, int channels)
+    {
+        if (channels == 1)
+        {
+            RenderTexture texture = new RenderTexture(resolution.x, resolution.y, 0, RenderTextureFormat.RInt)
+            {
+                dimension = UnityEngine.Rendering.TextureDimension.Tex3D,
+                volumeDepth = resolution.z,
+                enableRandomWrite = true,
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear
+            };
+            texture.Create();
+            return texture;
+        }
 
-    //     // Create a Texture2D with the same dimensions as the RenderTexture
-    //     Texture2D texture2D = new Texture2D(rt.width, rt.height, TextureFormat.RGB24, false);
+        else // channels == 2
+        {
+            RenderTexture texture = new RenderTexture(resolution.x, resolution.y, 0, RenderTextureFormat.RGInt)
+            {
+                dimension = UnityEngine.Rendering.TextureDimension.Tex3D,
+                volumeDepth = resolution.z,
+                enableRandomWrite = true,
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear
+            };
+            texture.Create();
+            return texture;
+        }
+    }
+    /// <summary>Creates a 2D int render texture</summary>
+    /// <remarks>Using (int2)resolution</remarks>
+    /// <returns>-> ref texture</returns>
+    public static void CreateIntTexture(ref RenderTexture texture, int2 resolution, int channels)
+    {
+        if (channels == 1)
+        {
+            texture = texture != null ? texture : new RenderTexture(resolution.x, resolution.y, 0, RenderTextureFormat.RInt)
+            {
+                dimension = UnityEngine.Rendering.TextureDimension.Tex3D,
+                enableRandomWrite = true,
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear
+            };
+            texture.Create();
+        }
 
-    //     // Read the pixels from the RenderTexture into the Texture2D
-    //     texture2D.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
-    //     texture2D.Apply();
+        else // channels == 2
+        {
+            texture = texture != null ? texture : new RenderTexture(resolution.x, resolution.y, 0, RenderTextureFormat.RGInt)
+            {
+                dimension = UnityEngine.Rendering.TextureDimension.Tex3D,
+                enableRandomWrite = true,
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear
+            };
+            texture.Create();
+        }
+    }
+    /// <summary>Creates a 2D int render texture</summary>
+    /// <remarks>Using (int2)resolution</remarks>
+    /// <returns>Without ref</returns>
+    public static RenderTexture CreateIntTexture(int2 resolution, int channels)
+    {
+        if (channels == 1)
+        {
+            RenderTexture texture = new RenderTexture(resolution.x, resolution.y, 0, RenderTextureFormat.RInt)
+            {
+                dimension = UnityEngine.Rendering.TextureDimension.Tex3D,
+                enableRandomWrite = true,
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear
+            };
+            texture.Create();
+            return texture;
+        }
 
-    //     // Get all pixel data at once
-    //     Color[] pixelData = texture2D.GetPixels();
+        else // channels == 2
+        {
+            RenderTexture texture = new RenderTexture(resolution.x, resolution.y, 0, RenderTextureFormat.RGInt)
+            {
+                dimension = UnityEngine.Rendering.TextureDimension.Tex3D,
+                enableRandomWrite = true,
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear
+            };
+            texture.Create();
+            return texture;
+        }
+    }
+    /// <summary>Creates a 3D render texture intended for boolean voxel tree operations</summary>
+    /// <returns>Texture3D without ref</returns>
+    public static (RenderTexture, int3, int) CreateVoxelTexture(int3 resolution)
+    {
 
-    //     // Release the RenderTexture
-    //     RenderTexture.active = null;
+        int3 pow2Res = new int3(Func.NextPow2(resolution.x), Func.NextPow2(resolution.y), Func.NextPow2(resolution.z));
+        int maxMipmapDepth = Mathf.Min(Func.LastLog2(resolution.x), Func.LastLog2(resolution.y), Func.LastLog2(resolution.z));
 
-    //     // Convert Color[] to Color[,]
-    //     Color[,] colorMap = new Color[rt.width, rt.height];
-    //     for (int y = 0; y < rt.height; y++)
-    //     {
-    //         for (int x = 0; x < rt.width; x++)
-    //         {
-    //             colorMap[x, y] = pixelData[y * rt.width + x];
-    //         }
-    //     }
+        RenderTexture texture = new RenderTexture((int)(pow2Res.x * 1.5f), pow2Res.y, 0, RenderTextureFormat.R8)
+        {
+            dimension = UnityEngine.Rendering.TextureDimension.Tex3D,
+            volumeDepth = pow2Res.z,
+            enableRandomWrite = true,
+            wrapMode = TextureWrapMode.Clamp,
+            filterMode = FilterMode.Point
+        };
+        texture.Create();
 
-    //     // Clean up the Texture2D
-    //     UnityEngine.Object.Destroy(texture2D);
+        return (texture, pow2Res, maxMipmapDepth);
+    }
 
-    //     return colorMap;
-    // }
+    /// <summary>NOT TESTED! Creates a color map froma render texture.</summary>
+    public static Color[,] ColorMapFromRenderTexture(RenderTexture rt)
+    {
+        // Set the RenderTexture as the active RenderTexture
+        RenderTexture.active = rt;
+
+        // Create a Texture2D with the same dimensions as the RenderTexture
+        Texture2D texture2D = new Texture2D(rt.width, rt.height, TextureFormat.RGB24, false);
+
+        // Read the pixels from the RenderTexture into the Texture2D
+        texture2D.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+        texture2D.Apply();
+
+        // Get all pixel data at once
+        Color[] pixelData = texture2D.GetPixels();
+
+        // Release the RenderTexture
+        RenderTexture.active = null;
+
+        // Convert Color[] to Color[,]
+        Color[,] colorMap = new Color[rt.width, rt.height];
+        for (int y = 0; y < rt.height; y++)
+        {
+            for (int x = 0; x < rt.width; x++)
+            {
+                colorMap[x, y] = pixelData[y * rt.width + x];
+            }
+        }
+
+        // Clean up the Texture2D
+        UnityEngine.Object.Destroy(texture2D);
+
+        return colorMap;
+    }
 #endregion
 
 #region Modify Textures (3D)

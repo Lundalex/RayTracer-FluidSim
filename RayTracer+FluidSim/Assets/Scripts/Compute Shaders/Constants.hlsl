@@ -7,7 +7,6 @@ static const float PI = 3.1415926;
 
 static const int TN_PS = 256; // ParticleSim
 static const int TN_RB = 32; // RigidbodySim
-static const int TN_SS_S = 512; // SpatialSort
 static const int TN_IPS = 512; // InterParticleSprings
 
 static const float SmoothViscosityLaplacianFactor = 45 / PI;
@@ -17,8 +16,11 @@ static const float SmoothViscosityLaplacianFactor = 45 / PI;
 static const int TN_RT = 8; // RayTracer
 static const int TN_PC = 256; // PreCalc
 static const int TN_PP = 8; // PostProcessing
-static const int TN_MC = 8; // MarchingSquares
-static const int TN_MC2 = 512; // MarchingSquares2
+
+// --- Marching Cubes ---
+
+static const int TN_MC = 8; // MarchingCubes
+static const int TN_MC2 = 512; // MarchingCubes2
 
 static const uint MAX_BVH_DEPTH = 32;
 
@@ -31,7 +33,12 @@ static const int TN_TC2 = 8; // TextureComposition2
 // --- Data Transfer ---
 
 static const int TN_DT = 512;
-static const int TN_SS_DT = 512;
+
+// --- Spatial Sort ---
+
+static const int TN_SS_DT = 512; // DataTransfer
+static const int TN_SS_MC = 512; // MarchingCubes
+static const int TN_SS_S = 512; // Simulation
 
 
 // --- Other Fixed Constants ---
@@ -99,48 +106,21 @@ float WeightFromGBLookup(uint x, uint y, uint z, uint radius)
 {
     if (radius == 1)
     {
-        if (z == 0)
-        {
-            return GBLookup1_z1[y][x];
-        }
-        if (z == 1)
-        {
-            return GBLookup1_z2[y][x];
-        }
+        if (z == 0) return GBLookup1_z1[y][x];
+        if (z == 1) return GBLookup1_z2[y][x];
     }
     else if (radius == 2)
     {
-        if (z == 0)
-        {
-            return GBLookup2_z1[y][x];
-        }
-        if (z == 1)
-        {
-            return GBLookup2_z2[y][x];
-        }
-        if (z == 2)
-        {
-            return GBLookup2_z3[y][x];
-        }
+        if (z == 0) return GBLookup2_z1[y][x];
+        if (z == 1) return GBLookup2_z2[y][x];
+        if (z == 2) return GBLookup2_z3[y][x];
     }
     else if (radius == 3)
     {
-        if (z == 0)
-        {
-            return GBLookup3_z1[y][x];
-        }
-        if (z == 1)
-        {
-            return GBLookup3_z2[y][x];
-        }
-        if (z == 2)
-        {
-            return GBLookup3_z3[y][x];
-        }
-        if (z == 3)
-        {
-            return GBLookup3_z4[y][x];
-        }
+        if (z == 0) return GBLookup3_z1[y][x];
+        if (z == 1) return GBLookup3_z2[y][x];
+        if (z == 2) return GBLookup3_z3[y][x];
+        if (z == 3) return GBLookup3_z4[y][x];
     }
     return -999.0; // Error indication
 }

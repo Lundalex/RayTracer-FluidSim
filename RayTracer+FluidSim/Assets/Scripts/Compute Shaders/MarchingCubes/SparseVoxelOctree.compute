@@ -1,0 +1,63 @@
+#pragma kernel ConstructSparseVoxelTree // 0
+
+#include "MarchingCubesResources.hlsl"
+
+// Sparse voxel octree settings
+const uint MipmapMaxDepth;
+const uint3 TextureMM1Dims;
+
+// Per-pass set variables
+const uint MipmapPassDepth;
+
+RWTexture3D<float> SurfaceCells;
+
+uint3 GetMipmapOffset(uint mipmapLayer)
+{
+    uint3 offset = 0;
+    
+    if (mipmapLayer >= 1) offset.x += TextureMM1Dims.x;
+
+    // This can be made without a for loop!
+    for (uint i = 1; i < mipmapLayer; i++) offset.y += (uint)(TextureMM1Dims.y / pow(2, i));
+
+    return offset;
+}
+
+float ReadFromMipmapLayer(uint3 pixelID, uint mipmapLayer)
+{
+    uint3 offsetPixelID = GetMipmapOffset(mipmapLayer) + pixelID;
+
+    return SurfaceCells[offsetPixelID];
+}
+
+void WriteToMipmapLayer(uint3 pixelID, uint mipmapLayer, float val)
+{
+    uint3 offsetPixelID = GetMipmapOffset(mipmapLayer) + pixelID;
+
+    SurfaceCells[offsetPixelID] = val;
+}
+
+[numthreads(TN_MC,TN_MC,TN_MC)]
+void ConstructSparseVoxelTree (uint3 id : SV_DispatchThreadID)
+{
+    uint3 basePixel = id.xyz * 2;
+    uint3 innerPositions[8] = {
+        basePixel,
+        basePixel + uint3(1,0,0),
+        basePixel + uint3(1,0,1),
+        basePixel + uint3(0,0,1),
+        basePixel + uint3(0,1,0),
+        basePixel + uint3(1,1,0),
+        basePixel + uint3(1,1,1),
+        basePixel + uint3(0,1,1)
+    };
+
+    // Keep checking all 8 "inner pixels" for leafs (pixel value == 1.0)
+    bool containsLeaf = false;
+    for (int i = 0; i < 8 && !containsLeaf; i++)
+    {
+        containsLeaf = ReadFromMipmapLayer(innerPositions[i], MipmapPassDepth-1) == 1.0;
+    }
+
+    WriteToMipmapLayer(id.xyz, MipmapPassDepth, containsLeaf); // 1.0 if containsLeaf == true. 0.0 if containsLeaf == false
+}

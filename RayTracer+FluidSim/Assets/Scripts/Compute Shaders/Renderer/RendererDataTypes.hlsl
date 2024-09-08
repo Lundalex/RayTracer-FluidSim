@@ -128,6 +128,7 @@ struct MCTri
     float3 vertex0;
     float3 vertex1;
     float3 vertex2;
+    int cellKey;
 };
 struct NearInfo
 {
@@ -144,6 +145,18 @@ Vertex2 InitVertex(float3 pos, float2 uv)
     vertex.uv = uv;
 
     return vertex;
+}
+
+Triangle InitTriangle()
+{
+    Triangle tri;
+    tri.vertex0Index = 0;
+    tri.vertex1Index = 0;
+    tri.vertex2Index = 0;
+    tri.localNormal = 0;
+    tri.area = 0;
+
+    return tri;
 }
 
 Triangle InitTriangle(int vertex0Index, int vertex1Index, int vertex2Index, float3 localNormal, float area)
