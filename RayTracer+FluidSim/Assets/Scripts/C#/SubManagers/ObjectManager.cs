@@ -466,7 +466,7 @@ public class ObjectManager : MonoBehaviour
         float3 worldMin = new float3(float.MaxValue, float.MaxValue, float.MaxValue);
         float3 worldMax = new float3(float.MinValue, float.MinValue, float.MinValue);
 
-        // Transform each BV corner to world space, and compare them to each other
+        // Transform each BV corner to world space, and compare them
         for (int i = 0; i < 8; i++)
         {
             float3 worldCorner = Func.Mul(localToWorldMatrix, corners[i]);

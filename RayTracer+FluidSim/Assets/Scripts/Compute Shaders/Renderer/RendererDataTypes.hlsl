@@ -28,8 +28,8 @@ struct SceneObject
     int bvStartIndex;
     int maxDepthBVH;
     float areaApprox;
-    float3 min;
-    float3 max;
+    float3 min; // Unused?
+    float3 max; // Unused?
 };
 struct LightObject
 {

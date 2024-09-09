@@ -91,6 +91,12 @@ Texture2D<float4> EnvironmentMap; // float4(r, g, b, brightness)
 const float2 TextureAtlasDims;
 const float2 EnvironmentMapTexDims;
 
+// Fluid mesh test
+RWTexture3D<int2> SurfaceCellsLookup;
+const uint StaticVerticesNum;
+const uint StaticTrisNum;
+const uint MipmapMaxDepth;
+
 float3 SampleTexture(float2 uv, uint2 texLoc, uint2 texDims, Texture2D tex)
 {
     uint2 texelCoord = texLoc + (uint2)(uv * float2(texDims.x, texDims.y));
@@ -252,7 +258,7 @@ void TraverseSceneBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
                 if (localHitInfo.dst < hitInfo.dst)
                 {
                     hitInfo.dst = localHitInfo.dst;
-                    hitInfo.normal =  normalize(mul(sceneObject.localToWorldMatrix, float4(localHitInfo.normal, 0)).xyz);
+                    hitInfo.normal = normalize(mul(sceneObject.localToWorldMatrix, float4(localHitInfo.normal, 0)).xyz);
                     hitInfo.hitPoint = ray.pos + ray.dir * localHitInfo.dst;
                     hitInfo.uv = localHitInfo.uv;
                     hitInfo.materialIndex = sceneObject.materialIndex;
@@ -281,12 +287,31 @@ void TraverseSceneBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
         }
     }
 }
+
+void TraverseSparseVoxelGrid(inout HitInfo hitInfo, Ray ray)
+{
+    uint4 voxelStack[80]; // MipmapMaxDepth * 8 or something similar
+    uint stackPointer = 0;
+
+
+
+
+
+
+    // RWTexture3D<int2> SurfaceCellsLookup;
+    // const uint StaticVerticesNum;
+    // const uint StaticTrisNum;
+    // const uint MipmapMaxDepth;
+}
  
 HitInfo GetRayCollision (Ray ray, inout DebugData debugData)
 {
     HitInfo hitInfo = InitHitInfo();
  
     TraverseSceneBVH(hitInfo, debugData, ray);
+
+    // Fluid mesh test
+    TraverseSparseVoxelGrid(hitInfo, ray);
  
     return hitInfo;
 }
