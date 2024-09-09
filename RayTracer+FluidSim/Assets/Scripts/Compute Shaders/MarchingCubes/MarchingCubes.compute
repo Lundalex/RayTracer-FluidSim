@@ -338,6 +338,12 @@ void TransferToRenderer (uint3 id : SV_DispatchThreadID)
     uint i = id.x;
     if (i >= max(FluidTrisNum, LastFluidTrisNum)) return;
 
+    if (i >= FluidTrisNum)
+    {
+        Triangles[i + StaticTrisNum] = InitTriangle();
+        return;
+    }
+
     MCTri mcTri = FluidTriMeshSL[i];
 
     uint vertexBaseIndex = 3 * i + StaticVerticesNum;
@@ -351,6 +357,5 @@ void TransferToRenderer (uint3 id : SV_DispatchThreadID)
 
     // Create an "empty" triangle if i is outside of the current frame's mesh length, but inside the last frame's mesh length
     // This requires for all unused triangles this frame to be the last elements of the sorted mesh buffer
-    if (i < FluidTrisNum) Triangles[i + StaticTrisNum] = InitTriangle(vertexBaseIndex, vertexBaseIndex + 1, vertexBaseIndex + 2, localNormal, area);
-    else Triangles[i + StaticTrisNum] = InitTriangle();
+    Triangles[i + StaticTrisNum] = InitTriangle(vertexBaseIndex, vertexBaseIndex + 1, vertexBaseIndex + 2, localNormal, area);
 }
