@@ -165,6 +165,26 @@ float RayBVIntersect(Ray ray, BV bv)
  
     return dst;
 };
+
+void TestTriangles(inout HitInfo hitInfo, inout DebugData debugData, Ray ray, uint startIndex, uint endIndex)
+{
+    for (int triIndex = startIndex; triIndex < endIndex; triIndex++)
+    {
+        Triangle tri = Triangles[triIndex];
+        if (dot(tri.localNormal, ray.dir) <= 0)
+        {
+            TriHitInfo triHitInfo = RayTriangleIntersect(ray, tri);
+            debugData.triChecks++;
+        
+            if (triHitInfo.didHit && triHitInfo.dst < hitInfo.dst)
+            {
+                hitInfo.dst = triHitInfo.dst;
+                hitInfo.uv = triHitInfo.uv;
+                hitInfo.normal = tri.localNormal;
+            }
+        }
+    }
+}
  
 void TraverseTrisBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray, uint bvStartIndex)
 {
@@ -182,22 +202,7 @@ void TraverseTrisBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray, 
         
         if (isLeaf)
         {
-            for (int triIndex = bv.indexA; triIndex < bv.indexA + bv.indexB; triIndex++)
-            {
-                Triangle tri = Triangles[triIndex];
-                if (dot(tri.localNormal, ray.dir) <= 0)
-                {
-                    TriHitInfo triHitInfo = RayTriangleIntersect(ray, tri);
-                    debugData.triChecks++;
-                
-                    if (triHitInfo.didHit && triHitInfo.dst < hitInfo.dst)
-                    {
-                        hitInfo.dst = triHitInfo.dst;
-                        hitInfo.uv = triHitInfo.uv;
-                        hitInfo.normal = tri.localNormal;
-                    }
-                }
-            }
+            TestTriangles(hitInfo, debugData, ray, bv.indexA, bv.indexA + bv.indexB);
         }
         else
         {
@@ -288,10 +293,64 @@ void TraverseSceneBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
     }
 }
 
-void TraverseSparseVoxelGrid(inout HitInfo hitInfo, Ray ray)
+uint3 GetMipmapOffset(uint mipmapLayer)
 {
-    uint4 voxelStack[80]; // MipmapMaxDepth * 8 or something similar
+    uint3 offset = 0;
+    
+    if (mipmapLayer >= 1) offset.x += TextureMM1Dims.x;
+
+    // This can be made without a for loop!
+    for (uint i = 1; i < mipmapLayer; i++) offset.y += (uint)(TextureMM1Dims.y / pow(2, i));
+
+    return offset;
+}
+
+float ReadFromMipmapLayer(uint3 pixelID, uint mipmapLayer)
+{
+    uint3 offsetPixelID = GetMipmapOffset(mipmapLayer) + pixelID;
+
+    return SurfaceCells[offsetPixelID];
+}
+
+void TraverseSparseVoxelGrid(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
+{
+    // uint4(pixelID: xyz, mipmap level: w)
+    uint4 nodeStack[80]; // MipmapMaxDepth * 8 or something similar
     uint stackPointer = 0;
+
+    while (stackPointer > 0)
+    {
+        uint4 node = nodeStack[--stackPointer];
+
+        bool isLeaf = node.w == 1;
+
+        if (isLeaf)
+        {
+            // uint2(triStartPos, numTris)
+            uint2 nodeContents = SurfaceCellsLookup[node.xyz];
+
+            TestTriangles(hitInfo, debugData, ray, nodeContents.x, nodeContents.x + nodeContents.y);
+        }
+        else
+        {
+            // int = 32bits. bits 1->8 corresponds to whether the contained child cells are occupied/empty
+            int nodeContents = ReadFromMipmapLayer(node.xyz, node.w);
+
+            // Perform hash lookup
+            // Order the stack
+            uint3 pixelBase = node.xyz * 2;
+            nodeStack[stackPointer++] = pixelBase;
+            nodeStack[stackPointer++] = pixelBase + uint3(1, 0, 0);
+            nodeStack[stackPointer++] = pixelBase + uint3(0, 1, 0);
+            nodeStack[stackPointer++] = pixelBase + uint3(1, 1, 0);
+            nodeStack[stackPointer++] = pixelBase + uint3(0, 0, 1);
+            nodeStack[stackPointer++] = pixelBase + uint3(1, 0, 1);
+            nodeStack[stackPointer++] = pixelBase + uint3(0, 1, 1);
+            nodeStack[stackPointer++] = pixelBase + uint3(1, 1, 1);
+
+            // Instead of only storing whether each cell is occupied/not, the 1->8 bits should store which inner cells have any contents
+        }
+    }
 
 
 
@@ -311,7 +370,7 @@ HitInfo GetRayCollision (Ray ray, inout DebugData debugData)
     TraverseSceneBVH(hitInfo, debugData, ray);
 
     // Fluid mesh test
-    TraverseSparseVoxelGrid(hitInfo, ray);
+    TraverseSparseVoxelGrid(hitInfo, debugData, ray);
  
     return hitInfo;
 }

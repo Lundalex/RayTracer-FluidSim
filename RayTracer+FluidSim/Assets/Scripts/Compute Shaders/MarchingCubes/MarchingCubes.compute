@@ -324,7 +324,7 @@ void ConstructSpatialLookupTexture (uint3 cellID : SV_DispatchThreadID)
     uint index = startIndex;
     while (cellKey == FluidTriMeshSL[index].cellKey && index < FluidTrisNum)
     {
-        index += 1;
+        index++;
     }
 
     uint celltrisNum = index - startIndex;
