@@ -26,6 +26,10 @@ const uint FluidTrisNum;
 const uint LastFluidVerticesNum;
 const uint LastFluidTrisNum;
 
+// Transform to world space
+const float3 FluidDims;
+const float3 FluidPos;
+
 RWStructuredBuffer<int2> SpatialLookup; // [NumObjects](sphereIndex, CellKey)
 RWStructuredBuffer<int> StartIndices;
 RWStructuredBuffer<float3> Points;
@@ -40,7 +44,7 @@ RWStructuredBuffer<Triangle> Triangles;
 RWStructuredBuffer<Vertex2> Vertices;
 
 RWTexture3D<float> GridDensities;
-RWTexture3D<float> SurfaceCells;
+RWTexture3D<int> SurfaceCells;
 RWTexture3D<int2> SurfaceCellsLookup;
 
 bool ValidCell(int3 cell)
@@ -268,11 +272,6 @@ void GenerateFluidMesh (uint3 baseCell : SV_DispatchThreadID)
         tri.vertex1 = interpolateVerts(densities[a1], densities[b1], localPositions[a1], localPositions[b1], Threshold);
         tri.vertex2 = interpolateVerts(densities[a2], densities[b2], localPositions[a2], localPositions[b2], Threshold);
 
-        // Transform to world space
-        tri.vertex0 *= CellSize;
-        tri.vertex1 *= CellSize;
-        tri.vertex2 *= CellSize;
-
         FluidTriMeshAPPEND.Append(tri);
     }
 }
@@ -332,6 +331,17 @@ void ConstructSpatialLookupTexture (uint3 cellID : SV_DispatchThreadID)
     SurfaceCellsLookup[cellID] = uint2(StaticTrisNum + startIndex, celltrisNum);
 }
 
+void FluidVertexToWorldSpace(inout float3 vertex)
+{
+    // Normalise vertex
+    vertex /= NumCells.xyz;
+
+    // Apply transform (TODO: replace with a matrix multiplication)
+    vertex *= FluidDims;
+    vertex -= FluidDims * 0.5;
+    vertex += FluidPos;
+}
+
 [numthreads(TN_MC2,1,1)]
 void TransferToRenderer (uint3 id : SV_DispatchThreadID)
 {
@@ -345,6 +355,11 @@ void TransferToRenderer (uint3 id : SV_DispatchThreadID)
     }
 
     MCTri mcTri = FluidTriMeshSL[i];
+
+    // Transform to world space
+    FluidVertexToWorldSpace(mcTri.vertex0);
+    FluidVertexToWorldSpace(mcTri.vertex1);
+    FluidVertexToWorldSpace(mcTri.vertex2);
 
     uint vertexBaseIndex = 3 * i + StaticVerticesNum;
 

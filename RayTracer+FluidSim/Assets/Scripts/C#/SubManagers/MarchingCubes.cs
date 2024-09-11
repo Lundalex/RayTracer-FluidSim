@@ -15,6 +15,10 @@ public class MarchingCubes : MonoBehaviour
 
     public float FluidTriMeshSLBufferSafety = 1;
 
+    // World transform
+    public float3 FluidDims;
+    public float3 FluidPos;
+
     // Script references
     public Simulation sim;
     public new NewRenderer renderer;
@@ -95,6 +99,11 @@ public class MarchingCubes : MonoBehaviour
 
         mcShader.SetFloat("DensityMultiplier", DensityMultiplier);
         mcShader.SetFloat("DistanceMultiplier", DistanceMultiplier);
+
+        mcShader.SetVector("FluidDims", new Vector3(FluidDims.x, FluidDims.y, FluidDims.z));
+        mcShader.SetVector("FluidPos", new Vector3(FluidPos.x, FluidPos.y, FluidPos.z));
+
+        renderer.DoUpdateSettings = true;
     }
 
     private void InitBuffers()

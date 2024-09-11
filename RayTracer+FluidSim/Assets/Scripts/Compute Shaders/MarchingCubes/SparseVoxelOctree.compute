@@ -9,7 +9,7 @@ const uint3 TextureMM1Dims;
 // Per-pass set variables
 const uint MipmapPassDepth;
 
-RWTexture3D<float> SurfaceCells;
+RWTexture3D<int> SurfaceCells;
 
 uint3 GetMipmapOffset(uint mipmapLayer)
 {
@@ -23,41 +23,39 @@ uint3 GetMipmapOffset(uint mipmapLayer)
     return offset;
 }
 
-float ReadFromMipmapLayer(uint3 pixelID, uint mipmapLayer)
+int ReadFromMipmapLayer(uint3 pixelID, uint mipmapLayer)
 {
     uint3 offsetPixelID = GetMipmapOffset(mipmapLayer) + pixelID;
 
     return SurfaceCells[offsetPixelID];
 }
 
-void WriteToMipmapLayer(uint3 pixelID, uint mipmapLayer, float val)
+void WriteToMipmapLayer(uint3 pixelID, uint mipmapLayer, int val)
 {
     uint3 offsetPixelID = GetMipmapOffset(mipmapLayer) + pixelID;
 
     SurfaceCells[offsetPixelID] = val;
 }
 
+void WriteBit(inout int val, int bitNr)
+{
+    val |= (1 << bitNr);
+}
+
 [numthreads(TN_MC,TN_MC,TN_MC)]
 void ConstructSparseVoxelTree (uint3 id : SV_DispatchThreadID)
 {
-    uint3 basePixel = id.xyz * 2;
-    uint3 innerPositions[8] = {
-        basePixel,
-        basePixel + uint3(1,0,0),
-        basePixel + uint3(1,0,1),
-        basePixel + uint3(0,0,1),
-        basePixel + uint3(0,1,0),
-        basePixel + uint3(1,1,0),
-        basePixel + uint3(1,1,1),
-        basePixel + uint3(0,1,1)
-    };
+    uint3 basePixelID = 2 * id.xyz;
 
-    // Keep checking all 8 "inner pixels" for leafs (pixel value == 1.0)
-    bool containsLeaf = false;
-    for (int i = 0; i < 8 && !containsLeaf; i++)
+    // Check all inner cells for leaves, and write the reseults using bit-wise or-operations
+    int node8bitData = 0;
+    for (int i = 0; i < 8; i++)
     {
-        containsLeaf = ReadFromMipmapLayer(innerPositions[i], MipmapPassDepth-1) == 1.0;
+        uint3 childPixelID = basePixelID + Offsets_2x2x2[i];
+        bool containsLeaf = ReadFromMipmapLayer(childPixelID, MipmapPassDepth-1) != 0;
+
+        if (containsLeaf) WriteBit(node8bitData, i);
     }
 
-    WriteToMipmapLayer(id.xyz, MipmapPassDepth, containsLeaf); // 1.0 if containsLeaf == true. 0.0 if containsLeaf == false
+    WriteToMipmapLayer(id.xyz, MipmapPassDepth, node8bitData);
 }

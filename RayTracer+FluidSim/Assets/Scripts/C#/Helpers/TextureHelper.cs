@@ -317,7 +317,7 @@ public class TextureHelper : MonoBehaviour
             return texture;
         }
     }
-    /// <summary>Creates a 3D render texture intended for boolean voxel tree operations</summary>
+    /// <summary>Creates a 3D render texture intended for voxel tree uses</summary>
     /// <returns>Texture3D without ref</returns>
     public static (RenderTexture, int3, int) CreateVoxelTexture(int3 resolution)
     {
@@ -325,7 +325,7 @@ public class TextureHelper : MonoBehaviour
         int3 pow2Res = new int3(Func.NextPow2(resolution.x), Func.NextPow2(resolution.y), Func.NextPow2(resolution.z));
         int maxMipmapDepth = Mathf.Min(Func.LastLog2(resolution.x), Func.LastLog2(resolution.y), Func.LastLog2(resolution.z));
 
-        RenderTexture texture = new RenderTexture((int)(pow2Res.x * 1.5f), pow2Res.y, 0, RenderTextureFormat.R8)
+        RenderTexture texture = new RenderTexture((int)(pow2Res.x * 1.5f), pow2Res.y, 0, RenderTextureFormat.RInt)
         {
             dimension = UnityEngine.Rendering.TextureDimension.Tex3D,
             volumeDepth = pow2Res.z,

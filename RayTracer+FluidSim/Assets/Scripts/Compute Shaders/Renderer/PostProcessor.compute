@@ -15,7 +15,7 @@ RWTexture2D<float4> Result;
 RWTexture2D<float4> AccumulatedResult;
 
 RWTexture3D<float> TexA;
-RWTexture3D<float> TexB;
+RWTexture3D<int> TexB;
 
 [numthreads(TN_PP,TN_PP,1)]
 void AccumulateFrames (uint3 id : SV_DispatchThreadID)

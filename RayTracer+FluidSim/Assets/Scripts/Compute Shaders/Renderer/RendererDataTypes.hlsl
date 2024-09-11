@@ -147,6 +147,17 @@ Vertex2 InitVertex(float3 pos, float2 uv)
     return vertex;
 }
 
+BV InitBV()
+{
+    BV bv;
+    bv.min = 0;
+    bv.max = 0;
+    bv.indexA = 0;
+    bv.indexB = 0;
+
+    return bv;
+}
+
 Triangle InitTriangle()
 {
     Triangle tri;

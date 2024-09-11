@@ -131,3 +131,14 @@ float TotWeightFromGBLookup(uint radius)
     if (radius == 2) { return GBLookup2_totWeight; }
     return GBLookup3_totWeight; // radius == 3
 }
+
+static const uint3 Offsets_2x2x2[8] = {
+    uint3(0,0,0),
+    uint3(1,0,0),
+    uint3(1,0,1),
+    uint3(0,0,1),
+    uint3(0,1,0),
+    uint3(1,1,0),
+    uint3(1,1,1),
+    uint3(0,1,1)
+};

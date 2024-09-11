@@ -314,16 +314,21 @@ public class NewRenderer : MonoBehaviour
         if (DoBRDF) rtShader.EnableKeyword("BRDF");
         else rtShader.DisableKeyword("BRDF");
 
-        // Object Textures
+        // Object textures
         int[] textureAtlasDims = new int[] { TextureAtlas.width, TextureAtlas.height };
         rtShader.SetInts("TextureAtlasDims", textureAtlasDims);
         rtShader.SetTexture(0, "TextureAtlas", TextureAtlas);
         rtShader.SetTexture(4, "TextureAtlas", TextureAtlas);
  
-        // Environment Map Texture
+        // Environment map texture
         int[] environmentMapTexDims = new int[] { EnvironmentMapTexture.width, EnvironmentMapTexture.height };
         rtShader.SetInts("EnvironmentMapTexDims", environmentMapTexDims);
         rtShader.SetTexture(4, "EnvironmentMap", EnvironmentMapTexture);
+
+        // Marching cubes - fluid transform
+        rtShader.SetVector("FluidDims", new Vector3(mCubes.FluidDims.x, mCubes.FluidDims.y, mCubes.FluidDims.z));
+        rtShader.SetVector("FluidPos", new Vector3(mCubes.FluidPos.x, mCubes.FluidPos.y, mCubes.FluidPos.z));
+        rtShader.SetVector("NumCells", new Vector3(mCubes.NumCells.x, mCubes.NumCells.y, mCubes.NumCells.z));
  
         Debug.Log("Internal program settings updated");
     }
