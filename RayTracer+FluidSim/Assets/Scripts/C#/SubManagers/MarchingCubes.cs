@@ -145,6 +145,8 @@ public class MarchingCubes : MonoBehaviour
             mcShader.SetTexture(2, "SurfaceCells", SurfaceCellsTexture);
             mcShader.SetTexture(4, "SurfaceCells", SurfaceCellsTexture);
             svoShader.SetTexture(0, "SurfaceCells", SurfaceCellsTexture);
+            renderer.rtShader.SetTexture(0, "SurfaceCells", SurfaceCellsTexture);
+            renderer.rtShader.SetTexture(4, "SurfaceCells", SurfaceCellsTexture);
             renderer.ppShader.SetTexture(1, "TexB", SurfaceCellsTexture);
 
             SurfaceCellsLookupTexture = TextureHelper.CreateIntTexture(NumCells.xyz, 2);
@@ -157,6 +159,7 @@ public class MarchingCubes : MonoBehaviour
 
             svoShader.SetInt("MipmapMaxDepth", SurfaceCellsMipmapDepth);
             svoShader.SetVector("TextureMM1Dims", new Vector3(SurfaceCellsMM1Dims.x, SurfaceCellsMM1Dims.y, SurfaceCellsMM1Dims.z));
+            renderer.rtShader.SetVector("TextureMM1Dims", new Vector3(SurfaceCellsMM1Dims.x, SurfaceCellsMM1Dims.y, SurfaceCellsMM1Dims.z));
 
             // Temporary
             textureManager.NoiseResolution = SurfaceCellsMM1Dims;

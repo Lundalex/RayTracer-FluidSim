@@ -93,6 +93,8 @@ const float2 EnvironmentMapTexDims;
 
 // Fluid mesh test
 RWTexture3D<int2> SurfaceCellsLookup;
+RWTexture3D<float> SurfaceCells;
+const uint3 TextureMM1Dims;
 const uint StaticVerticesNum;
 const uint StaticTrisNum;
 const uint MipmapMaxDepth;
@@ -168,7 +170,7 @@ float RayBVIntersect(Ray ray, BV bv)
 
 void TestTriangles(inout HitInfo hitInfo, inout DebugData debugData, Ray ray, uint startIndex, uint endIndex)
 {
-    for (int triIndex = startIndex; triIndex < endIndex; triIndex++)
+    for (uint triIndex = startIndex; triIndex < endIndex; triIndex++)
     {
         Triangle tri = Triangles[triIndex];
         if (dot(tri.localNormal, ray.dir) <= 0)
@@ -317,9 +319,12 @@ void TraverseSparseVoxelGrid(inout HitInfo hitInfo, inout DebugData debugData, R
     // uint4(pixelID: xyz, mipmap level: w)
     uint4 nodeStack[80]; // MipmapMaxDepth * 8 or something similar
     uint stackPointer = 0;
+    nodeStack[stackPointer++] = uint4(0, 0, 0, 1);
 
-    while (stackPointer > 0)
-    {
+    uint maxIterations = 10;
+    uint iterationCount = 0;
+    while (stackPointer > 0 && iterationCount < maxIterations)
+    {iterationCount++;
         uint4 node = nodeStack[--stackPointer];
 
         bool isLeaf = node.w == 1;
@@ -329,7 +334,7 @@ void TraverseSparseVoxelGrid(inout HitInfo hitInfo, inout DebugData debugData, R
             // uint2(triStartPos, numTris)
             uint2 nodeContents = SurfaceCellsLookup[node.xyz];
 
-            TestTriangles(hitInfo, debugData, ray, nodeContents.x, nodeContents.x + nodeContents.y);
+            // TestTriangles(hitInfo, debugData, ray, nodeContents.x, nodeContents.x + nodeContents.y);
         }
         else
         {
@@ -338,29 +343,20 @@ void TraverseSparseVoxelGrid(inout HitInfo hitInfo, inout DebugData debugData, R
 
             // Perform hash lookup
             // Order the stack
+            // Cuurently without ANY CELL CHECKS
             uint3 pixelBase = node.xyz * 2;
-            nodeStack[stackPointer++] = pixelBase;
-            nodeStack[stackPointer++] = pixelBase + uint3(1, 0, 0);
-            nodeStack[stackPointer++] = pixelBase + uint3(0, 1, 0);
-            nodeStack[stackPointer++] = pixelBase + uint3(1, 1, 0);
-            nodeStack[stackPointer++] = pixelBase + uint3(0, 0, 1);
-            nodeStack[stackPointer++] = pixelBase + uint3(1, 0, 1);
-            nodeStack[stackPointer++] = pixelBase + uint3(0, 1, 1);
-            nodeStack[stackPointer++] = pixelBase + uint3(1, 1, 1);
+            nodeStack[stackPointer++] = uint4(pixelBase, 0);
+            nodeStack[stackPointer++] = uint4(pixelBase + uint3(1, 0, 0), 0);
+            nodeStack[stackPointer++] = uint4(pixelBase + uint3(0, 1, 0), 0);
+            nodeStack[stackPointer++] = uint4(pixelBase + uint3(1, 1, 0), 0);
+            nodeStack[stackPointer++] = uint4(pixelBase + uint3(0, 0, 1), 0);
+            nodeStack[stackPointer++] = uint4(pixelBase + uint3(1, 0, 1), 0);
+            nodeStack[stackPointer++] = uint4(pixelBase + uint3(0, 1, 1), 0);
+            nodeStack[stackPointer++] = uint4(pixelBase + uint3(1, 1, 1), 0);
 
             // Instead of only storing whether each cell is occupied/not, the 1->8 bits should store which inner cells have any contents
         }
     }
-
-
-
-
-
-
-    // RWTexture3D<int2> SurfaceCellsLookup;
-    // const uint StaticVerticesNum;
-    // const uint StaticTrisNum;
-    // const uint MipmapMaxDepth;
 }
  
 HitInfo GetRayCollision (Ray ray, inout DebugData debugData)
@@ -370,7 +366,7 @@ HitInfo GetRayCollision (Ray ray, inout DebugData debugData)
     TraverseSceneBVH(hitInfo, debugData, ray);
 
     // Fluid mesh test
-    TraverseSparseVoxelGrid(hitInfo, debugData, ray);
+    // TraverseSparseVoxelGrid(hitInfo, debugData, ray);
  
     return hitInfo;
 }
@@ -506,7 +502,7 @@ void GenerateCandidatesDL(HitInfo hitInfo, uint pixelIndex, inout uint state)
     // Expensive due to the need for casting a ray, but removes any and all visibility noise from the end result
     #if VIS_REUSE
         Ray shadowRay = InitRay(hitInfo.hitPoint, dir);
-        DebugData t;
+        DebugData t = InitDebugData();
 
         // Traverse the scene to validate the candidate
         // Then discard the candidate from further use if the target is occluded
