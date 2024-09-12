@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.37311947, g: 0.38074014, b: 0.3587274, a: 1}
+  m_IndirectSpecularColor: {r: 0.37311953, g: 0.38074014, b: 0.3587274, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -344,7 +344,7 @@ MonoBehaviour:
     z: 256
   NoiseCellSize: 128
   LerpFactor: 0.15
-  NoisePixelSize: 3
+  NoisePixelSize: 1.5
   DoCreateTextures: 0
   RenderNoiseTextures: 1
   renderer: {fileID: 868168749}
@@ -555,7 +555,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   CameraMoveSpeed: 8
   CameraPanSpeed: 8
-  renderTarget: 0
+  renderTarget: 2
   DoAccumulateFrames: 0
   UseDenoiser: 0
   DoLogDenoiserPerformance: 0
@@ -923,6 +923,14 @@ MonoBehaviour:
   DistanceMultiplier: 0.2
   DensityMultiplier: 0.2
   FluidTriMeshSLBufferSafety: 0.2
+  FluidDims:
+    x: 5
+    y: 5
+    z: 5
+  FluidPos:
+    x: -2
+    y: 0
+    z: 12
   sim: {fileID: 2125271849}
   renderer: {fileID: 868168749}
   shaderHelper: {fileID: 1604392134}

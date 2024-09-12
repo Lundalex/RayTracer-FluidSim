@@ -37,7 +37,7 @@ void WriteToMipmapLayer(uint3 pixelID, uint mipmapLayer, int val)
     SurfaceCells[offsetPixelID] = val;
 }
 
-void WriteBit(inout int val, int bitNr)
+void WriteBit(inout uint val, int bitNr)
 {
     val |= (1 << bitNr);
 }
@@ -48,7 +48,7 @@ void ConstructSparseVoxelTree (uint3 id : SV_DispatchThreadID)
     uint3 basePixelID = 2 * id.xyz;
 
     // Check all inner cells for leaves, and write the reseults using bit-wise or-operations
-    int node8bitData = 0;
+    uint node8bitData = 0;
     for (int i = 0; i < 8; i++)
     {
         uint3 childPixelID = basePixelID + Offsets_2x2x2[i];

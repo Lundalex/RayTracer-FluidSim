@@ -338,7 +338,6 @@ void FluidVertexToWorldSpace(inout float3 vertex)
 
     // Apply transform (TODO: replace with a matrix multiplication)
     vertex *= FluidDims;
-    vertex -= FluidDims * 0.5;
     vertex += FluidPos;
 }
 

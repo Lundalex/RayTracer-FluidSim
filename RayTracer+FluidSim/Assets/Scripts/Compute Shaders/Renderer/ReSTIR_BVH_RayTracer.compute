@@ -312,49 +312,75 @@ uint3 GetMipmapOffset(uint mipmapLayer)
     return offset;
 }
 
-float ReadFromMipmapLayer(uint3 pixelID, uint mipmapLayer)
+uint ReadFromMipmapLayer(uint3 pixelID, uint mipmapLayer)
 {
     uint3 offsetPixelID = GetMipmapOffset(mipmapLayer) + pixelID;
 
     return SurfaceCells[offsetPixelID];
 }
 
-void TraverseGrid(float3 rayOrigin, float3 rayDir, float3 gridMin, float3 gridMax, float3 cellSize, int3 gridResolution)
+bool ReadBit(uint val, int bitNr)
 {
-    // Calculate the ray's entry point in the grid (start cell)
-    int3 cell = int3(floor((rayOrigin - gridMin) / cellSize));
+    return (val & (1 << bitNr)) != 0;
+}
 
-    // Determine the step direction for the ray (-1, 0, or 1)
+static const uint nodeStackLength = 50;
+void DDA(HitInfo hitInfo, Ray ray, int3 gridCellsNum, float3 cellSize, float3 gridMin, float3 gridMax, inout uint4 nodeStack[nodeStackLength], inout uint stackPointer, inout bool tempBool)
+{
+    // Calculate the starting cell
+    int3 cell = int3(floor((ray.pos - gridMin) / cellSize));
+
+    // Determine the step direction
     int3 step;
-    step.x = (rayDir.x > 0.0) ? 1 : -1;
-    step.y = (rayDir.y > 0.0) ? 1 : -1;
-    step.z = (rayDir.z > 0.0) ? 1 : -1;
+    step.x = (ray.dir.x > 0.0) ? 1 : -1;
+    step.y = (ray.dir.y > 0.0) ? 1 : -1;
+    step.z = (ray.dir.z > 0.0) ? 1 : -1;
 
-    // Calculate the distance from the ray's origin to the next cell boundary
+    // Calculate the distance from the ray's position to the next cell boundary
+    // The step axis for each loop iteration will be decided by what direction has the lowest ray distance
     float3 tMax;
-    tMax.x = ((cell.x + (step.x > 0)) * cellSize.x + gridMin.x - rayOrigin.x) / rayDir.x;
-    tMax.y = ((cell.y + (step.y > 0)) * cellSize.y + gridMin.y - rayOrigin.y) / rayDir.y;
-    tMax.z = ((cell.z + (step.z > 0)) * cellSize.z + gridMin.z - rayOrigin.z) / rayDir.z;
+    tMax.x = ((cell.x + (step.x > 0)) * cellSize.x + gridMin.x - ray.pos.x) / ray.dir.x; // * ray.invDir.x
+    tMax.y = ((cell.y + (step.y > 0)) * cellSize.y + gridMin.y - ray.pos.y) / ray.dir.y; // * ray.invDir.y
+    tMax.z = ((cell.z + (step.z > 0)) * cellSize.z + gridMin.z - ray.pos.z) / ray.dir.z; // * ray.invDir.z
 
     // Calculate how far to step along the ray per grid cell in each axis
     float3 tDelta;
-    tDelta.x = abs(cellSize.x / rayDir.x);
-    tDelta.y = abs(cellSize.y / rayDir.y);
-    tDelta.z = abs(cellSize.z / rayDir.z);
+    tDelta.x = abs(cellSize.x / ray.dir.x);
+    tDelta.y = abs(cellSize.y / ray.dir.y);
+    tDelta.z = abs(cellSize.z / ray.dir.z);
 
     // Traverse the grid
-    for (int i = 0; i < 100; i++)  // Limit the number of iterations to avoid infinite loops
+    // If the fluid settings are very wierd, the initial nodeStack setup can be very costly.
+    // Therefore, a maximum iteration count is set
+    uint maxIterations = 50;
+    for (uint i = 0; i < maxIterations; i++)
     {
         // Check if we are outside the grid bounds
-        if (cell.x < 0 || cell.x >= gridResolution.x ||
-            cell.y < 0 || cell.y >= gridResolution.y ||
-            cell.z < 0 || cell.z >= gridResolution.z)
+        if (cell.x < 0 || cell.x >= gridCellsNum.x ||
+            cell.y < 0 || cell.y >= gridCellsNum.y ||
+            cell.z < 0 || cell.z >= gridCellsNum.z)
         {
             break;  // Exit if outside the grid
         }
 
-        // Process the current cell (you can implement any specific behavior here)
-        // e.g., Check if the cell contains an object, or mark it as visited
+        // If the current node is valid, add its child nodes to the node stack
+        uint node8bitData = ReadFromMipmapLayer(cell, MipmapMaxDepth-1);
+        if (node8bitData != 0)
+        {
+            tempBool = true;
+            uint3 basePixelID = cell * 2;
+            for (uint i = 0; i < 8; i++)
+            {
+                bool containsLeaf = ReadBit(node8bitData, i);
+
+                // Push child node to the stack if it contains leaves
+                if (containsLeaf)
+                {
+                    uint3 childPixelID = basePixelID + Offsets_2x2x2[i];
+                    nodeStack[stackPointer++] = uint4(childPixelID, MipmapMaxDepth-2);
+                }
+            }
+        }
 
         // Move to the next cell
         if (tMax.x < tMax.y && tMax.x < tMax.z)
@@ -375,42 +401,37 @@ void TraverseGrid(float3 rayOrigin, float3 rayDir, float3 gridMin, float3 gridMa
     }
 }
 
-
-bool ReadBit(int val, int bitNr)
-{
-    return (val & (1 << bitNr)) != 0;
-}
-
 void TraverseSparseVoxelGrid(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
 {
     ray.pos -= FluidPos;
-    ray.pos /= FluidDims;
     // Initial fluid box intersection test
     BV fluidBV = InitBV();
-    fluidBV.min = -0.5;
-    fluidBV.max = 0.5;
+    fluidBV.min = 0;
+    fluidBV.max = FluidDims;
     float dst = RayBVIntersect(ray, fluidBV);
     if (dst > hitInfo.dst || dst == 1.#INF) return;
-    
-    // Move ray to fluid container?
-    ray.pos += ray.dir * dst;
 
-    // Record debug data
+    // Record debug data (Temp)
     debugData.triChecks = 100;
 
-    // Initialise stack
+    // Init DDA data
+    ray.pos += ray.dir * dst;
+    uint3 highMipmapGridCellsNum = TextureMM1Dims / pow(2, MipmapMaxDepth-1);
+    float3 highMipmapCellSize = FluidDims / highMipmapGridCellsNum;
+
+    // Init nodeStack
     // uint4(pixelID: xyz, mipmap level: w)
-    uint4 nodeStack[80]; // MipmapMaxDepth * 8 or something similar
+    uint4 nodeStack[nodeStackLength]; // MipmapMaxDepth * 8 or something similar
+    for (uint i = 0; i < nodeStackLength; i++) nodeStack[i] = uint4(0, 0, 0, 0);
     uint stackPointer = 0;
-    uint3 highMipmapGridSize = TextureMM1Dims / pow(2, MipmapMaxDepth-1);
-    // TraverseGrid();
-
-
-    nodeStack[stackPointer++] = uint4(0, 0, 0, MipmapMaxDepth);
+    // Use DDA to get the root nodes intersected by the ray
+    bool tempBool = false;
+    DDA(hitInfo, ray, highMipmapGridCellsNum, highMipmapCellSize, 0, FluidDims, nodeStack, stackPointer, tempBool);
+    if (tempBool) debugData.bvChecks = 100;
 
     uint maxIterations = 10; // temp
     uint iterationCount = 0; // temp
-    while (stackPointer > 0 && iterationCount < maxIterations)
+    while (stackPointer > 0 && iterationCount < maxIterations) 
     {   
         iterationCount++; // temp
         uint4 node = nodeStack[--stackPointer];
@@ -422,41 +443,36 @@ void TraverseSparseVoxelGrid(inout HitInfo hitInfo, inout DebugData debugData, R
             // uint2(triStartPos, numTris)
             uint2 nodeContents = SurfaceCellsLookup[node.xyz];
 
-            TestTriangles(hitInfo, debugData, ray, nodeContents.x, nodeContents.x + nodeContents.y);
+            // TestTriangles(hitInfo, debugData, ray, nodeContents.x, nodeContents.x + nodeContents.y);
         }
         else
         {
             // RINT (8 bits total). Each bit corresponds to one of the children cells (true if the child contains leaves)
-            int node8bitData = ReadFromMipmapLayer(node.xyz, node.w);
+            uint node8bitData = ReadFromMipmapLayer(node.xyz, node.w);
 
             // Perform hash lookup?
             // Order the stack
             // Currently without ANY CELL CHECKS
-            uint3 basePixelID = node.xyz * 2;
-            for (int i = 0; i < 8; i++)
+            if (node8bitData != 0)
             {
-                bool containsLeaf = ReadBit(node8bitData, i);
-
-                // Push child node to the stack if it contains leaves
-                if (containsLeaf)
+                uint3 basePixelID = node.xyz * 2;
+                for (uint i = 0; i < 8; i++)
                 {
-                    uint3 childPixelID = basePixelID + Offsets_2x2x2[i];
-                    nodeStack[stackPointer++] = uint4(childPixelID, node.w - 1);
+                    bool containsLeaf = ReadBit(node8bitData, i);
+
+                    // Push child node to the stack if it contains leaves
+                    if (containsLeaf)
+                    {
+                        uint3 childPixelID = basePixelID + Offsets_2x2x2[i];
+                        nodeStack[stackPointer++] = uint4(childPixelID, node.w - 1);
+                    }
                 }
             }
         }
     }
-
-    // const uint3 TextureMM1Dims;
-    // const uint MipmapMaxDepth;
-
-    // // Fluid world transform & grid
-    // const float3 FluidDims;
-    // const float3 FluidPos;
-    // const uint3 NumCells;
 }
  
-HitInfo GetRayCollision (Ray ray, inout DebugData debugData)
+HitInfo GetRayCollision(Ray ray, inout DebugData debugData)
 {
     HitInfo hitInfo = InitHitInfo();
  
