@@ -4,7 +4,7 @@
 PlayerSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 26
-  productGUID: 03cd0220b36b38f4eac6ddbd2ec76ed7
+  productGUID: f1da12f9fd9b6ca458c6745403e423dc
   AndroidProfiler: 0
   AndroidFilterTouchesWhenObscured: 0
   AndroidEnableSustainedPerformanceMode: 0
@@ -750,10 +750,10 @@ PlayerSettings:
   apiCompatibilityLevel: 6
   activeInputHandler: 2
   windowsGamepadBackendHint: 0
-  cloudProjectId: f9643d99-082a-43d3-a7ee-d507e49089d2
+  cloudProjectId: 73006302-989d-4993-a04a-7fdb65b39033
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: RenderStreaming
+  projectName: RenderStreaming 2024-09-15_20-43-00
   organizationId: lundalex
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
