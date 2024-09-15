@@ -923,6 +923,7 @@ MonoBehaviour:
   DistanceMultiplier: 0.2
   DensityMultiplier: 0.2
   FluidTriMeshSLBufferSafety: 0.2
+  SurfaceCellsMipmapDepthLimit: 5
   FluidDims:
     x: 5
     y: 5
@@ -930,7 +931,7 @@ MonoBehaviour:
   FluidPos:
     x: -2
     y: 0
-    z: 12
+    z: 7.5
   sim: {fileID: 2125271849}
   renderer: {fileID: 868168749}
   shaderHelper: {fileID: 1604392134}
@@ -1040,14 +1041,14 @@ MonoBehaviour:
   ParticlesNum: 60000
   SpringCapacitySafety: 1000
   MaxChunkSearchSafety: 1
-  Width: 150
-  Height: 200
-  Depth: 50
+  Width: 100
+  Height: 100
+  Depth: 100
   BorderPadding: 4
   FixedTimeStep: 1
   TimeStep: 0.04
   ProgramSpeed: 2
-  TimeStepsNum: 1
+  TimeStepsNum: 2
   SubTimeStepsNum: 3
   MaxInteractionRadius: 40
   InteractionAttractionPower: 5

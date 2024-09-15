@@ -14,6 +14,7 @@ public class MarchingCubes : MonoBehaviour
     public float DensityMultiplier;
 
     public float FluidTriMeshSLBufferSafety = 1;
+    public int SurfaceCellsMipmapDepthLimit = 4;
 
     // World transform
     public float3 FluidDims;
@@ -149,6 +150,7 @@ public class MarchingCubes : MonoBehaviour
         if (SurfaceCellsTexture == null)
         {
             (SurfaceCellsTexture, SurfaceCellsMM1Dims, SurfaceCellsMipmapDepth) = TextureHelper.CreateVoxelTexture(NumCells.xyz);
+            SurfaceCellsMipmapDepth = Mathf.Min(SurfaceCellsMipmapDepth, SurfaceCellsMipmapDepthLimit);
             SurfaceCellsTexture.Create();
             mcShader.SetTexture(1, "SurfaceCells", SurfaceCellsTexture);
             mcShader.SetTexture(2, "SurfaceCells", SurfaceCellsTexture);
