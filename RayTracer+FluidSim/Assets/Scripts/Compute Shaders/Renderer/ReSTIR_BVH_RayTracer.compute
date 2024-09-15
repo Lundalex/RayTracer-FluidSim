@@ -177,6 +177,7 @@ void TestTriangles(inout HitInfo hitInfo, inout DebugData debugData, Ray ray, ui
 {
     for (uint triIndex = startIndex; triIndex < endIndex; triIndex++)
     {
+        debugData.triChecks++;
         Triangle tri = Triangles[triIndex];
         if (dot(tri.localNormal, ray.dir) <= 0)
         {
@@ -463,7 +464,7 @@ void TraverseSparseVoxelGrid(inout HitInfo hitInfo, inout DebugData debugData, R
     float dst = RayBVIntersect(ray, fluidBV);
     if (dst > hitInfo.dst || dst == 1.#INF) return;
 
-    // Record debug data (Temp)
+    // Reset debug data (Temp)
     debugData.triChecks = 0;
     debugData.bvChecks = 0;
 
@@ -486,9 +487,9 @@ void TraverseSparseVoxelGrid(inout HitInfo hitInfo, inout DebugData debugData, R
     uint iterationCount = 0;
     while (stackPointer > 0 && iterationCount < maxIterations) 
     {   
-        iterationCount++; // temp
-        uint4 node = nodeStack[--stackPointer];
+        iterationCount++;
 
+        uint4 node = nodeStack[--stackPointer];
         bool isLeaf = node.w == 0;
 
         if (isLeaf)
@@ -504,9 +505,7 @@ void TraverseSparseVoxelGrid(inout HitInfo hitInfo, inout DebugData debugData, R
             // RINT (8 bits total). Each bit corresponds to one of the children cells (true if the child contains leaves)
             uint node8bitData = ReadFromMipmapLayer(node.xyz, node.w);
 
-            // Perform hash lookup?
-            // Order the stack appends!
-            // Currently without ANY CELL CHECKS
+            // Perform hash lookup also?
             if (node8bitData != 0)
             {
                 uint3 basePixelID = node.xyz * 2;
@@ -541,11 +540,12 @@ void TraverseSparseVoxelGrid(inout HitInfo hitInfo, inout DebugData debugData, R
                 // Append childs to nodeStack in order
                 for (i = 0; i < 8; i++)
                 {
-                    float dst = distances[i];
+                    uint index = 7 - i;
+                    float dst = distances[index];
                     if (dst < hitInfo.dst && dst != 1.#INF)
                     {
                         debugData.bvChecks += 2;
-                        nodeStack[stackPointer++] = uint4(childPixelIDs[i], node.w - 1);
+                        nodeStack[stackPointer++] = uint4(childPixelIDs[index], node.w - 1);
                     }
                 }
             }

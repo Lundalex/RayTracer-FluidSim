@@ -77,6 +77,14 @@ public static class ComputeHelper
 		return buffer;
 	}
     /// <summary>Create a structured buffer</summary>
+    /// <returns>Without ref</returns>
+	public static ComputeBuffer CreateStructuredBuffer<T>(T[] data, int capacity) // T is the buffer struct
+	{
+		var buffer = new ComputeBuffer(capacity, GetStride<T>());
+		buffer.SetData(data);
+		return buffer;
+	}
+    /// <summary>Create a structured buffer</summary>
     /// <returns>-> ref buffer</returns>
     public static void CreateStructuredBuffer<T>(ref ComputeBuffer buffer, T[] data) // T is the buffer struct
     {
