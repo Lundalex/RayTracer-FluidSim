@@ -900,9 +900,9 @@ MonoBehaviour:
   m_Codec:
     m_MimeType: 
     m_SdpFmtpLine: 
-  m_FrameRate: 30
+  m_FrameRate: 0
   m_Bitrate:
-    min: 2000
+    min: 0
     max: 3000
   m_ScaleFactor: 1
   m_AutoRequestUserAuthorization: 1
@@ -1859,9 +1859,9 @@ MonoBehaviour:
   m_Codec:
     m_MimeType: 
     m_SdpFmtpLine: 
-  m_FrameRate: 30
+  m_FrameRate: 0
   m_Bitrate:
-    min: 2000
+    min: 0
     max: 3000
   m_ScaleFactor: 1
   m_AutoRequestUserAuthorization: 1
