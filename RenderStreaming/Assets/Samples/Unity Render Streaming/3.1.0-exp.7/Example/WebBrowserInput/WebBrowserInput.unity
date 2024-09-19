@@ -900,11 +900,11 @@ MonoBehaviour:
   m_Codec:
     m_MimeType: 
     m_SdpFmtpLine: 
-  m_FrameRate: 0
+  m_FrameRate: 30
   m_Bitrate:
     min: 0
-    max: 3000
-  m_ScaleFactor: 1
+    max: 1000
+  m_ScaleFactor: 16
   m_AutoRequestUserAuthorization: 1
 --- !u!1 &775980371
 GameObject:
@@ -1859,10 +1859,10 @@ MonoBehaviour:
   m_Codec:
     m_MimeType: 
     m_SdpFmtpLine: 
-  m_FrameRate: 0
+  m_FrameRate: 30
   m_Bitrate:
     min: 0
-    max: 3000
+    max: 1000
   m_ScaleFactor: 1
   m_AutoRequestUserAuthorization: 1
 --- !u!114 &1112556117
