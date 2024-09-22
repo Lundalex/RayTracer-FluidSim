@@ -6,6 +6,7 @@ using UnityEngine.Rendering;
 public class NewRenderer : MonoBehaviour
 {
 #region Inspector
+    public float3 TEMP;
     public NewRenderPipeline renderPipeline;
     [Header("Camera interaction settings")]
     public float CameraMoveSpeed;
@@ -329,6 +330,9 @@ public class NewRenderer : MonoBehaviour
         rtShader.SetVector("FluidDims", new Vector3(mCubes.FluidDims.x, mCubes.FluidDims.y, mCubes.FluidDims.z));
         rtShader.SetVector("FluidPos", new Vector3(mCubes.FluidPos.x, mCubes.FluidPos.y, mCubes.FluidPos.z));
         rtShader.SetVector("NumCells", new Vector3(mCubes.NumCells.x, mCubes.NumCells.y, mCubes.NumCells.z));
+        rtShader.SetFloat("CellSize", mCubes.CellSize);
+
+        rtShader.SetVector("TEMP", new Vector3(TEMP.x, TEMP.y, TEMP.z));
  
         Debug.Log("Internal program settings updated");
     }
@@ -361,9 +365,9 @@ public class NewRenderer : MonoBehaviour
         // Set SceneObjects & Tris data
         SceneObjectDataBuffer = ComputeHelper.CreateStructuredBuffer<SceneObjectData>(SceneObjectDatas);
         shaderHelper.SetSceneObjectDataBuffer(SceneObjectDataBuffer);
-        RenderTriangleBuffer = ComputeHelper.CreateStructuredBuffer<RenderTriangle>(RenderTriangles, StaticTrisNum + 80000);
+        RenderTriangleBuffer = ComputeHelper.CreateStructuredBuffer<RenderTriangle>(RenderTriangles, StaticTrisNum + 120000);
         shaderHelper.SetTriBuffer(RenderTriangleBuffer);
-        VertexBuffer = ComputeHelper.CreateStructuredBuffer<Vertex>(Vertices, StaticVerticesNum + 3 * 80000);
+        VertexBuffer = ComputeHelper.CreateStructuredBuffer<Vertex>(Vertices, StaticVerticesNum + 3 * 120000);
         shaderHelper.SetVertexBuffer(VertexBuffer);
         RunPreCalcShader();
  

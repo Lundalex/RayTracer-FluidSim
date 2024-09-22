@@ -187,7 +187,7 @@ void CalcGridDensities (uint3 mcCell : SV_DispatchThreadID)
     if (!ValidCell(mcCell)) return;
 
     float3 pos = mcCell * CellSize;
-    NearInfo nearInfo = GetNearDstCheap(pos);
+    NearInfo nearInfo = GetNearDst(pos, DensityRadius);
 
     GridDensities[mcCell] = nearInfo.val;
 }

@@ -84,6 +84,7 @@ public class MarchingCubes : MonoBehaviour
 
         float3 simMaxBounds = new(sim.Width, sim.Height, sim.Depth);
 
+        CellSize = 100.0f / 64.0f; // TEMP
         NumCells = new(Mathf.CeilToInt(simMaxBounds.x / CellSize),
                         Mathf.CeilToInt(simMaxBounds.y / CellSize),
                         Mathf.CeilToInt(simMaxBounds.z / CellSize), 0);
@@ -124,7 +125,7 @@ public class MarchingCubes : MonoBehaviour
         ComputeHelper.CreateStructuredBuffer<int>(ref FluidStartIndicesBuffer, NumCellsAll);
         mcShader.SetBuffer(4, "FluidStartIndices", FluidStartIndicesBuffer);
 
-        ComputeHelper.CreateAppendBuffer<MCTri>(ref FluidTriMeshBufferAC, 80000);
+        ComputeHelper.CreateAppendBuffer<MCTri>(ref FluidTriMeshBufferAC, 120000);
         mcShader.SetBuffer(2, "FluidTriMeshAPPEND", FluidTriMeshBufferAC);
         mcShader.SetBuffer(3, "FluidTriMeshCONSUME", FluidTriMeshBufferAC);
 
@@ -220,7 +221,7 @@ public class MarchingCubes : MonoBehaviour
 
         // Get new fluid mesh length
         // GetAppendBufferCount() IS VERY EXPENIVE. USE ASYNC! ! ! ! !
-        FluidMeshLength = 80000; // ComputeHelper.GetAppendBufferCount(FluidTriMeshBufferAC);
+        FluidMeshLength = 120000; // ComputeHelper.GetAppendBufferCount(FluidTriMeshBufferAC);
 
         // Set fluid mesh length settings
         mcShader.SetInt("LastFluidVerticesNum", LastFluidMeshLength * 3);

@@ -546,9 +546,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1059782422ce97346a2af3422f9d5bbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  TEMP:
+    x: 1
+    y: 1
+    z: 0
   CameraMoveSpeed: 8
   CameraPanSpeed: 8
-  renderTarget: 2
+  renderTarget: 0
   DoAccumulateFrames: 0
   UseDenoiser: 0
   DoLogDenoiserPerformance: 0
@@ -622,7 +626,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64875cfea3598b9419edac2dbbce0413, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  streamingSize: {x: 2560, y: 1440}
+  streamingSize: {x: 1920, y: 1200}
   depth: 16
   antiAliasing: 1
 --- !u!4 &926544471 stripped
@@ -685,9 +689,9 @@ MonoBehaviour:
   materialInputs:
   - brightness: 0
     col:
-      x: 1
+      x: 0
       y: 1
-      z: 0
+      z: 1
     colTex: {fileID: 0}
     normalsTex: {fileID: 0}
     roughness: 1
@@ -995,12 +999,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CellSize: 1.59
-  DensityRadius: 1
-  Threshold: 0.2
+  DensityRadius: 2
+  Threshold: 0.5
   DistanceMultiplier: 0.2
   DensityMultiplier: 0.2
   FluidTriMeshSLBufferSafety: 0.4
-  SurfaceCellsMipmapDepthLimit: 4
+  SurfaceCellsMipmapDepthLimit: 5
   FluidDims:
     x: 5
     y: 5

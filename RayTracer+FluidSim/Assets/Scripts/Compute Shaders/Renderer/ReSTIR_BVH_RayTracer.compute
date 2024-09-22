@@ -103,6 +103,9 @@ const uint MipmapMaxDepth;
 const float3 FluidDims;
 const float3 FluidPos;
 const uint3 NumCells;
+const float CellSize;
+
+const float3 TEMP;
 
 float3 SampleTexture(float2 uv, uint2 texLoc, uint2 texDims, Texture2D tex)
 {
@@ -325,7 +328,7 @@ bool ReadBit(uint val, int bitNr)
     return (val & (1 << bitNr)) != 0;
 }
 
-bool IsOutsideGrid(uint3 cell, uint3 gridCellsNum)
+bool IsOutsideGrid(int3 cell, int3 gridCellsNum)
 {
     return (cell.x < 0 || cell.x >= gridCellsNum.x ||
             cell.y < 0 || cell.y >= gridCellsNum.y ||
@@ -374,7 +377,7 @@ void DDA(HitInfo hitInfo, Ray ray, uint3 gridCellsNum, float3 cellSize, float3 g
     // Traverse the grid
     // If the fluid settings are very wierd, the initial nodeStack setup can be very costly.
     // Therefore, a maximum iteration count is set
-    const uint maxIterations = 500;
+    const uint maxIterations = 100;
     for (uint i = 0; i < maxIterations; i++)
     {
         // Check if we are outside the grid bounds
@@ -421,11 +424,9 @@ void DDA(HitInfo hitInfo, Ray ray, uint3 gridCellsNum, float3 cellSize, float3 g
 // WARNING: SUPER GARBAGE CODE. TODO: FIX
 float RayVoxelIntersect(uint3 pixelID, uint mipmapLayer, Ray ray)
 {
-    ray.pos -= FluidPos;
-
-    uint3 mipmipLayerCellsNum = TextureMM1Dims / pow(2, mipmapLayer); // TextureMM1Dims >> mipmapLayer;
-    float3 min = FluidDims * (float3)pixelID / (float3)mipmipLayerCellsNum;
-    float3 max = min + FluidDims / (float3)mipmipLayerCellsNum;
+    float3 mipmapLayerNumCells = NumCells / (uint)pow(2, mipmapLayer); // TextureMM1Dims >> mipmapLayer;
+    float3 min = FluidPos + FluidDims * (float3)pixelID / (float3)mipmapLayerNumCells;
+    float3 max = min + FluidDims / (float3)mipmapLayerNumCells;
 
     BV voxelBV = InitBV();
     voxelBV.min = min;
@@ -463,7 +464,7 @@ void TraverseSparseVoxelGrid(inout HitInfo hitInfo, inout DebugData debugData, R
     // Initial fluid box intersection test
     BV fluidBV = InitBV();
     fluidBV.min = FluidPos;
-    fluidBV.max = FluidPos + FluidDims;
+    fluidBV.max = FluidPos + FluidDims* TEMP.y;
     float dst = RayBVIntersect(ray, fluidBV);
     if (dst > hitInfo.dst || dst == 1.#INF) return;
 
@@ -474,7 +475,7 @@ void TraverseSparseVoxelGrid(inout HitInfo hitInfo, inout DebugData debugData, R
 
     // Init DDA data
     ray.pos += ray.dir * dst;
-    uint3 highMipmapGridCellsNum = TextureMM1Dims / pow(2, MipmapMaxDepth-1);
+    uint3 highMipmapGridCellsNum = TextureMM1Dims / (uint)pow(2, MipmapMaxDepth-1);
     float3 highMipmapCellSize = FluidDims / float3(highMipmapGridCellsNum);
 
     // Init nodeStack
@@ -487,7 +488,7 @@ void TraverseSparseVoxelGrid(inout HitInfo hitInfo, inout DebugData debugData, R
     DDA(hitInfo, ray, highMipmapGridCellsNum, highMipmapCellSize, 0, FluidDims, nodeStack, stackPointer, tempBool);
     if (tempBool) debugData.bvChecks = 2;
 
-    const uint maxIterations = 500;
+    const uint maxIterations = 100;
     uint iterationCount = 0;
     while (stackPointer > 0 && iterationCount < maxIterations) 
     {   
@@ -580,10 +581,10 @@ HitInfo GetRayCollision(Ray ray, inout DebugData debugData)
     // Material2 material = Materials[0];
     // if (all(material.normalsTexLoc != -1)) localHitInfo.normal = SampleTexture(localHitInfo.uv, material.normalsTexLoc, material.normalsTexDims, TextureAtlas) * 2 - 1;
 
-    debugData.bvChecks = localHitInfo.dst != 1.#INF ? 1000 : 0;
+    debugData.triChecks = localHitInfo.dst != 1.#INF ? 1000 : 0;
     if (localHitInfo.dst != 1.#INF)
     {
-        hitInfo.dst = 1;
+        hitInfo.dst = localHitInfo.dst;
         hitInfo.normal = localHitInfo.normal;
         hitInfo.hitPoint = ray.pos + ray.dir * localHitInfo.dst;
         hitInfo.uv = localHitInfo.uv;
