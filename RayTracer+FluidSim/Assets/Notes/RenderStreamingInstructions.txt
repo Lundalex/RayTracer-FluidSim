@@ -1,0 +1,38 @@
+--- Google cloud server setup ---
+
+1. Create a new google cloud project
+
+2. Go to "VM instances" (located in the side bar)
+
+3. Create a new VM instance 
+ - Set an external IP
+ - Create firewall rules to allow access through necessary ports
+ - Set desired machine (probably "small" or a similar option)
+
+4. Setup signaling server
+ - Open the server terminal (Click the SSH button in the VM instances overview)
+ - Pull the WebApp repository (with both "Dockerfile" and "docker-compose.yml").
+ - CD to the WebApp repository location
+ - Run "docker-compose up"
+
+
+--- Unity setup ---
+
+1. Add the render streaming package from the unity package manager
+- Open the package manager
+- Press the "+" button, followed by "Add package by name", and input "com.unity.renderstreaming" into the text field
+- Make sure to use the pre3 version of the render streaming package
+- Click "fix all" in the render streaming wizard
+
+2. Do the unity scene setup (the example scene provided by unity may be helpful)
+
+3. Input the correct URLs and addresses
+ - Render streaming script instance:
+    - Signaling URL: "ws://" + EXTERNAL_SIGNALING_SERVER_IP (e.g "ws://34.88.144.154")
+    - Ice Servers -> Ice server[0] -> Urls -> Element 0: "turn:" + EXTERNAL_SIGNALING_SERVER_IP + ":3478" (e.g "turn:34.88.144.154:3478")
+
+
+--- Links ---
+
+ - Functional render streaming server: https://console.cloud.google.com/compute/instances?project=renderstreamingcoturn
+ - Signaling server docker image: https://hub.docker.com/r/fuseman/renderserver
