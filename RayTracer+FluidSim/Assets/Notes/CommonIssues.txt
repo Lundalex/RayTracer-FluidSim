@@ -1,1 +1,3 @@
 If V-sync is enabled, the maximum framerate of the program is ~160fps.
+
+FINNS SIFFROR SÅSOM 80000 i iaf MarchingCubes.cs AND NewRenderer

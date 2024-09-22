@@ -528,7 +528,7 @@ Transform:
   m_GameObject: {fileID: 868168745}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.5150381, z: 0, w: 0.85716736}
-  m_LocalPosition: {x: 10, y: 3, z: 7}
+  m_LocalPosition: {x: 6, y: 3, z: 6.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -994,13 +994,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da170071670cb7348adfac942c82272e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CellSize: 2
+  CellSize: 1.59
   DensityRadius: 1
   Threshold: 0.2
   DistanceMultiplier: 0.2
   DensityMultiplier: 0.2
-  FluidTriMeshSLBufferSafety: 0.2
-  SurfaceCellsMipmapDepthLimit: 5
+  FluidTriMeshSLBufferSafety: 0.4
+  SurfaceCellsMipmapDepthLimit: 4
   FluidDims:
     x: 5
     y: 5

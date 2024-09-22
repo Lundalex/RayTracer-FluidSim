@@ -177,13 +177,12 @@ void TestTriangles(inout HitInfo hitInfo, inout DebugData debugData, Ray ray, ui
 {
     for (uint triIndex = startIndex; triIndex < endIndex; triIndex++)
     {
-        debugData.triChecks++;
         Triangle tri = Triangles[triIndex];
         if (dot(tri.localNormal, ray.dir) <= 0)
         {
             TriHitInfo triHitInfo = RayTriangleIntersect(ray, tri);
             debugData.triChecks++;
-        
+
             if (triHitInfo.didHit && triHitInfo.dst < hitInfo.dst)
             {
                 hitInfo.dst = triHitInfo.dst;
@@ -262,6 +261,7 @@ void TraverseSceneBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
                 localRay.invDir = 1 / localRay.dir;
         
                 HitInfo localHitInfo = InitHitInfo();
+                //localHitInfo.dst = hitInfo.dst; Optimisation?
         
                 TraverseTrisBVH(localHitInfo, debugData, localRay, sceneObject.bvStartIndex);
                 
@@ -342,6 +342,8 @@ void EnsureNonZero(inout float val)
 static const uint nodeStackLength = 50;
 void DDA(HitInfo hitInfo, Ray ray, uint3 gridCellsNum, float3 cellSize, float3 gridMin, float3 gridMax, inout uint4 nodeStack[nodeStackLength], inout uint stackPointer, inout bool tempBool)
 {
+    ray.pos -= FluidPos;
+    
     // Ensure ray direction values are non-zero
     EnsureNonZero(ray.dir.x);
     EnsureNonZero(ray.dir.y);
@@ -372,7 +374,7 @@ void DDA(HitInfo hitInfo, Ray ray, uint3 gridCellsNum, float3 cellSize, float3 g
     // Traverse the grid
     // If the fluid settings are very wierd, the initial nodeStack setup can be very costly.
     // Therefore, a maximum iteration count is set
-    const uint maxIterations = 100;
+    const uint maxIterations = 500;
     for (uint i = 0; i < maxIterations; i++)
     {
         // Check if we are outside the grid bounds
@@ -416,12 +418,14 @@ void DDA(HitInfo hitInfo, Ray ray, uint3 gridCellsNum, float3 cellSize, float3 g
     }
 }
 
-// WARNING: SUPER GARBAGE CODE. TODO: FIX THE BOUNDING VOLUME CRAP
+// WARNING: SUPER GARBAGE CODE. TODO: FIX
 float RayVoxelIntersect(uint3 pixelID, uint mipmapLayer, Ray ray)
 {
+    ray.pos -= FluidPos;
+
     uint3 mipmipLayerCellsNum = TextureMM1Dims / pow(2, mipmapLayer); // TextureMM1Dims >> mipmapLayer;
     float3 min = FluidDims * (float3)pixelID / (float3)mipmipLayerCellsNum;
-    float3 max = min + FluidDims / mipmipLayerCellsNum;
+    float3 max = min + FluidDims / (float3)mipmipLayerCellsNum;
 
     BV voxelBV = InitBV();
     voxelBV.min = min;
@@ -456,22 +460,22 @@ void SortAscending(inout float arr[8], inout uint3 arr2[8])
 
 void TraverseSparseVoxelGrid(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
 {
-    ray.pos -= FluidPos;
     // Initial fluid box intersection test
     BV fluidBV = InitBV();
-    fluidBV.min = 0;
-    fluidBV.max = FluidDims;
+    fluidBV.min = FluidPos;
+    fluidBV.max = FluidPos + FluidDims;
     float dst = RayBVIntersect(ray, fluidBV);
     if (dst > hitInfo.dst || dst == 1.#INF) return;
 
     // Reset debug data (Temp)
+    DebugData t = InitDebugData(); // temp
     debugData.triChecks = 0;
     debugData.bvChecks = 0;
 
     // Init DDA data
     ray.pos += ray.dir * dst;
     uint3 highMipmapGridCellsNum = TextureMM1Dims / pow(2, MipmapMaxDepth-1);
-    float3 highMipmapCellSize = FluidDims / highMipmapGridCellsNum;
+    float3 highMipmapCellSize = FluidDims / float3(highMipmapGridCellsNum);
 
     // Init nodeStack
     // uint4(pixelID: xyz, mipmap level: w)
@@ -483,7 +487,7 @@ void TraverseSparseVoxelGrid(inout HitInfo hitInfo, inout DebugData debugData, R
     DDA(hitInfo, ray, highMipmapGridCellsNum, highMipmapCellSize, 0, FluidDims, nodeStack, stackPointer, tempBool);
     if (tempBool) debugData.bvChecks = 2;
 
-    const uint maxIterations = 100;
+    const uint maxIterations = 500;
     uint iterationCount = 0;
     while (stackPointer > 0 && iterationCount < maxIterations) 
     {   
@@ -494,11 +498,17 @@ void TraverseSparseVoxelGrid(inout HitInfo hitInfo, inout DebugData debugData, R
 
         if (isLeaf)
         {
+            // node.xyz is correct
+            // debugData.triChecks = 20* float(node.z) / float(TextureMM1Dims.z);
+            // if (any(node.xyz) < 0 || node.x >= TextureMM1Dims.x || node.y >= TextureMM1Dims.y || node.z <= TextureMM1Dims.z) debugData.triChecks += 10000;
+
             // uint2(triStartPos, numTris)
             uint2 nodeContents = SurfaceCellsLookup[node.xyz];
 
-            DebugData t = InitDebugData();
-            TestTriangles(hitInfo, t, ray, nodeContents.x, nodeContents.x + nodeContents.y);
+            // nodeContents.y seems to work as long as AC buffers and sorting length are long enough
+            // debugData.triChecks = (nodeContents.x > 0) ? 100 : 0;
+
+            TestTriangles(hitInfo, debugData, ray, nodeContents.x, nodeContents.x + nodeContents.y);
         }
         else
         {
@@ -559,8 +569,34 @@ HitInfo GetRayCollision(Ray ray, inout DebugData debugData)
  
     TraverseSceneBVH(hitInfo, debugData, ray);
 
+
+
+    // --- FLUID ---
+
+    HitInfo localHitInfo = InitHitInfo();
     // Fluid mesh test
-    TraverseSparseVoxelGrid(hitInfo, debugData, ray);
+    TraverseSparseVoxelGrid(localHitInfo, debugData, ray);
+    
+    // Material2 material = Materials[0];
+    // if (all(material.normalsTexLoc != -1)) localHitInfo.normal = SampleTexture(localHitInfo.uv, material.normalsTexLoc, material.normalsTexDims, TextureAtlas) * 2 - 1;
+
+    debugData.bvChecks = localHitInfo.dst != 1.#INF ? 1000 : 0;
+    if (localHitInfo.dst != 1.#INF)
+    {
+        hitInfo.dst = 1;
+        hitInfo.normal = localHitInfo.normal;
+        hitInfo.hitPoint = ray.pos + ray.dir * localHitInfo.dst;
+        hitInfo.uv = localHitInfo.uv;
+        hitInfo.materialIndex = 0;
+    }
+
+    // TestTriangles(localHitInfo, debugData, ray, StaticTrisNum, StaticTrisNum + 8000);
+    // debugData.triChecks = 0;
+    // debugData.bvChecks = localHitInfo.dst != 1.#INF ? 1000 : 0;
+
+    // --- FLUID ---
+
+
  
     return hitInfo;
 }

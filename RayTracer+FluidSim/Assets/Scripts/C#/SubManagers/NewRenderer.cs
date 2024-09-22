@@ -83,8 +83,8 @@ public class NewRenderer : MonoBehaviour
     [NonSerialized] public LightObject[] LightObjects;
     [NonSerialized] public RenderBV[] BVs;
     private ComputeBuffer BVBuffer;
-    private ComputeBuffer RenderTriangleBuffer;
-    private ComputeBuffer VertexBuffer;
+    public ComputeBuffer RenderTriangleBuffer; // "public" is temp!
+    public ComputeBuffer VertexBuffer; // "public" is temp!
     private ComputeBuffer SceneObjectDataBuffer;
     private ComputeBuffer LightObjectBuffer;
     private ComputeBuffer MaterialBuffer;
@@ -361,9 +361,9 @@ public class NewRenderer : MonoBehaviour
         // Set SceneObjects & Tris data
         SceneObjectDataBuffer = ComputeHelper.CreateStructuredBuffer<SceneObjectData>(SceneObjectDatas);
         shaderHelper.SetSceneObjectDataBuffer(SceneObjectDataBuffer);
-        RenderTriangleBuffer = ComputeHelper.CreateStructuredBuffer<RenderTriangle>(RenderTriangles);
+        RenderTriangleBuffer = ComputeHelper.CreateStructuredBuffer<RenderTriangle>(RenderTriangles, StaticTrisNum + 80000);
         shaderHelper.SetTriBuffer(RenderTriangleBuffer);
-        VertexBuffer = ComputeHelper.CreateStructuredBuffer<Vertex>(Vertices);
+        VertexBuffer = ComputeHelper.CreateStructuredBuffer<Vertex>(Vertices, StaticVerticesNum + 3 * 80000);
         shaderHelper.SetVertexBuffer(VertexBuffer);
         RunPreCalcShader();
  

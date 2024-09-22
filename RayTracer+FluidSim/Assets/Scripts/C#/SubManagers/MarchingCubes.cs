@@ -124,7 +124,7 @@ public class MarchingCubes : MonoBehaviour
         ComputeHelper.CreateStructuredBuffer<int>(ref FluidStartIndicesBuffer, NumCellsAll);
         mcShader.SetBuffer(4, "FluidStartIndices", FluidStartIndicesBuffer);
 
-        ComputeHelper.CreateAppendBuffer<MCTri>(ref FluidTriMeshBufferAC, 20000);
+        ComputeHelper.CreateAppendBuffer<MCTri>(ref FluidTriMeshBufferAC, 80000);
         mcShader.SetBuffer(2, "FluidTriMeshAPPEND", FluidTriMeshBufferAC);
         mcShader.SetBuffer(3, "FluidTriMeshCONSUME", FluidTriMeshBufferAC);
 
@@ -220,7 +220,7 @@ public class MarchingCubes : MonoBehaviour
 
         // Get new fluid mesh length
         // GetAppendBufferCount() IS VERY EXPENIVE. USE ASYNC! ! ! ! !
-        FluidMeshLength = 5000; // ComputeHelper.GetAppendBufferCount(FluidTriMeshBufferAC);
+        FluidMeshLength = 80000; // ComputeHelper.GetAppendBufferCount(FluidTriMeshBufferAC);
 
         // Set fluid mesh length settings
         mcShader.SetInt("LastFluidVerticesNum", LastFluidMeshLength * 3);
@@ -243,6 +243,16 @@ public class MarchingCubes : MonoBehaviour
 
         // Transfer sorted fluid mesh to the render triangle buffer
         ComputeHelper.DispatchKernel(mcShader, "TransferToRenderer", FluidMeshLength, mcShaderThreadSize2);
+
+        // TEMP: DEBUG
+        var temp = new int[FluidStartIndicesBuffer.count];
+        var temp2 = new MCTri[FluidTriMeshSLBuffer.count];
+        FluidStartIndicesBuffer.GetData(temp);
+        FluidTriMeshSLBuffer.GetData(temp2);
+        var temp3 = new RenderTriangle[renderer.RenderTriangleBuffer.count];
+        renderer.RenderTriangleBuffer.GetData(temp3);
+        var temp4 = new Vertex[renderer.VertexBuffer.count];
+        renderer.VertexBuffer.GetData(temp4);
 
         // Construct the sparse voxel traversal tree mipmap texture for the fluid mesh
         ConstructSparseVoxelTree();
