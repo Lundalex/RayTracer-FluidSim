@@ -245,16 +245,6 @@ public class MarchingCubes : MonoBehaviour
         // Transfer sorted fluid mesh to the render triangle buffer
         ComputeHelper.DispatchKernel(mcShader, "TransferToRenderer", FluidMeshLength, mcShaderThreadSize2);
 
-        // TEMP: DEBUG
-        var temp = new int[FluidStartIndicesBuffer.count];
-        var temp2 = new MCTri[FluidTriMeshSLBuffer.count];
-        FluidStartIndicesBuffer.GetData(temp);
-        FluidTriMeshSLBuffer.GetData(temp2);
-        var temp3 = new RenderTriangle[renderer.RenderTriangleBuffer.count];
-        renderer.RenderTriangleBuffer.GetData(temp3);
-        var temp4 = new Vertex[renderer.VertexBuffer.count];
-        renderer.VertexBuffer.GetData(temp4);
-
         // Construct the sparse voxel traversal tree mipmap texture for the fluid mesh
         ConstructSparseVoxelTree();
 

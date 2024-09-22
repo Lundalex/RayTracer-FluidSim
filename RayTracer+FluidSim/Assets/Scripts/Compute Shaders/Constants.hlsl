@@ -2,6 +2,7 @@
 
 static const float FLT_MAX = 99999999999.0; // supplement for maximum float val
 static const float PI = 3.1415926;
+static const float MIN_NON_ZERO = 0.01;
 
 // --- Simulation ---
 
@@ -17,12 +18,17 @@ static const int TN_RT = 8; // RayTracer
 static const int TN_PC = 256; // PreCalc
 static const int TN_PP = 8; // PostProcessing
 
+static const uint MAX_DDA_ITERATIONS = 100;
+static const uint MAX_VOXEL_TREE_ITERATIONS = 100;
+static const uint FLUID_NODE_STACK_LENGTH = 50;
+static const uint MAX_BVH_DEPTH = 32;
+
+static const uint BVH_NODE_STACK_LENGTH = MAX_BVH_DEPTH + 1;
+
 // --- Marching Cubes ---
 
 static const int TN_MC = 8; // MarchingCubes
 static const int TN_MC2 = 512; // MarchingCubes2
-
-static const uint MAX_BVH_DEPTH = 32;
 
 // --- Textures ---
 
@@ -142,3 +148,24 @@ static const uint3 Offsets_2x2x2[8] = {
     uint3(1,1,1),
     uint3(0,1,1)
 };
+
+void SwapInt2(inout int2 a, inout int2 b)
+{
+    int2 temp = a;
+    a = b;
+    b = temp;
+}
+
+void SwapFloat(inout float a, inout float b)
+{
+    float temp = a;
+    a = b;
+    b = temp;
+}
+
+void SwapUint3(inout uint3 a, inout uint3 b)
+{
+    uint3 temp = a;
+    a = b;
+    b = temp;
+}

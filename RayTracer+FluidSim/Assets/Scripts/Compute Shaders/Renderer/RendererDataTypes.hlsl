@@ -119,7 +119,8 @@ struct CandidateReservoir
 struct DebugData
 {
     int triChecks;
-    int bvChecks;
+    int bvVoxelChecks;
+    bool errorhasOccured;
 };
 
 // Basic Tri struct for marching cubes shader
@@ -225,7 +226,8 @@ DebugData InitDebugData()
 {
     DebugData debugData;
     debugData.triChecks = 0;
-    debugData.bvChecks = 0;
+    debugData.bvVoxelChecks = 0;
+    debugData.errorhasOccured = false;
  
     return debugData;
 }

@@ -7,22 +7,13 @@ public class NewRenderer : MonoBehaviour
 {
 #region Inspector
     public float3 TEMP;
-    public NewRenderPipeline renderPipeline;
-    [Header("Camera interaction settings")]
+
+    [Header("Camera Settings")]
     public float CameraMoveSpeed;
     public float CameraPanSpeed;
-    [Header("Debug settings")]
-    public RenderTargetSelect renderTarget;
-    public bool DoAccumulateFrames;
-    public bool UseDenoiser;
-    public bool DoLogDenoiserPerformance;
-    public bool RenderAsciiArt;
-    public int DebugMaxTriChecks;
-    public int DebugMaxBVChecks;
-    [Header("Render settings")]
+
+    [Header("Ray Tracer Settings")]
     public float fieldOfView;
- 
-    [Header("Ray tracer settings")]
     public int RaysNum;
     public int MaxBounceCount;
     [Range(0.0f, 1.0f)] public float ScatterProbability;
@@ -30,7 +21,8 @@ public class NewRenderer : MonoBehaviour
     public float FocalPlaneFactor; // FocalPlaneFactor must be positive
     public int FrameCount;
     public int AccFrameCount;
-    [Header("ReStir settings")]
+
+    [Header("ReStir Settings")]
     public int SceneObjectReservoirTestsNum;
     public int TriReservoirTestsNum;
     public int CandidateReservoirTestsNum;
@@ -43,8 +35,20 @@ public class NewRenderer : MonoBehaviour
     public float SpatialHitPointDiffThreshold;
     public float SpatialNormalsAngleThreshold;
     public float SpatialBRDFThreshold;
-    public float VisibilityReuseThreshold;
-    [Header("Multi-compile settings")]
+
+    [Header("Post Processing Settings")]
+    public RenderTargetSelect renderTarget;
+    public bool DoAccumulateFrames;
+    public bool UseDenoiser;
+    public bool DoLogDenoiserPerformance;
+    public bool RenderAsciiArt;
+
+    [Header("Debug Settings")]
+    [Range(1, 100)] public int DebugMaxTriChecks;
+    [Range(1, 100)] public int DebugMaxBVChecks;
+    [Range(1, 100)] public int DebugMaxVoxelChecks;
+
+    [Header("Multi-compile Settings")]
     public bool DoVisibilityReuse;
     public bool DoWeightRecalc;
     public bool DoBRDF;
@@ -60,6 +64,7 @@ public class NewRenderer : MonoBehaviour
     public AsciiManager asciiManager;
     public Texture2D EnvironmentMapTexture;
     public Texture2D BlackTexture;
+    public NewRenderPipeline renderPipeline;
 #endregion
  
 #region Script communication
@@ -71,7 +76,7 @@ public class NewRenderer : MonoBehaviour
 #endregion
 
 #region Private variables
-    [NonSerialized] public RenderTexture RTPassResultTexture;
+    [NonSerialized] private RenderTexture RTPassResultTexture;
     private RenderTexture AccumulatedResultTexture;
     private RenderTexture DebugOverlayTexture;
     private int RayTracerThreadSize = 8; // /32
@@ -291,8 +296,7 @@ public class NewRenderer : MonoBehaviour
         rtShader.SetFloat("FocalPlaneFactor", FocalPlaneFactor);
  
         // Debug overlay
-        int[] DebugDataMaxValues = new int[] { DebugMaxTriChecks, DebugMaxBVChecks };
-        rtShader.SetInts("DebugDataMaxValues", DebugDataMaxValues);
+        rtShader.SetVector("DebugDataMaxValues", new Vector3(DebugMaxTriChecks, DebugMaxBVChecks, DebugMaxVoxelChecks));
  
         // ReStir
         rtShader.SetInt("SceneObjectReservoirTestsNum", SceneObjectReservoirTestsNum);
@@ -305,7 +309,6 @@ public class NewRenderer : MonoBehaviour
         rtShader.SetFloat("SpatialBRDFThreshold", SpatialBRDFThreshold);
         rtShader.SetInt("TemporalCandidatesNum", TemporalCandidatesNum);
         rtShader.SetFloat("TemporalPrecisionThreshold", TemporalPrecisionThreshold);
-        rtShader.SetFloat("VisibilityReuseThreshold", VisibilityReuseThreshold);
 
         // Multi compilation
         if (DoVisibilityReuse) rtShader.EnableKeyword("VIS_REUSE");

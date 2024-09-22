@@ -40,7 +40,7 @@ const uint FrameRand; // "random" value from 0 to 999999, gets reset each frame
 const uint FrameCount; // Each frame: FrameCount++
  
 // Debug
-const float3 DebugDataMaxValues;
+const int3 DebugDataMaxValues;
  
 // ReSTIR - Reservoir sample quality
 const uint SceneObjectReservoirTestsNum;
@@ -154,7 +154,7 @@ void TestTriangles(inout HitInfo hitInfo, inout DebugData debugData, Ray ray, ui
     }
 }
 
-void CheckStackOverflow(uint stackPointer, uint stackSize, DebugData debugData)
+void CheckStackOverFlow(uint stackPointer, uint stackSize, DebugData debugData)
 {
     if (stackPointer >= stackSize) debugData.errorhasOccured = true;
 }
@@ -169,7 +169,7 @@ void TraverseTrisBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray, 
     {
         BV bv = BVs[bvStack[--stackPointer]];
 
-        CheckStackOverflow(stackPointer, BVH_NODE_STACK_LENGTH, debugData);
+        CheckStackOverFlow(stackPointer, BVH_NODE_STACK_LENGTH, debugData);
  
         bool isLeaf = bv.indexA >= 0;
         bv.indexA = abs(bv.indexA);
@@ -186,7 +186,7 @@ void TraverseTrisBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray, 
             BV bvB = BVs[bv.indexB];
             float dstA = RayBVIntersect(ray, bvA);
             float dstB = RayBVIntersect(ray, bvB);
-            debugData.bvVoxelChecks += 2;
+            debugData.bvChecks += 2;
  
             // Push the nearest BV last, to avaluate it first
             if (dstA < dstB)
@@ -213,7 +213,7 @@ void TraverseSceneBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
     {
         BV bv = BVs[bvStack[--stackPointer]];
         
-        CheckStackOverflow(stackPointer, BVH_NODE_STACK_LENGTH, debugData);
+        CheckStackOverFlow(stackPointer, BVH_NODE_STACK_LENGTH, debugData);
 
         bool isLeaf = bv.indexA >= 0;
         bv.indexA = abs(bv.indexA);
@@ -251,9 +251,9 @@ void TraverseSceneBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
         {
             // Check child BV intersections
             BV bvA = BVs[bv.indexA];
-            float dstA = RayBVIntersect(ray, bvA); debugData.bvVoxelChecks++;
+            float dstA = RayBVIntersect(ray, bvA); debugData.bvChecks++;
             BV bvB = BVs[bv.indexB];
-            float dstB = RayBVIntersect(ray, bvB); debugData.bvVoxelChecks++;
+            float dstB = RayBVIntersect(ray, bvB); debugData.bvChecks++;
  
             // Push the nearest BV last, to avaluate it first
             if (dstA < dstB)
@@ -328,15 +328,15 @@ void DDA(HitInfo hitInfo, Ray ray, uint3 gridCellsNum, float3 cellSize, float3 g
     // Calculate the distance from the ray's position to the next cell boundary
     // The step axis for each loop iteration will be decided by what direction has the lowest ray distance
     float3 tMax;
-    tMax.x = ((cell.x + (step.x > 0)) * cellSize.x + gridMin.x - ray.pos.x) * ray.invDir.x;
-    tMax.y = ((cell.y + (step.y > 0)) * cellSize.y + gridMin.y - ray.pos.y) * ray.invDir.y;
-    tMax.z = ((cell.z + (step.z > 0)) * cellSize.z + gridMin.z - ray.pos.z) * ray.invDir.z;
+    tMax.x = ((cell.x + (step.x > 0)) * cellSize.x + gridMin.x - ray.pos.x) / ray.dir.x; // * ray.invDir.x
+    tMax.y = ((cell.y + (step.y > 0)) * cellSize.y + gridMin.y - ray.pos.y) / ray.dir.y; // * ray.invDir.y
+    tMax.z = ((cell.z + (step.z > 0)) * cellSize.z + gridMin.z - ray.pos.z) / ray.dir.z; // * ray.invDir.z
 
     // Calculate how far to step along the ray per grid cell in each axis
     float3 tDelta;
-    tDelta.x = abs(cellSize.x * ray.invDir.x);
-    tDelta.y = abs(cellSize.y * ray.invDir.y);
-    tDelta.z = abs(cellSize.z * ray.invDir.z);
+    tDelta.x = abs(cellSize.x / ray.dir.x);
+    tDelta.y = abs(cellSize.y / ray.dir.y);
+    tDelta.z = abs(cellSize.z / ray.dir.z);
 
     // Traverse the grid
     // If the fluid settings are very wierd, the initial nodeStack setup can be very costly.
@@ -394,7 +394,7 @@ float RayVoxelIntersect(uint3 pixelID, uint mipmapLayer, Ray ray)
     return dst;
 }
 
-void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
+void TraverseVoxelOctree(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
 {
     // Initial fluid box intersection test
     float3 fluidMin = FluidPos;
@@ -403,8 +403,8 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
     if (dst > hitInfo.dst || dst == 1.#INF) return;
 
     // Init DDA data
-    Ray ddaRay = InitRay(ray.pos + ray.dir * dst, ray.dir);
-    uint3 highMipmapGridCellsNum = TextureMM1Dims / (uint)pow2(MipmapMaxDepth-1);
+    ray.pos += ray.dir * dst;
+    uint3 highMipmapGridCellsNum = TextureMM1Dims / (uint)pow(2, MipmapMaxDepth-1);
     float3 highMipmapCellSize = FluidDims / float3(highMipmapGridCellsNum);
 
     // Init nodeStack
@@ -414,20 +414,29 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
     uint stackPointer = 0;
 
     // Use DDA to get the root nodes intersected by the ray
-    DDA(hitInfo, ddaRay, highMipmapGridCellsNum, highMipmapCellSize, 0, FluidDims, nodeStack, stackPointer);
+    DDA(hitInfo, ray, highMipmapGridCellsNum, highMipmapCellSize, 0, FluidDims, nodeStack, stackPointer);
 
     uint iterationCount = 0;
     while (stackPointer > 0 && iterationCount < MAX_VOXEL_TREE_ITERATIONS) 
     {   
         iterationCount++;
-        
+
+        CheckStackOverFlow(stackPointer, MAX_VOXEL_TREE_ITERATIONS, debugData);
+
         uint4 node = nodeStack[--stackPointer];
         bool isLeaf = node.w == 0;
 
         if (isLeaf)
         {
+            // node.xyz is correct
+            // debugData.triChecks = 20* float(node.z) / float(TextureMM1Dims.z);
+            // if (any(node.xyz) < 0 || node.x >= TextureMM1Dims.x || node.y >= TextureMM1Dims.y || node.z <= TextureMM1Dims.z) debugData.triChecks += 10000;
+
             // uint2(triStartPos, numTris)
             uint2 nodeContents = SurfaceCellsLookup[node.xyz];
+
+            // nodeContents.y seems to work as long as AC buffers and sorting length are long enough
+            // debugData.triChecks = (nodeContents.x > 0) ? 100 : 0;
 
             TestTriangles(hitInfo, debugData, ray, nodeContents.x, nodeContents.x + nodeContents.y);
         }
@@ -476,24 +485,20 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
                     if (dst < hitInfo.dst && dst != 1.#INF)
                     {
                         nodeStack[stackPointer++] = uint4(childPixelIDs[index], node.w - 1);
-
-                        if (debugData.bvVoxelChecks >= 0) debugData.bvVoxelChecks = 0;
-                        debugData.bvVoxelChecks--;
+                        debugData.voxelChecks++;
                     }
                 }
             }
         }
     }
-
-    CheckStackOverflow(stackPointer, FLUID_NODE_STACK_LENGTH, debugData);
 }
 
-void TraverseAllSVHs(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
+void TraverseFluidVoxelOctrees(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
 {
     HitInfo localHitInfo = InitHitInfo();
     localHitInfo.dst = hitInfo.dst;
 
-    TraverseSVH(localHitInfo, debugData, ray);
+    TraverseVoxelOctree(localHitInfo, debugData, ray);
 
     uint fluidMaterialIndex = 0;
 
@@ -510,7 +515,7 @@ void TraverseAllSVHs(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
     // Loop through nearly all triangles (no acceleration structure)
     // TestTriangles(localHitInfo, debugData, ray, StaticTrisNum, StaticTrisNum + 8000);
     // debugData.triChecks = 0;
-    // debugData.bvVoxelChecks = localHitInfo.dst != 1.#INF ? 1000 : 0;
+    // debugData.bvChecks = localHitInfo.dst != 1.#INF ? 1000 : 0;
 }
  
 HitInfo GetRayCollision(Ray ray, inout DebugData debugData)
@@ -519,7 +524,7 @@ HitInfo GetRayCollision(Ray ray, inout DebugData debugData)
 
     TraverseSceneBVH(hitInfo, debugData, ray);
 
-    TraverseAllSVHs(hitInfo, debugData, ray);
+    TraverseFluidVoxelOctrees(hitInfo, debugData, ray);
  
     return hitInfo;
 }
@@ -733,10 +738,8 @@ void InitialTrace (uint3 id : SV_DispatchThreadID)
     // Record data to textures
     if (MaxBVHDepth > BVH_NODE_STACK_LENGTH) debugData.errorhasOccured = true;
     
-    // Record debug data
-    // blue channel can correspond to either bv checks or voxel checks
-    float bChannel = debugData.bvVoxelChecks >= 0 ? debugData.bvVoxelChecks / DebugDataMaxValues.y : debugData.bvVoxelChecks / DebugDataMaxValues.z;
-    DebugOverlay[id.xy] = float4(debugData.triChecks / (float)DebugDataMaxValues.x, bChannel, debugData.errorhasOccured, 0);
+    float rChannel = debugData.voxelChecks == 0 ? debugData.bvChecks / (float)DebugDataMaxValues.y : debugData.voxelChecks / (float)DebugDataMaxValues.z;
+    DebugOverlay[id.xy] = float4(debugData.triChecks / (float)DebugDataMaxValues.x, rChannel, debugData.errorhasOccured, 0);
     
     DepthBuffer[id.xy] = hitInfo.dst;
     NormalsBuffer[id.xy] = (hitInfo.normal + 1) * 0.5; // normalized to fit in a render texture

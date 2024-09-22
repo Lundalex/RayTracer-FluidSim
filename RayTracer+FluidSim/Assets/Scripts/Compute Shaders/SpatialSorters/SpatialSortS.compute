@@ -26,13 +26,6 @@ RWStructuredBuffer<int> SpringStartIndices_dbC; // Support
 
 RWStructuredBuffer<PData> PDataB;
 
-void SwapInt2(inout int2 a, inout int2 b)
-{
-    int2 temp = a;
-    a = b;
-    b = temp;
-}
-
 int GetChunkKeyFromPosition(float3 pos)
 {
     int3 chunk = (int3)(pos / MaxInfluenceRadius);

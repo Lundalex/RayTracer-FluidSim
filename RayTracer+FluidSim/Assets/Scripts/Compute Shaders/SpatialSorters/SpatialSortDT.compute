@@ -21,13 +21,6 @@ RWStructuredBuffer<int> StartIndices;
 
 RWStructuredBuffer<float3> Points;
 
-void SwapInt2(inout int2 a, inout int2 b)
-{
-    int2 temp = a;
-    a = b;
-    b = temp;
-}
-
 int3 GetCellFromPos(float3 pos)
 {
     return (int3)(pos / CellSize);

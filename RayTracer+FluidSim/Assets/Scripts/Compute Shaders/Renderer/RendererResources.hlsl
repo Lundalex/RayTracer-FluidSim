@@ -11,6 +11,44 @@ float MSDensityKernel(float dst, float radius)
 	return 0;
 }
 
+// Sort an array of size 8 using bubble sort
+void SortAscendingSize8BubbleSort(inout float arr1[8], inout uint3 arr2[8])
+{
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 0; j < 7 - i; j++) // 7-i ensures we don't compare sorted elements
+        {
+            if (arr1[j] > arr1[j + 1])
+            {
+                // Swap [j] and [j + 1] for arr1 and arr2
+                SwapFloat(arr1[j], arr1[j + 1]);
+                SwapUint3(arr2[j], arr2[j + 1]);
+            }
+        }
+    }
+}
+
+// Sort an array of size 8 using insertion sort
+void SortAscendingSize8InsertionSort(inout float distances[8], inout uint3 pixelIDs[8])
+{
+    for (int i = 1; i < 8; i++)
+    {
+        float keyDistance = distances[i];
+        uint3 keyPixelID = pixelIDs[i];
+        int j = i - 1;
+
+        // Move elements greater than keyDistance to one position ahead
+        while (j >= 0 && distances[j] > keyDistance)
+        {
+            distances[j + 1] = distances[j];
+            pixelIDs[j + 1] = pixelIDs[j];
+            j--;
+        }
+        distances[j + 1] = keyDistance;
+        pixelIDs[j + 1] = keyPixelID;
+    }
+}
+
 void ApplyTransformTriVertices(float3 rot, inout float3 a, inout float3 b, inout float3 c)
 {
     float cosX = cos(rot.x);
@@ -58,6 +96,11 @@ float dot2(float3 a) // float3 version
 float dot2(float2 a) // float2 version
 {
     return dot(a, a);
+}
+
+uint pow2(uint exponent)
+{
+    return 1 << exponent;
 }
 
 uint NextRandom(inout uint state)

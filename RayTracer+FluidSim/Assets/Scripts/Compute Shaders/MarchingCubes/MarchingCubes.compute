@@ -225,24 +225,11 @@ void GenerateFluidMesh (uint3 baseCell : SV_DispatchThreadID)
 {
     if (!ValidCell(baseCell+1) || SurfaceCells[baseCell] != 1) return;
 
-    uint3 localPositions[8] = {
-        baseCell,
-        baseCell + uint3(1,0,0),
-        baseCell + uint3(1,0,1),
-        baseCell + uint3(0,0,1),
-        baseCell + uint3(0,1,0),
-        baseCell + uint3(1,1,0),
-        baseCell + uint3(1,1,1),
-        baseCell + uint3(0,1,1)
-    };
+    uint3 localPositions[8];
+    for (int i = 0; i < 8; i++) localPositions[i] = baseCell + Offsets_2x2x2[i];
 
     float densities[8];
-    for (int i = 0; i < 8; i++)
-    {
-        // Will this work for edges?
-        uint3 localPos = localPositions[i];
-        densities[i] = GridDensities[localPos];
-    }
+    for (i = 0; i < 8; i++) densities[i] = GridDensities[localPositions[i]];
 
     // Calculate unique index for each cube configuration.
     // There are 256 possible values
@@ -266,6 +253,7 @@ void GenerateFluidMesh (uint3 baseCell : SV_DispatchThreadID)
         int a2 = cornerIndexAFromEdge[edges[k+2]];
         int b2 = cornerIndexBFromEdge[edges[k+2]];
 
+        // Adjust the triangle vertices by interpolating between the neighbouring densities
         MCTri tri;
         tri.cellKey = GetCellKey(baseCell);
         tri.vertex0 = interpolateVerts(densities[a0], densities[b0], localPositions[a0], localPositions[b0], Threshold);
@@ -321,10 +309,7 @@ void ConstructSpatialLookupTexture (uint3 cellID : SV_DispatchThreadID)
     uint startIndex = FluidStartIndices[cellKey];
 
     uint index = startIndex;
-    while (cellKey == FluidTriMeshSL[index].cellKey && index < FluidTrisNum)
-    {
-        index++;
-    }
+    while (cellKey == FluidTriMeshSL[index].cellKey && index < FluidTrisNum) index++;
 
     uint celltrisNum = index - startIndex;
 
@@ -349,13 +334,14 @@ void TransferToRenderer (uint3 id : SV_DispatchThreadID)
 
     if (i >= FluidTrisNum)
     {
-        Triangles[i + StaticTrisNum] = InitTriangle();
+        // Uncomment this line if triangles stop disappearing
+        // Triangles[i + StaticTrisNum] = InitTriangle();
         return;
     }
 
     MCTri mcTri = FluidTriMeshSL[i];
 
-    // Transform to world space
+    // Transform vertices to world space
     FluidVertexToWorldSpace(mcTri.vertex0);
     FluidVertexToWorldSpace(mcTri.vertex1);
     FluidVertexToWorldSpace(mcTri.vertex2);
