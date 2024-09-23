@@ -1,15 +1,10 @@
-// --- Fixed Constants ---
-
-static const float FLT_MAX = 99999999999.0; // supplement for maximum float val
-static const float PI = 3.1415926;
-static const float MIN_NON_ZERO = 0.01;
-
 // --- Simulation ---
 
 static const int TN_PS = 256; // ParticleSim
 static const int TN_RB = 32; // RigidbodySim
 static const int TN_IPS = 512; // InterParticleSprings
 
+static const float PI = 3.1415926;
 static const float SmoothViscosityLaplacianFactor = 45 / PI;
 
 // --- Renderer ---
@@ -22,8 +17,6 @@ static const uint MAX_DDA_ITERATIONS = 100;
 static const uint MAX_VOXEL_TREE_ITERATIONS = 100;
 static const uint FLUID_NODE_STACK_LENGTH = 50;
 static const uint MAX_BVH_DEPTH = 32;
-
-static const uint BVH_NODE_STACK_LENGTH = MAX_BVH_DEPTH + 1;
 
 // --- Marching Cubes ---
 
@@ -46,6 +39,10 @@ static const int TN_SS_DT = 512; // DataTransfer
 static const int TN_SS_MC = 512; // MarchingCubes
 static const int TN_SS_S = 512; // Simulation
 
+// --- Fixed Constants ---
+
+static const float MIN_NON_ZERO = 0.01;
+static const uint BVH_NODE_STACK_LENGTH = MAX_BVH_DEPTH + 1;
 
 // --- Other Fixed Constants ---
 

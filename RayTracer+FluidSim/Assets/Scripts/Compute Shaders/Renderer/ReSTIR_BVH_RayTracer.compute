@@ -165,11 +165,9 @@ void TraverseTrisBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray, 
     uint stackPointer = 0;
     bvStack[stackPointer++] = bvStartIndex;
  
-    while (stackPointer > 0)
+    while (stackPointer > 0 && stackPointer < BVH_NODE_STACK_LENGTH)
     {
         BV bv = BVs[bvStack[--stackPointer]];
-
-        CheckStackOverflow(stackPointer, BVH_NODE_STACK_LENGTH, debugData);
  
         bool isLeaf = bv.indexA >= 0;
         bv.indexA = abs(bv.indexA);
@@ -201,20 +199,20 @@ void TraverseTrisBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray, 
             }
         }
     }
+
+    CheckStackOverflow(stackPointer, BVH_NODE_STACK_LENGTH, debugData);
 }
  
 void TraverseSceneBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
 {
-    uint bvStack[MAX_BVH_DEPTH + 1];
+    uint bvStack[BVH_NODE_STACK_LENGTH];
     uint stackPointer = 0;
     bvStack[stackPointer++] = SceneBVHStartIndex;
  
-    while (stackPointer > 0)
+    while (stackPointer > 0 && stackPointer < BVH_NODE_STACK_LENGTH)
     {
         BV bv = BVs[bvStack[--stackPointer]];
         
-        CheckStackOverflow(stackPointer, BVH_NODE_STACK_LENGTH, debugData);
-
         bool isLeaf = bv.indexA >= 0;
         bv.indexA = abs(bv.indexA);
         bv.indexB = abs(bv.indexB);
@@ -268,6 +266,8 @@ void TraverseSceneBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
             }
         }
     }
+
+    CheckStackOverflow(stackPointer, BVH_NODE_STACK_LENGTH, debugData);
 }
 
 uint3 GetMipmapOffset(uint mipmapLayer)
@@ -277,7 +277,7 @@ uint3 GetMipmapOffset(uint mipmapLayer)
     if (mipmapLayer >= 1) offset.x += TextureMM1Dims.x;
 
     // This can be made without a for loop!
-    for (uint i = 1; i < mipmapLayer; i++) offset.y += (uint)(TextureMM1Dims.y / pow(2, i));
+    for (uint i = 1; i < mipmapLayer; i++) offset.y += (uint)(TextureMM1Dims.y / pow2(i));
 
     return offset;
 }
@@ -385,9 +385,14 @@ void DDA(HitInfo hitInfo, Ray ray, uint3 gridCellsNum, float3 cellSize, float3 g
 
 float RayVoxelIntersect(uint3 pixelID, uint mipmapLayer, Ray ray)
 {
-    float3 mipmapLayerNumCells = NumCells / pow2(mipmapLayer);
-    float3 min = FluidPos + FluidDims * (float3)pixelID / mipmapLayerNumCells;
-    float3 max = min + FluidDims / mipmapLayerNumCells;
+    // float3 mipmapLayerNumCells = NumCells / pow2(mipmapLayer);
+    // float3 min = FluidPos + FluidDims * (float3)pixelID / mipmapLayerNumCells;
+    // float3 max = min + FluidDims / mipmapLayerNumCells;
+
+    // Optimised
+    float3 invMipmapLayerNumCells = pow2(mipmapLayer) / NumCells;
+    float3 min = FluidPos + FluidDims * (float3)pixelID * invMipmapLayerNumCells;
+    float3 max = min + FluidDims * invMipmapLayerNumCells;
 
     float dst = RayBoxIntersect(ray, min, max);
     
@@ -404,7 +409,7 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
 
     // Init DDA data
     Ray ddaRay = InitRay(ray.pos + ray.dir * dst, ray.dir);
-    uint3 highMipmapGridCellsNum = TextureMM1Dims / (uint)pow2(MipmapMaxDepth-1);
+    uint3 highMipmapGridCellsNum = TextureMM1Dims / pow2(MipmapMaxDepth-1);
     float3 highMipmapCellSize = FluidDims / float3(highMipmapGridCellsNum);
 
     // Init nodeStack
@@ -437,49 +442,46 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
             uint node8bitData = ReadFromMipmapLayer(node.xyz, node.w);
 
             // Perform hash lookup also?
-            if (node8bitData != 0)
+            if (node8bitData == 0) continue;
+            
+            uint3 basePixelID = node.xyz * 2;
+
+            // Init childPixelIDs
+            uint3 childPixelIDs[8];
+            for (int i = 0; i < 8; i++) childPixelIDs[i] = basePixelID + Offsets_2x2x2[i];
+
+            // Init distances
+            float distances[8];
+            for (i = 0; i < 8; i++) distances[i] = 1.#INF;
+
+            // Perform ray-voxel intersection tests for each non-empty child node
+            for (i = 0; i < 8; i++)
             {
-                uint3 basePixelID = node.xyz * 2;
-                uint i = 0;
+                bool containsLeaves = ReadBit(node8bitData, i);
 
-                // Init childPixelIDs
-                uint3 childPixelIDs[8];
-                for (i = 0; i < 8; i++) childPixelIDs[i] = basePixelID + Offsets_2x2x2[i];
-
-                // Init distances
-                float distances[8];
-                for (i = 0; i < 8; i++) distances[i] = 1.#INF;
-
-                // Perform ray-voxel intersection tests for each non-empty child node
-                for (i = 0; i < 8; i++)
+                // Push child node to the stack if it contains leaves
+                if (containsLeaves)
                 {
-                    bool notEmpty = ReadBit(node8bitData, i);
+                    float dst = RayVoxelIntersect(childPixelIDs[i], node.w - 1, ray);
 
-                    // Push child node to the stack if it contains leaves
-                    if (notEmpty)
-                    {
-                        float dst = RayVoxelIntersect(childPixelIDs[i], node.w - 1, ray);
-
-                        // Add the dst value if the voxel was hit
-                        if (dst != 1.#INF) distances[i] = dst;
-                    }
+                    // Add the dst value if the voxel was hit
+                    if (dst != 1.#INF && dst < hitInfo.dst) distances[i] = dst;
                 }
+            }
 
-                // Sort the child nodes by hit distance
-                SortAscendingSize8InsertionSort(distances, childPixelIDs);
+            // Sort the child nodes by distance
+            SortAscendingSize8InsertionSort(distances, childPixelIDs);
 
-                // Append childs to nodeStack in order
-                for (i = 0; i < 8; i++)
+            // Append childs to nodeStack in order
+            for (i = 7; i >= 0; i--)
+            {
+                float dst = distances[i];
+                if (dst < hitInfo.dst && dst != 1.#INF)
                 {
-                    uint index = 7 - i;
-                    float dst = distances[index];
-                    if (dst < hitInfo.dst && dst != 1.#INF)
-                    {
-                        nodeStack[stackPointer++] = uint4(childPixelIDs[index], node.w - 1);
-
-                        if (debugData.bvVoxelChecks >= 0) debugData.bvVoxelChecks = 0;
-                        debugData.bvVoxelChecks--;
-                    }
+                    nodeStack[stackPointer++] = uint4(childPixelIDs[i], node.w - 1);
+            
+                    if (debugData.bvVoxelChecks >= 0) debugData.bvVoxelChecks = 0;
+                    debugData.bvVoxelChecks--;
                 }
             }
         }

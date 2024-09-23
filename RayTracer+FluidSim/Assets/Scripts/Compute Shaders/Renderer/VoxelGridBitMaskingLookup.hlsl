@@ -1,3 +1,3 @@
-// static const int rayPosBitMask[8] = {
+// static const int rayVoxelBitMask[8] = {
 
 // }

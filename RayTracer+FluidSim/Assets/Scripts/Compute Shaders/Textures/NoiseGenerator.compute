@@ -124,7 +124,7 @@ void GeneratePointsMap (uint3 id : SV_DispatchThreadID)
 void Voronoi (uint3 id : SV_DispatchThreadID)
 {
     uint3 num = floor(NoiseResolution / MaxNoiseCellSize);
-    float minDstSqr = FLT_MAX; // Decreasing this value will leave patches of white (> .0)
+    float minDstSqr = 1.#INF; // Decreasing this value will leave patches of white (> .0)
 
     float3 cellPos = (float3(id) % MaxNoiseCellSize) / MaxNoiseCellSize;
 

@@ -67,7 +67,7 @@ NearInfo GetNearDstCheap(float3 pos)
  
     NearInfo nearInfo;
     nearInfo.materialIndex = -1;
-    float nearDstSqr = FLT_MAX;
+    float nearDstSqr = 1.#INF;
     int index = startIndex;
     while (cellKey == SpatialLookup[index].y)
     {
@@ -95,7 +95,7 @@ NearInfo GetNearDst(float3 pos, int radius)
     float radiusSqr = sqr(radius);
     NearInfo nearInfo;
     nearInfo.materialIndex = -1;
-    float nearDstSqr = FLT_MAX;
+    float nearDstSqr = 1.#INF;
     for (int x = -radius; x <= radius; x++)
     {
         for (int y = -radius; y <= radius; y++)
