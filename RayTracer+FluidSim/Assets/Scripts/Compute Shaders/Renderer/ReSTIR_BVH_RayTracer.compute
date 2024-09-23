@@ -470,7 +470,7 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
             }
 
             // Sort the child nodes by distance
-            SortAscendingSize8BubbleSort(distances, childPixelIDs);
+            SortAscendingSize8InsertionSort(distances, childPixelIDs);
             
             // Append childs to nodeStack in order
             for (i = 7; i >= 0; i--)
@@ -492,6 +492,7 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
 
 void TraverseAllSVHs(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
 {
+    // NO DST ORDER BETWEEN BVHs AND SVOs
     HitInfo localHitInfo = InitHitInfo();
     localHitInfo.dst = hitInfo.dst;
 
@@ -499,7 +500,6 @@ void TraverseAllSVHs(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
 
     uint fluidMaterialIndex = 0;
 
-    debugData.triChecks = localHitInfo.dst != 1.#INF ? 1000 : 0;
     if (localHitInfo.dst < hitInfo.dst && localHitInfo.dst != 1.#INF)
     {
         hitInfo.dst = localHitInfo.dst;
@@ -508,11 +508,6 @@ void TraverseAllSVHs(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
         hitInfo.uv = localHitInfo.uv;
         hitInfo.materialIndex = fluidMaterialIndex;
     }
-
-    // Loop through nearly all triangles (no acceleration structure)
-    // TestTriangles(localHitInfo, debugData, ray, StaticTrisNum, StaticTrisNum + 8000);
-    // debugData.triChecks = 0;
-    // debugData.bvVoxelChecks = localHitInfo.dst != 1.#INF ? 1000 : 0;
 }
  
 HitInfo GetRayCollision(Ray ray, inout DebugData debugData)
@@ -737,7 +732,7 @@ void InitialTrace (uint3 id : SV_DispatchThreadID)
     
     // Record debug data
     // blue channel can correspond to either bv checks or voxel checks
-    float bChannel = debugData.bvVoxelChecks >= 0 ? debugData.bvVoxelChecks / DebugDataMaxValues.y : debugData.bvVoxelChecks / DebugDataMaxValues.z;
+    float bChannel = debugData.bvVoxelChecks >= 0 ? debugData.bvVoxelChecks / DebugDataMaxValues.y : -debugData.bvVoxelChecks / DebugDataMaxValues.z;
     DebugOverlay[id.xy] = float4(debugData.triChecks / (float)DebugDataMaxValues.x, bChannel, debugData.errorhasOccured, 0);
     
     DepthBuffer[id.xy] = hitInfo.dst;

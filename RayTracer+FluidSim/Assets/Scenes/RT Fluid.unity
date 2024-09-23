@@ -577,7 +577,7 @@ MonoBehaviour:
   UseDenoiser: 0
   DoLogDenoiserPerformance: 0
   RenderAsciiArt: 0
-  DebugMaxTriChecks: 10
+  DebugMaxTriChecks: 100
   DebugMaxBVChecks: 100
   DebugMaxVoxelChecks: 100
   DoVisibilityReuse: 1
@@ -999,7 +999,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CellSize: 1.59
-  DensityRadius: 2
+  DensityRadius: 1
   Threshold: 0.5
   DistanceMultiplier: 0.2
   DensityMultiplier: 0.2
