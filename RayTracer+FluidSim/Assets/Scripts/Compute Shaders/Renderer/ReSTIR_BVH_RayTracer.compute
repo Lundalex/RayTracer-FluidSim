@@ -390,7 +390,7 @@ float RayVoxelIntersect(uint3 pixelID, uint mipmapLayer, Ray ray)
     // float3 max = min + FluidDims / mipmapLayerNumCells;
 
     // Optimised
-    float3 invMipmapLayerNumCells = pow2(mipmapLayer) / NumCells;
+    float3 invMipmapLayerNumCells = pow2(mipmapLayer) / (float3)NumCells;
     float3 min = FluidPos + FluidDims * (float3)pixelID * invMipmapLayerNumCells;
     float3 max = min + FluidDims * invMipmapLayerNumCells;
 
@@ -470,8 +470,8 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
             }
 
             // Sort the child nodes by distance
-            SortAscendingSize8InsertionSort(distances, childPixelIDs);
-
+            SortAscendingSize8BubbleSort(distances, childPixelIDs);
+            
             // Append childs to nodeStack in order
             for (i = 7; i >= 0; i--)
             {
