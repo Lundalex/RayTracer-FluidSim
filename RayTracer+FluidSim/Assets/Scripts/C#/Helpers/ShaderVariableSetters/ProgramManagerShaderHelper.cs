@@ -33,7 +33,7 @@ public class ProgramManagerShaderHelper : MonoBehaviour
         // Num constants
         ssShader.SetVector("NumCells", new Vector4(manager.mCubes.NumCells.x, manager.mCubes.NumCells.y, manager.mCubes.NumCells.z, manager.mCubes.NumCells.w));
         ssShader.SetInt("NumCellsAll", manager.mCubes.NumCellsAll);
-        ssShader.SetFloat("CellSize", manager.mCubes.CellSize);
+        ssShader.SetFloat("CellSize", manager.mCubes.sim.MaxInfluenceRadius);
         ssShader.SetInt("NumPoints", manager.mCubes.NumPoints);
         ssShader.SetInt("NumPoints_NextPow2", Func.NextPow2(manager.mCubes.NumPoints_NextPow2));
     }

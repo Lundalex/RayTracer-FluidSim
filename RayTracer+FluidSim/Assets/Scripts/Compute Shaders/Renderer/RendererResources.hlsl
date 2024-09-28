@@ -164,3 +164,9 @@ float angleBetweenNormals(float3 a, float3 b)
 
     return angleDegrees;
 }
+
+void ensureMinValue(inout float value, float minValue = MIN_NON_ZERO)
+{
+    float valueSign = (value >= 0.0) ? 1.0 : -1.0;
+    value = (abs(value) > minValue) ? value : (valueSign * minValue);
+}

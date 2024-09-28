@@ -52,3 +52,16 @@ float RayBoxIntersect(Ray ray, float3 boxMin, float3 boxMax)
  
     return dst;
 };
+
+// Ray must intersect with box for this optimisation to work
+void MoveToBox(inout Ray ray, float3 boxMin, float3 boxMax)
+{
+    float3 t1 = (boxMin - ray.pos) * ray.invDir;
+    float3 t2 = (boxMax - ray.pos) * ray.invDir;
+
+    float tNear = max(max(min(t1.x, t2.x), min(t1.y, t2.y)), min(t1.z, t2.z));
+
+    tNear = max(tNear, 0.0f);
+
+    ray.pos += tNear * ray.dir;
+}

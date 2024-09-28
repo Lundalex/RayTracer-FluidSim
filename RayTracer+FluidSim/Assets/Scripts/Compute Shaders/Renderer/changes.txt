@@ -1,7 +1,0 @@
-RayVoxelIntersect optimised
-
-CheckStackOverflow placed outside while loops. Also, added while (_ && stackPointer < BVH_NODE_STACK_SIZE)
-
-Some changes to TraverseSVH while loop
-
-For fluid triangles, try transforming the normals to make it work for any fluid transforms

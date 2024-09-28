@@ -344,7 +344,7 @@ MonoBehaviour:
     z: 256
   NoiseCellSize: 128
   LerpFactor: 0.15
-  NoisePixelSize: 1.5
+  NoisePixelSize: 2
   DoCreateTextures: 0
   RenderNoiseTextures: 1
   renderer: {fileID: 868168749}
@@ -998,10 +998,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da170071670cb7348adfac942c82272e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CellSize: 1.59
-  DensityRadius: 1
+  DensityRadius: 2
   Threshold: 0.5
-  DistanceMultiplier: 0.2
+  DistanceMultiplier: 0.3
   DensityMultiplier: 0.2
   FluidTriMeshSLBufferSafety: 0.4
   SurfaceCellsMipmapDepthLimit: 5
@@ -1131,7 +1130,7 @@ MonoBehaviour:
   ProgramSpeed: 2
   TimeStepsNum: 2
   SubTimeStepsNum: 3
-  MaxInteractionRadius: 40
+  MaxInteractionRadius: 25
   InteractionAttractionPower: 5
   InteractionFountainPower: 0
   InteractionTemperaturePower: 0

@@ -332,8 +332,8 @@ public class NewRenderer : MonoBehaviour
         // Marching cubes - fluid transform
         rtShader.SetVector("FluidDims", new Vector3(mCubes.FluidDims.x, mCubes.FluidDims.y, mCubes.FluidDims.z));
         rtShader.SetVector("FluidPos", new Vector3(mCubes.FluidPos.x, mCubes.FluidPos.y, mCubes.FluidPos.z));
-        rtShader.SetVector("NumCells", new Vector3(mCubes.NumCells.x, mCubes.NumCells.y, mCubes.NumCells.z));
-        rtShader.SetFloat("CellSize", mCubes.CellSize);
+        rtShader.SetVector("SmNumCells", new Vector3(mCubes.NumCells.x, mCubes.NumCells.y, mCubes.NumCells.z));
+        rtShader.SetFloat("SmCellSize", mCubes.sim.MaxInfluenceRadius);
 
         rtShader.SetVector("TEMP", new Vector3(TEMP.x, TEMP.y, TEMP.z));
  

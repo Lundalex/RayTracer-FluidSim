@@ -55,6 +55,6 @@ void TransferParticleData (uint3 id : SV_DispatchThreadID)
 
     PData pData = PDataB[i];
     // PType pType = PTypes[Extract_PType(pData.lastChunkKey_PType_POrder)];
-    float3 transformedPos = ApplyTransform(Rot, pData.pos);
+    // float3 transformedPos = ApplyTransform(Rot, pData.pos);
     Points[i] = pData.pos;
 }

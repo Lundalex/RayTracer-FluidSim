@@ -7,8 +7,7 @@ using RendererResources;
 public class MarchingCubes : MonoBehaviour
 {
     // Scene-related variables
-    public float CellSize;
-    public float DensityRadius;
+    public uint DensityRadius;
     public float Threshold;
     public float DistanceMultiplier;
     public float DensityMultiplier;
@@ -83,18 +82,17 @@ public class MarchingCubes : MonoBehaviour
         if (!sim.ProgramStarted) Debug.LogWarning("Marching cubes class initiated before Simulation class. Variables might not be set correctly");
 
         float3 simMaxBounds = new(sim.Width, sim.Height, sim.Depth);
-
-        CellSize = 100.0f / 64.0f; // TEMP
-        NumCells = new(Mathf.CeilToInt(simMaxBounds.x / CellSize),
-                        Mathf.CeilToInt(simMaxBounds.y / CellSize),
-                        Mathf.CeilToInt(simMaxBounds.z / CellSize), 0);
+        
+        NumCells = new(Mathf.CeilToInt(simMaxBounds.x / sim.MaxInfluenceRadius),
+                        Mathf.CeilToInt(simMaxBounds.y / sim.MaxInfluenceRadius),
+                        Mathf.CeilToInt(simMaxBounds.z / sim.MaxInfluenceRadius), 0);
         NumCells.w = NumCells.x * NumCells.y;
         NumCellsAll = NumCells.x * NumCells.y * NumCells.z;
 
         FluidTriMeshSLLength = (int)(NumCellsAll * MaxTrisPerCell * FluidTriMeshSLBufferSafety);
 
-        mcShader.SetFloat("CellSize", CellSize);
-        mcShader.SetFloat("DensityRadius", DensityRadius);
+        mcShader.SetFloat("CellSize", sim.MaxInfluenceRadius);
+        mcShader.SetInt("DensityRadius", (int)DensityRadius);
         mcShader.SetFloat("Threshold", Threshold);
         mcShader.SetVector("NumCells", new Vector4(NumCells.x, NumCells.y, NumCells.z, NumCells.x * NumCells.y));
         mcShader.SetInt("NumCellsAll", NumCellsAll);
@@ -151,7 +149,7 @@ public class MarchingCubes : MonoBehaviour
         if (SurfaceCellsTexture == null)
         {
             (SurfaceCellsTexture, SurfaceCellsMM1Dims, SurfaceCellsMipmapDepth) = TextureHelper.CreateVoxelTexture(NumCells.xyz);
-            SurfaceCellsMipmapDepth = Mathf.Min(SurfaceCellsMipmapDepth, SurfaceCellsMipmapDepthLimit);
+            SurfaceCellsMipmapDepth = Mathf.Min(SurfaceCellsMipmapDepth, SurfaceCellsMipmapDepthLimit)+1;
             SurfaceCellsTexture.Create();
             mcShader.SetTexture(1, "SurfaceCells", SurfaceCellsTexture);
             mcShader.SetTexture(2, "SurfaceCells", SurfaceCellsTexture);
@@ -169,7 +167,7 @@ public class MarchingCubes : MonoBehaviour
             renderer.rtShader.SetTexture(4, "SurfaceCellsLookup", SurfaceCellsLookupTexture);
             renderer.rtShader.SetInt("MipmapMaxDepth", SurfaceCellsMipmapDepth);
 
-            svoShader.SetInt("MipmapMaxDepth", SurfaceCellsMipmapDepth);
+            svoShader.SetInt("MipmapMaxDepth", SurfaceCellsMipmapDepth); // Highest depth level = DepthLevelsNum - 1
             svoShader.SetVector("TextureMM1Dims", new Vector3(SurfaceCellsMM1Dims.x, SurfaceCellsMM1Dims.y, SurfaceCellsMM1Dims.z));
             renderer.rtShader.SetVector("TextureMM1Dims", new Vector3(SurfaceCellsMM1Dims.x, SurfaceCellsMM1Dims.y, SurfaceCellsMM1Dims.z));
 

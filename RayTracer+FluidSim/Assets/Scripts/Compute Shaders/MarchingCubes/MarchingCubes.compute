@@ -9,7 +9,7 @@
 
 // Marching cubes settings
 const float CellSize;
-const float DensityRadius;
+const uint DensityRadius;
 const float Threshold;
 const uint4 NumCells;
 const uint NumCellsAll;
@@ -80,7 +80,7 @@ NearInfo GetNearDstCheap(float3 pos)
  
         // --- Increment index each iteration - Cell particle search algorithm ---
  
-        index += 1;
+        index++;
     }
  
     nearInfo.val = max(1 - sqrt(nearDstSqr) * DistanceMultiplier, 0);
@@ -91,8 +91,7 @@ NearInfo GetNearDstCheap(float3 pos)
 NearInfo GetNearDst(float3 pos, int radius)
 {
     int3 cell = int3(pos / CellSize);
- 
-    float radiusSqr = sqr(radius);
+
     NearInfo nearInfo;
     nearInfo.materialIndex = -1;
     float nearDstSqr = 1.#INF;
@@ -169,7 +168,7 @@ NearInfo GetNearDensity(float3 pos, int radius)
            
                     // --- Increment index each iteration - Cell particle search algorithm ---
            
-                    index ++;
+                    index++;
                 }
             }
         }
@@ -186,7 +185,7 @@ void CalcGridDensities (uint3 mcCell : SV_DispatchThreadID)
 {
     if (!ValidCell(mcCell)) return;
 
-    float3 pos = mcCell * CellSize;
+    float3 pos = mcCell * CellSize + 0.5 * CellSize;
     NearInfo nearInfo = GetNearDst(pos, DensityRadius);
 
     GridDensities[mcCell] = nearInfo.val;

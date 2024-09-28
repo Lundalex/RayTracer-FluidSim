@@ -11,14 +11,18 @@ const uint MipmapPassDepth;
 
 RWTexture3D<int> SurfaceCells;
 
+uint pow2(uint exponent)
+{
+    return 1 << exponent;
+}
+
 uint3 GetMipmapOffset(uint mipmapLayer)
 {
-    uint3 offset = 0;
+    if (mipmapLayer == 0) return 0;
     
-    if (mipmapLayer >= 1) offset.x += TextureMM1Dims.x;
-
-    // This can be made without a for loop!
-    for (uint i = 1; i < mipmapLayer; i++) offset.y += (uint)(TextureMM1Dims.y / pow(2, i));
+    uint3 offset = 0;
+    offset.x += TextureMM1Dims.x;
+    if (mipmapLayer > 1) offset.y = TextureMM1Dims.y - TextureMM1Dims.y / pow2(mipmapLayer-1);
 
     return offset;
 }

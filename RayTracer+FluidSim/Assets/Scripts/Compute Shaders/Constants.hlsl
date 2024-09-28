@@ -125,7 +125,7 @@ float WeightFromGBLookup(uint x, uint y, uint z, uint radius)
         if (z == 2) return GBLookup3_z3[y][x];
         if (z == 3) return GBLookup3_z4[y][x];
     }
-    return -999.0; // Error indication
+    return -1.#INF; // Error indication
 }
 
 float TotWeightFromGBLookup(uint radius)
@@ -145,6 +145,28 @@ static const uint3 Offsets_2x2x2[8] = {
     uint3(1,1,1),
     uint3(0,1,1)
 };
+static const uint InvOffsets_2x2x2[2][2][2] = {
+    {   // x = 0
+        {   // y = 0
+            0, // z = 0 -> Index 0: (0, 0, 0)
+            3  // z = 1 -> Index 3: (0, 0, 1)
+        },
+        {   // y = 1
+            4, // z = 0 -> Index 4: (0, 1, 0)
+            7  // z = 1 -> Index 7: (0, 1, 1)
+        }
+    },
+    {   // x = 1
+        {   // y = 0
+            1, // z = 0 -> Index 1: (1, 0, 0)
+            2  // z = 1 -> Index 2: (1, 0, 1)
+        },
+        {   // y = 1
+            5, // z = 0 -> Index 5: (1, 1, 0)
+            6  // z = 1 -> Index 6: (1, 1, 1)
+        }
+    }
+};
 
 void SwapInt2(inout int2 a, inout int2 b)
 {
@@ -163,6 +185,13 @@ void SwapFloat(inout float a, inout float b)
 void SwapUint3(inout uint3 a, inout uint3 b)
 {
     uint3 temp = a;
+    a = b;
+    b = temp;
+}
+
+void SwapUint4(inout uint4 a, inout uint4 b)
+{
+    uint4 temp = a;
     a = b;
     b = temp;
 }
