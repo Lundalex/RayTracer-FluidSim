@@ -4,9 +4,12 @@ using System;
 
 // Import utils from RendererResources.cs
 using RendererResources;
+using System.Collections;
+using UnityEngine.Rendering;
 public class MarchingCubes : MonoBehaviour
 {
     // Scene-related variables
+    public int FluidTriMeshBufferACMax = 120000;
     public uint DensityRadius;
     public float Threshold;
     public float DistanceMultiplier;
@@ -123,7 +126,7 @@ public class MarchingCubes : MonoBehaviour
         ComputeHelper.CreateStructuredBuffer<int>(ref FluidStartIndicesBuffer, NumCellsAll);
         mcShader.SetBuffer(4, "FluidStartIndices", FluidStartIndicesBuffer);
 
-        ComputeHelper.CreateAppendBuffer<MCTri>(ref FluidTriMeshBufferAC, 120000);
+        ComputeHelper.CreateAppendBuffer<MCTri>(ref FluidTriMeshBufferAC, FluidTriMeshBufferACMax);
         mcShader.SetBuffer(2, "FluidTriMeshAPPEND", FluidTriMeshBufferAC);
         mcShader.SetBuffer(3, "FluidTriMeshCONSUME", FluidTriMeshBufferAC);
 
@@ -167,7 +170,7 @@ public class MarchingCubes : MonoBehaviour
             renderer.rtShader.SetTexture(4, "SurfaceCellsLookup", SurfaceCellsLookupTexture);
             renderer.rtShader.SetInt("MipmapMaxDepth", SurfaceCellsMipmapDepth);
 
-            svoShader.SetInt("MipmapMaxDepth", SurfaceCellsMipmapDepth); // Highest depth level = DepthLevelsNum - 1
+            svoShader.SetInt("MipmapMaxDepth", SurfaceCellsMipmapDepth);
             svoShader.SetVector("TextureMM1Dims", new Vector3(SurfaceCellsMM1Dims.x, SurfaceCellsMM1Dims.y, SurfaceCellsMM1Dims.z));
             renderer.rtShader.SetVector("TextureMM1Dims", new Vector3(SurfaceCellsMM1Dims.x, SurfaceCellsMM1Dims.y, SurfaceCellsMM1Dims.z));
 
@@ -219,8 +222,10 @@ public class MarchingCubes : MonoBehaviour
 
         // Get new fluid mesh length
         // GetAppendBufferCount() IS VERY EXPENIVE. USE ASYNC! ! ! ! !
+        ComputeHelper.GetAppendBufferCountAsync(FluidTriMeshBufferAC);
         FluidMeshLength = 120000; // ComputeHelper.GetAppendBufferCount(FluidTriMeshBufferAC);
-
+        
+        
         // Set fluid mesh length settings
         mcShader.SetInt("LastFluidVerticesNum", LastFluidMeshLength * 3);
         mcShader.SetInt("LastFluidTrisNum", LastFluidMeshLength);

@@ -41,7 +41,7 @@ static const int TN_SS_S = 512; // Simulation
 
 // --- Fixed Constants ---
 
-static const float MIN_NON_ZERO = 0.01;
+static const float MIN_NON_ZERO = 0.00001;
 static const uint BVH_NODE_STACK_LENGTH = MAX_BVH_DEPTH + 1;
 
 // --- Other Fixed Constants ---

@@ -161,7 +161,7 @@ bool TestTriangles(inout HitInfo hitInfo, inout DebugData debugData, Ray ray, ui
     return didHit;
 }
 
-void CheckStackOverflow(uint stackPointer, uint stackSize, DebugData debugData)
+void CheckStackOverflow(uint stackPointer, uint stackSize, inout DebugData debugData)
 {
     if (stackPointer >= stackSize) debugData.errorhasOccured = true;
 }
@@ -304,7 +304,7 @@ uint3 GetMipmapOffset(uint mipmapLayer)
     if (mipmapLayer == 0) return 0;
     
     uint3 offset = 0;
-    offset.x += TextureMM1Dims.x;
+    offset.x = TextureMM1Dims.x;
     if (mipmapLayer > 1) offset.y = TextureMM1Dims.y - TextureMM1Dims.y / pow2(mipmapLayer-1);
 
     return offset;
@@ -317,12 +317,16 @@ float GetMipmapCellSize(uint mipmapLayer)
 
 uint3 GetMipmapNumCells(uint mipmapLayer)
 {
-    return ceil((float)SmNumCells / (float)pow2(mipmapLayer));
+    float3 t = (float3)TextureMM1Dims / (float)pow2(mipmapLayer);
+    uint3 t2 = uint3(ceil(t.x), ceil(t.y), ceil(t.z));
+    return t2;
 }
 
 int3 GetMipmapCell(float3 pos, uint mipmapLayer)
 {
-    return int3(floor(pos / GetMipmapCellSize(mipmapLayer)));
+    float3 t = pos / GetMipmapCellSize(mipmapLayer);
+    int3 t2 = uint3(floor(t.x), floor(t.y), floor(t.z));
+    return t2;
 }
 
 float3 GetMipmapTDelta(float3 smTDelta, uint mipmapLayer)
@@ -418,7 +422,7 @@ static bool USE_REVERSE = false;
 
 
 // Traverses a grid of any size, and appends all intersected (and non-empty) nodes to the node stack
-void DDA(Ray ray, int3 step, uint3 numGridCells, float cellSize, inout float3 tMax, float3 tDelta, uint mipmapLayer, inout uint4 nodeStack[FLUID_NODE_STACK_LENGTH], inout uint stackPointer)
+void DDA(Ray ray, int3 step, uint3 numGridCells, float cellSize, float3 tMax, float3 tDelta, uint mipmapLayer, inout uint4 nodeStack[FLUID_NODE_STACK_LENGTH], inout uint stackPointer)
 {
     int3 cell = int3(floor(ray.pos / cellSize));
 
@@ -468,26 +472,28 @@ void DDA(Ray ray, int3 step, uint3 numGridCells, float cellSize, inout float3 tM
 }
 
 // Traverses a 2x2x2 grid (contained by a voxel), and appends all intersected (and non-empty) child nodes to the node stack
-void DDA_2x2x2(Ray ray, int3 step, int3 cellOffset, float cellSize, inout float3 tMax, float3 tDelta, uint mipmapLayer, uint node8bitData, inout uint4 nodeStack[FLUID_NODE_STACK_LENGTH], inout uint stackPointer, inout DebugData debugData)
+void DDA_2x2x2(HitInfo hitInfo, Ray rayINITIAL, Ray ray, int3 step, int3 cellOffset, float cellSize, float3 tMax, float3 tDelta, uint mipmapLayer, uint node8bitData, inout uint4 nodeStack[FLUID_NODE_STACK_LENGTH], inout uint stackPointer, inout DebugData debugData)
 {
     int3 localCell = int3(floor(ray.pos / cellSize));
     uint stackPointerStart = stackPointer;
 
-    bool t = true;
-    while (!IsCellOutsideGrid(localCell, uint3(2, 2, 2)) || t)
-    {
-        if (t == false) debugData.errorhasOccured = true;
-        t = false;
+    if (any(localCell) >= 1) debugData.errorhasOccured = true;
 
+    while (!IsCellOutsideGrid(localCell, uint3(2, 2, 2)))
+    {
         // Process the current cell
         uint bitIndex = InvOffsets_2x2x2[localCell.x][localCell.y][localCell.z];
         if (ReadBit(node8bitData, bitIndex))
         {
-            nodeStack[stackPointer++] = uint4(localCell + cellOffset, mipmapLayer);
-
             // Record debug data
             if (debugData.bvVoxelChecks >= 0) debugData.bvVoxelChecks = 0;
             debugData.bvVoxelChecks--;
+
+            // Validate dst
+            float dst = RayVoxelIntersect(localCell + cellOffset, mipmapLayer, rayINITIAL);
+            if (dst > hitInfo.dst || dst == 1.#INF) break;
+
+            nodeStack[stackPointer++] = uint4(localCell + cellOffset, mipmapLayer);
         }
     
         // Move to the next cell
@@ -595,17 +601,22 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
 
             if (USE_DDA)
             {
-                Ray ddaRay_copy = ddaRay;
-                float dst = RayVoxelIntersect(node.xyz, node.w, ddaRay_copy);
-                ddaRay_copy.pos += ddaRay_copy.dir * dst;
-                ddaRay_copy.pos -= GetMipmapCellSize(node.w) * node.xyz;
+                float dst = RayVoxelIntersect(node.xyz, node.w, ray);
+                if (dst == 1.#INF) break;
+                Ray ddaRay2 = InitRay(ray.pos + ray.dir * dst - FluidPos, ray.dir);
+                ensureMinValue(ddaRay.dir.x);
+                ensureMinValue(ddaRay.dir.y);
+                ensureMinValue(ddaRay.dir.z);
+                ddaRay2.pos -= node.xyz * GetMipmapCellSize(node.w);
 
                 uint childMipmapLayer = node.w - 1;
                 float cellSize = GetMipmapCellSize(childMipmapLayer);
-                float3 tMax = GetMipmapTMax(ddaRay_copy, step, childMipmapLayer);
+                float3 tMax = GetMipmapTMax(ddaRay2, step, childMipmapLayer);
                 float3 tDelta = GetMipmapTDelta(smTDelta, childMipmapLayer);
+
+                // if (all(tMax) > 0 && all(tMax) < GetMipmapCellSize(childMipmapLayer)) debugData.errorhasOccured = true;
                 
-                DDA_2x2x2(ddaRay_copy, step, 2 * node.xyz, cellSize, tMax, tDelta, childMipmapLayer, node8bitData, nodeStack, stackPointer, debugData);
+                DDA_2x2x2(hitInfo, ray, ddaRay2, step, 2 * node.xyz, cellSize, tMax, tDelta, childMipmapLayer, node8bitData, nodeStack, stackPointer, debugData);
             }
             else
             {

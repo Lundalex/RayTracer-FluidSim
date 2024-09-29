@@ -685,7 +685,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sceneObjects:
   - {fileID: 2439891451013711600}
-  - {fileID: 1060108115}
+  - {fileID: 4565288040932495236}
   materialInputs:
   - brightness: 0
     col:
@@ -730,16 +730,11 @@ MonoBehaviour:
   MaxAtlasDims: 16384
   MaxDepthSceneBVH: 10
   SplitResolution: 5
-  FileName: 80kScene
+  FileName: 8kScene
   BVUpdateModeSelect: 0
   FileModeSelect: 1
   ExtensionModeSelect: 0
   m: {fileID: 868168749}
---- !u!1 &1060108115 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8409242006498289557, guid: 52f1e2443de37a04ba443fa01d725629, type: 3}
-  m_PrefabInstance: {fileID: 4718083346981041156}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1164272047
 GameObject:
   m_ObjectHideFlags: 0
@@ -1392,7 +1387,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1133065936894574146, guid: 49109c01bb31884459234917c7cccf0f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2
+      value: 12.46
       objectReference: {fileID: 0}
     - target: {fileID: 1133065936894574146, guid: 49109c01bb31884459234917c7cccf0f, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1443,6 +1438,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 49109c01bb31884459234917c7cccf0f, type: 3}
+--- !u!1 &4565288040932495236 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2700935931099460490, guid: 49109c01bb31884459234917c7cccf0f, type: 3}
+  m_PrefabInstance: {fileID: 4565288040932495235}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &4718083346981041156
 PrefabInstance:
   m_ObjectHideFlags: 0

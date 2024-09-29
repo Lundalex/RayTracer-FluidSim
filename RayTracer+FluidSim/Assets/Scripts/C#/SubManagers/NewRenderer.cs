@@ -368,9 +368,9 @@ public class NewRenderer : MonoBehaviour
         // Set SceneObjects & Tris data
         SceneObjectDataBuffer = ComputeHelper.CreateStructuredBuffer<SceneObjectData>(SceneObjectDatas);
         shaderHelper.SetSceneObjectDataBuffer(SceneObjectDataBuffer);
-        RenderTriangleBuffer = ComputeHelper.CreateStructuredBuffer<RenderTriangle>(RenderTriangles, StaticTrisNum + 120000);
+        RenderTriangleBuffer = ComputeHelper.CreateStructuredBuffer<RenderTriangle>(RenderTriangles, StaticTrisNum + mCubes.FluidTriMeshBufferACMax);
         shaderHelper.SetTriBuffer(RenderTriangleBuffer);
-        VertexBuffer = ComputeHelper.CreateStructuredBuffer<Vertex>(Vertices, StaticVerticesNum + 3 * 120000);
+        VertexBuffer = ComputeHelper.CreateStructuredBuffer<Vertex>(Vertices, StaticVerticesNum + 3 * mCubes.FluidTriMeshBufferACMax);
         shaderHelper.SetVertexBuffer(VertexBuffer);
         RunPreCalcShader();
  
@@ -459,6 +459,7 @@ public class NewRenderer : MonoBehaviour
             NormalsBufferTexture.Create();
             rtShader.SetTexture(0, "NormalsBuffer", NormalsBufferTexture);
             rtShader.SetTexture(1, "NormalsBuffer", NormalsBufferTexture);
+            // rtShader.SetTexture(4, "NormalsBuffer", NormalsBufferTexture);
         }
     }
  
@@ -487,6 +488,8 @@ public class NewRenderer : MonoBehaviour
     private void RunReSTIRShader()
     {
         ComputeHelper.DispatchKernel(rtShader, "InitialTrace", Resolution, RayTracerThreadSize);
+
+        // Vector3[] normalsBuffer = TextureUnpacker.UnpackTextureTo1DArray(NormalsBufferTexture);
 
         if (TemporalReuseWeight > 0) ComputeHelper.DispatchKernel(rtShader, "TemporalReuse", Resolution, RayTracerThreadSize);
 

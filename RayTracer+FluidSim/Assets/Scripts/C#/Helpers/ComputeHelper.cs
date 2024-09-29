@@ -3,6 +3,8 @@ using UnityEngine;
 
 // Import utils from SimResources.cs
 using SimResources;
+using UnityEngine.Rendering;
+using System.Collections;
 public static class ComputeHelper
 {
 
@@ -159,6 +161,31 @@ public static class ComputeHelper
         countBuffer.Release();
         return count;
 	}
+
+    public static void GetAppendBufferCountAsync(ComputeBuffer buffer)
+    {
+        ComputeBuffer countBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
+
+        ComputeBuffer.CopyCount(buffer, countBuffer, 0);
+
+        AsyncGPUReadback.Request(countBuffer, OnCompleteReadback);
+        
+        countBuffer.Release();
+
+        static void OnCompleteReadback(AsyncGPUReadbackRequest request)
+        {
+            if(!request.done){
+                Debug.Log("!request.done - GetAppendBufferCountAsync");
+                return;
+            }
+
+            if(request.hasError){
+                Debug.Log("request.hasError - GetAppendBufferCountAsync");
+            }else{
+                Debug.Log(request.GetData<int>().ToArray()[0]);
+            }
+        }
+    }
 
     /// <summary>Get data from a compute buffer into a c# array</summary>
 	public static T[] GetStructuredBufferData<T>(ComputeBuffer buffer)
