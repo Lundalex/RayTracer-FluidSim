@@ -993,6 +993,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da170071670cb7348adfac942c82272e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  FluidTriMeshBufferACMax: 120000
+  FluidMeshLengthSafety: 1.1
   DensityRadius: 2
   Threshold: 0.5
   DistanceMultiplier: 0.3

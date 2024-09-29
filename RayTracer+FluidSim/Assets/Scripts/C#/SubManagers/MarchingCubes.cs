@@ -4,12 +4,11 @@ using System;
 
 // Import utils from RendererResources.cs
 using RendererResources;
-using System.Collections;
-using UnityEngine.Rendering;
 public class MarchingCubes : MonoBehaviour
 {
     // Scene-related variables
     public int FluidTriMeshBufferACMax = 120000;
+    [Range(1.0f, 1.5f)] public float FluidMeshLengthSafety = 1.05f;
     public uint DensityRadius;
     public float Threshold;
     public float DistanceMultiplier;
@@ -44,7 +43,7 @@ public class MarchingCubes : MonoBehaviour
 #region Run Time Set Variables
     [NonSerialized] public int NumPoints;
     [NonSerialized] public int NumPoints_NextPow2;
-    [NonSerialized] public  int FluidMeshLength = 0;
+    [NonSerialized] public int FluidMeshLength = 0;
     private int LastFluidMeshLength = 0;
     private int FluidTriMeshSLLength = 0;
 #endregion
@@ -126,6 +125,7 @@ public class MarchingCubes : MonoBehaviour
         ComputeHelper.CreateStructuredBuffer<int>(ref FluidStartIndicesBuffer, NumCellsAll);
         mcShader.SetBuffer(4, "FluidStartIndices", FluidStartIndicesBuffer);
 
+        FluidMeshLength = FluidTriMeshBufferACMax;
         ComputeHelper.CreateAppendBuffer<MCTri>(ref FluidTriMeshBufferAC, FluidTriMeshBufferACMax);
         mcShader.SetBuffer(2, "FluidTriMeshAPPEND", FluidTriMeshBufferAC);
         mcShader.SetBuffer(3, "FluidTriMeshCONSUME", FluidTriMeshBufferAC);
@@ -220,11 +220,11 @@ public class MarchingCubes : MonoBehaviour
         // Generate the fluid mesh using marching cubes
         ComputeHelper.DispatchKernel(mcShader, "GenerateFluidMesh", NumCells.xyz, mcShaderThreadSize);
 
-        // Get new fluid mesh length
-        // GetAppendBufferCount() IS VERY EXPENIVE. USE ASYNC! ! ! ! !
-        ComputeHelper.GetAppendBufferCountAsync(FluidTriMeshBufferAC);
-        FluidMeshLength = 120000; // ComputeHelper.GetAppendBufferCount(FluidTriMeshBufferAC);
-        
+        // Get new fluid mesh length asyncronously
+        ComputeHelper.GetAppendBufferCountAsync(FluidTriMeshBufferAC, count => 
+        {
+            FluidMeshLength = (int)(count * FluidMeshLengthSafety);
+        });
         
         // Set fluid mesh length settings
         mcShader.SetInt("LastFluidVerticesNum", LastFluidMeshLength * 3);

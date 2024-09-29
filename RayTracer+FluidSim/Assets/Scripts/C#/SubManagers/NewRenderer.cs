@@ -487,7 +487,7 @@ public class NewRenderer : MonoBehaviour
  
     private void RunReSTIRShader()
     {
-        ComputeHelper.DispatchKernel(rtShader, "InitialTrace", Resolution, RayTracerThreadSize);
+        ComputeHelper.DispatchKernel(rtShader, "InitialTrace", Resolution, RayTracerThreadSize "USE ONLY SPARSE VOXEL TREE INSTEAD OF DDA???");
 
         // Vector3[] normalsBuffer = TextureUnpacker.UnpackTextureTo1DArray(NormalsBufferTexture);
 

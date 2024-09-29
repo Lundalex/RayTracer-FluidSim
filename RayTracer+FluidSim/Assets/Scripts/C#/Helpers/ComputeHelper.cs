@@ -1,10 +1,10 @@
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Rendering;
+using System;
 
 // Import utils from SimResources.cs
 using SimResources;
-using UnityEngine.Rendering;
-using System.Collections;
 public static class ComputeHelper
 {
 
@@ -140,7 +140,7 @@ public static class ComputeHelper
 #region Get Buffer Data
 
     /// <summary>Get append buffer count</summary>
-    /// <remarks>Uses an countBuffer</remarks>
+    /// <remarks>Uses a countBuffer</remarks>
 	public static int GetAppendBufferCount(ComputeBuffer buffer, ComputeBuffer countBuffer)
 	{
         ComputeBuffer.CopyCount(buffer, countBuffer, 0);
@@ -150,7 +150,7 @@ public static class ComputeHelper
         return count;
 	}
     /// <summary>Get append buffer count</summary>
-    /// <remarks>Does not use an countBuffer</remarks>
+    /// <remarks>Does not use a countBuffer</remarks>
 	public static int GetAppendBufferCount(ComputeBuffer buffer)
 	{
         ComputeBuffer countBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
@@ -162,29 +162,54 @@ public static class ComputeHelper
         return count;
 	}
 
-    public static void GetAppendBufferCountAsync(ComputeBuffer buffer)
+    /// <summary>Get append buffer count asyncronously (invokes an action).
+    /// MAY NOT WORK PROPERLY IF CALLED MULTIPLE TIMES WITH THE SAME COUNTBUFFER</summary>
+    /// <remarks>Uses a countBuffer</remarks>
+    public static void GetAppendBufferCountAsync(ComputeBuffer buffer, ComputeBuffer countBuffer, Action<int> onComplete)
+    {
+        ComputeBuffer.CopyCount(buffer, countBuffer, 0);
+
+        AsyncGPUReadback.Request(countBuffer, (request) =>
+        {
+            if (request.hasError)
+            {
+                Debug.Log("request.hasError - GetAppendBufferCountAsync");
+                onComplete?.Invoke(-1); // -1 indicates an error
+            }
+            else
+            {
+                int count = request.GetData<int>()[0];
+                onComplete?.Invoke(count);
+            }
+
+            // Release the count buffer to free GPU memory.
+            countBuffer.Release();
+        });
+    }
+    /// <summary>Get append buffer count asyncronously (invokes an action)</summary>
+    /// <remarks>Does not use a countBuffer</remarks>
+    public static void GetAppendBufferCountAsync(ComputeBuffer buffer, Action<int> onComplete)
     {
         ComputeBuffer countBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
 
         ComputeBuffer.CopyCount(buffer, countBuffer, 0);
 
-        AsyncGPUReadback.Request(countBuffer, OnCompleteReadback);
-        
-        countBuffer.Release();
-
-        static void OnCompleteReadback(AsyncGPUReadbackRequest request)
+        AsyncGPUReadback.Request(countBuffer, (request) =>
         {
-            if(!request.done){
-                Debug.Log("!request.done - GetAppendBufferCountAsync");
-                return;
+            if (request.hasError)
+            {
+                Debug.Log("request.hasError - GetAppendBufferCountAsync");
+                onComplete?.Invoke(-1); // -1 indicates an error
+            }
+            else
+            {
+                int count = request.GetData<int>()[0];
+                onComplete?.Invoke(count);
             }
 
-            if(request.hasError){
-                Debug.Log("request.hasError - GetAppendBufferCountAsync");
-            }else{
-                Debug.Log(request.GetData<int>().ToArray()[0]);
-            }
-        }
+            // Release the count buffer to free GPU memory.
+            countBuffer.Release();
+        });
     }
 
     /// <summary>Get data from a compute buffer into a c# array</summary>
