@@ -168,6 +168,10 @@ static const uint InvOffsets_2x2x2[2][2][2] = {
     }
 };
 
+static const float f8_INF[8] = {
+    1.#INF, 1.#INF, 1.#INF, 1.#INF, 1.#INF, 1.#INF, 1.#INF, 1.#INF
+};
+
 void SwapInt2(inout int2 a, inout int2 b)
 {
     int2 temp = a;

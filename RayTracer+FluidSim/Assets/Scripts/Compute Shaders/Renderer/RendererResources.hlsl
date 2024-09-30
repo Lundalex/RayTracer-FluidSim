@@ -12,44 +12,51 @@ float MSDensityKernel(float dst, float radius)
 }
 
 // Sort an array of size 8 using bubble sort
-void SortAscendingSize8BubbleSort(inout float arr1[8], inout uint3 arr2[8])
+void SortDescendingBubbleSort_NodeDst8(inout NodeDst arr[8], int length)
 {
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < length; i++)
     {
-        for (int j = 0; j < 7 - i; j++) // 7-i ensures we don't compare sorted elements
+        for (int j = 0; j < length - 1 - i; j++) // length - 1 - i to avoid comparing sorted elements
         {
-            if (arr1[j] > arr1[j + 1])
+            if (arr[j].dst < arr[j + 1].dst)
             {
-                // Swap [j] and [j + 1] for arr1 and arr2
-                SwapFloat(arr1[j], arr1[j + 1]);
-                SwapUint3(arr2[j], arr2[j + 1]);
+                SwapNodeDst(arr[j], arr[j + 1]);
             }
         }
     }
 }
 
-// Sort an array of size 8 using insertion sort
-void SortAscendingSize8InsertionSort(inout float distances[8], inout uint3 pixelIDs[8])
-{
-    for (int i = 1; i < 8; i++)
-    {
-        float keyDistance = distances[i];
-        uint3 keyPixelID = pixelIDs[i];
-        int j = i - 1;
+// // Sort an array of size 8 using insertion sort
+// void SortDescendingInsertionSort_NodeDst8(inout NodeDst arr[8], uint length)
+// {
+//     for (int i = 1; i < 8; i++)
+//     {
+//         float keyDistance = distances[i];
+//         uint3 keyPixelID = pixelIDs[i];
+//         int j = i - 1;
 
-        // Move elements greater than keyDistance to one position ahead
-        while (j >= 0 && distances[j] > keyDistance)
-        {
-            distances[j + 1] = distances[j];
-            pixelIDs[j + 1] = pixelIDs[j];
-            j--;
-        }
-        distances[j + 1] = keyDistance;
-        pixelIDs[j + 1] = keyPixelID;
+//         // Move elements greater than keyDistance to one position ahead
+//         while (j >= 0 && distances[j] > keyDistance)
+//         {
+//             distances[j + 1] = distances[j];
+//             pixelIDs[j + 1] = pixelIDs[j];
+//             j--;
+//         }
+//         distances[j + 1] = keyDistance;
+//         pixelIDs[j + 1] = keyPixelID;
+//     }
+// }
+
+void ReverseArrayUint4_50(inout uint4 arr[50], uint startIndex, uint endIndex)
+{
+    uint iterations = (uint)((endIndex - startIndex) * 0.5);
+    for (uint i = 0; i < iterations; i++)
+    {
+        SwapUint4(arr[startIndex + i], arr[endIndex - i - 1]);
     }
 }
 
-void ApplyTransformTriVertices(float3 rot, inout float3 a, inout float3 b, inout float3 c)
+void ApplyTransformF3x3(float3 rot, inout float3 a, inout float3 b, inout float3 c)
 {
     float cosX = cos(rot.x);
     float sinX = sin(rot.x);
@@ -101,6 +108,26 @@ float dot2(float2 a) // float2 version
 uint pow2(uint exponent)
 {
     return 1 << exponent;
+}
+
+int3 ceilF3(float3 a)
+{
+    return int3(ceil(a.x), ceil(a.y), ceil(a.z));
+}
+
+int2 ceilF2(float2 a)
+{
+    return int2(ceil(a.x), ceil(a.y));
+}
+
+int3 floorF3(float3 a)
+{
+    return int3(floor(a.x), floor(a.y), floor(a.z));
+}
+
+int2 floorF2(float2 a)
+{
+    return int2(floor(a.x), floor(a.y));
 }
 
 uint NextRandom(inout uint state)

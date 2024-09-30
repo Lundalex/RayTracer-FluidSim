@@ -277,28 +277,6 @@ void TraverseSceneBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
     CheckStackOverflow(stackPointer, BVH_NODE_STACK_LENGTH, debugData);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 uint3 GetMipmapOffset(uint mipmapLayer)
 {
     if (mipmapLayer == 0) return 0;
@@ -317,43 +295,16 @@ float GetMipmapCellSize(uint mipmapLayer)
 
 uint3 GetMipmapNumCells(uint mipmapLayer)
 {
-    float3 t = (float3)TextureMM1Dims / (float)pow2(mipmapLayer);
-    uint3 t2 = uint3(ceil(t.x), ceil(t.y), ceil(t.z));
+    float3 t = (float3)SmNumCells / (float)pow2(mipmapLayer);
+    uint3 t2 = ceilF3(t);
     return t2;
 }
 
 int3 GetMipmapCell(float3 pos, uint mipmapLayer)
 {
     float3 t = pos / GetMipmapCellSize(mipmapLayer);
-    int3 t2 = uint3(floor(t.x), floor(t.y), floor(t.z));
+    int3 t2 = floorF3(t);
     return t2;
-}
-
-float3 GetMipmapTDelta(float3 smTDelta, uint mipmapLayer)
-{
-    return smTDelta * pow2(mipmapLayer);
-}
-
-float3 GetMipmapTMax(Ray ray, int3 step, uint mipmapLayer)
-{
-    int3 cell = GetMipmapCell(ray.pos, mipmapLayer);
-    float cellSize = GetMipmapCellSize(mipmapLayer);
-
-    float3 tMax;
-    tMax.x = ((cell.x + (step.x > 0)) * cellSize - ray.pos.x) * ray.invDir.x;
-    tMax.y = ((cell.y + (step.y > 0)) * cellSize - ray.pos.y) * ray.invDir.y;
-    tMax.z = ((cell.z + (step.z > 0)) * cellSize - ray.pos.z) * ray.invDir.z;
-
-    return tMax;
-}
-float3 GetMipmapTMax(Ray ray, int3 step, int3 cell, float cellSize)
-{
-    float3 tMax;
-    tMax.x = ((cell.x + (step.x > 0)) * cellSize - ray.pos.x) * ray.invDir.x;
-    tMax.y = ((cell.y + (step.y > 0)) * cellSize - ray.pos.y) * ray.invDir.y;
-    tMax.z = ((cell.z + (step.z > 0)) * cellSize - ray.pos.z) * ray.invDir.z;
-
-    return tMax;
 }
 
 uint ReadFromMipmapLayer(uint3 pixelID, uint mipmapLayer)
@@ -370,9 +321,10 @@ bool ReadBit(uint val, int bitNr)
 
 bool IsCellOutsideGrid(int3 cell, int3 numGridCells)
 {
-    return (cell.x < 0 || cell.x >= numGridCells.x ||
-            cell.y < 0 || cell.y >= numGridCells.y ||
-            cell.z < 0 || cell.z >= numGridCells.z);
+    return (any(cell) < 0
+            || cell.x >= numGridCells.x
+            || cell.y >= numGridCells.y
+            || cell.z >= numGridCells.z);
 }
 
 float RayVoxelIntersect(uint3 pixelID, uint mipmapLayer, Ray ray)
@@ -405,128 +357,6 @@ void MoveToVoxel(uint3 pixelID, uint mipmapLayer, inout Ray ray)
     MoveToBox(ray, min, max);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-static bool USE_DDA = false;
-static bool USE_REVERSE = false;
-
-
-// Traverses a grid of any size, and appends all intersected (and non-empty) nodes to the node stack
-void DDA(Ray ray, int3 step, uint3 numGridCells, float cellSize, float3 tMax, float3 tDelta, uint mipmapLayer, inout uint4 nodeStack[FLUID_NODE_STACK_LENGTH], inout uint stackPointer)
-{
-    int3 cell = int3(floor(ray.pos / cellSize));
-
-    uint stackPointerStart = stackPointer;
-
-    // Traverse the grid
-    // If the fluid settings are very wierd, the initial nodeStack setup can be very costly.
-    // Therefore, a maximum iteration count is set
-    for (uint i = 0; i < MAX_DDA_ITERATIONS; i++)
-    {
-        // Check if we are outside the grid bounds
-        if (IsCellOutsideGrid(cell, numGridCells)) break;
-
-        // If the current node is valid, add all its non-empty child nodes to the node stack
-        uint node8bitData = ReadFromMipmapLayer(cell, mipmapLayer);
-        if (node8bitData != 0) nodeStack[stackPointer++] = uint4(cell, mipmapLayer);
-
-        // Move to the next cell
-        if (tMax.x < tMax.y && tMax.x < tMax.z)
-        {
-            tMax.x += tDelta.x;
-            cell.x += step.x;
-        }
-        else if (tMax.y < tMax.z)
-        {
-            tMax.y += tDelta.y;
-            cell.y += step.y;
-        }
-        else
-        {
-            tMax.z += tDelta.z;
-            cell.z += step.z;
-        }
-    }
-
-    if (USE_REVERSE)
-    {
-        // EXPENSIVE!
-        // Reverse the order of added nodes to make sure to check the nearest one first
-        uint iterations = (stackPointer - stackPointerStart ) / 2;
-        int endIndex = stackPointer - 1;
-        for (i = 0; i < iterations; i++)
-        {
-            SwapUint4(nodeStack[stackPointerStart + i], nodeStack[endIndex - i]);
-        }
-    }
-}
-
-// Traverses a 2x2x2 grid (contained by a voxel), and appends all intersected (and non-empty) child nodes to the node stack
-void DDA_2x2x2(HitInfo hitInfo, Ray rayINITIAL, Ray ray, int3 step, int3 cellOffset, float cellSize, float3 tMax, float3 tDelta, uint mipmapLayer, uint node8bitData, inout uint4 nodeStack[FLUID_NODE_STACK_LENGTH], inout uint stackPointer, inout DebugData debugData)
-{
-    int3 localCell = int3(floor(ray.pos / cellSize));
-    uint stackPointerStart = stackPointer;
-
-    if (any(localCell) >= 1) debugData.errorhasOccured = true;
-
-    while (!IsCellOutsideGrid(localCell, uint3(2, 2, 2)))
-    {
-        // Process the current cell
-        uint bitIndex = InvOffsets_2x2x2[localCell.x][localCell.y][localCell.z];
-        if (ReadBit(node8bitData, bitIndex))
-        {
-            // Record debug data
-            if (debugData.bvVoxelChecks >= 0) debugData.bvVoxelChecks = 0;
-            debugData.bvVoxelChecks--;
-
-            // Validate dst
-            float dst = RayVoxelIntersect(localCell + cellOffset, mipmapLayer, rayINITIAL);
-            if (dst > hitInfo.dst || dst == 1.#INF) break;
-
-            nodeStack[stackPointer++] = uint4(localCell + cellOffset, mipmapLayer);
-        }
-    
-        // Move to the next cell
-        if (tMax.x < tMax.y && tMax.x < tMax.z)
-        {
-            tMax.x += tDelta.x;
-            localCell.x += step.x;
-        }
-        else if (tMax.y < tMax.z)
-        {
-            tMax.y += tDelta.y;
-            localCell.y += step.y;
-        }
-        else
-        {
-            tMax.z += tDelta.z;
-            localCell.z += step.z;
-        }
-    }
-
-    if (USE_REVERSE)
-    {
-        // EXPENSIVE!
-        // Reverse the order of added nodes to make sure to check the nearest one first
-        uint iterations = (stackPointer - stackPointerStart ) / 2;
-        int endIndex = stackPointer - 1;
-        for (uint i = 0; i < iterations; i++)
-        {
-            SwapUint4(nodeStack[stackPointerStart + i], nodeStack[endIndex - i]);
-        }
-    }
-}
-
 void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
 {
     // Initial fluid box intersection test
@@ -535,44 +365,17 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
     float dst = RayBoxIntersect(ray, fluidMin, fluidMax);
     if (dst > hitInfo.dst || dst == 1.#INF) return;
 
-    // Init DDA data
-    Ray ddaRay = InitRay(ray.pos + ray.dir * dst - FluidPos, ray.dir);
-    ensureMinValue(ddaRay.dir.x);
-    ensureMinValue(ddaRay.dir.y);
-    ensureMinValue(ddaRay.dir.z);
+    // Repurpose debugData.bvVoxelChecks to count voxel checks
+    if (debugData.bvVoxelChecks >= 0) debugData.bvVoxelChecks = 0;
 
-    // Determine the step direction
-    int3 step;
-    step.x = (ddaRay.dir.x > 0.0) ? 1 : -1;
-    step.y = (ddaRay.dir.y > 0.0) ? 1 : -1;
-    step.z = (ddaRay.dir.z > 0.0) ? 1 : -1;
-
-    // Calculate how far to step along the ray per grid cell in each axis
-    float3 smTDelta;
-    smTDelta.x = abs(SmCellSize * ddaRay.invDir.x);
-    smTDelta.y = abs(SmCellSize * ddaRay.invDir.y);
-    smTDelta.z = abs(SmCellSize * ddaRay.invDir.z);
-
-    // tMax:
-    // Calculate the distance from the rays position to the next cell boundary (for each mipmap layer)
-    // The step axis for each loop iteration will be decided by what direction has the lowest ray distance (at the current mipmap level scope)
-
-    // Init nodeStack
+    // Init nodeStack with the root node of the SVO
+    // mipmap level may be redundant and able to be replaced by a variable
     uint4 nodeStack[FLUID_NODE_STACK_LENGTH]; // uint4(pixelID: xyz, mipmap level: w)
-    for (uint i = 0; i < FLUID_NODE_STACK_LENGTH; i++) nodeStack[i] = uint4(0, 0, 0, 0);
     uint stackPointer = 0;
+    nodeStack[stackPointer++] = uint4(0, 0, 0, MipmapMaxDepth);
 
-    // Use DDA to get the root nodes intersected by the ray
-    uint3 hNumCells = GetMipmapNumCells(MipmapMaxDepth);
-    float hCellSize = GetMipmapCellSize(MipmapMaxDepth);
-
-    // step: same between mipmap levels
-    // tMax: Complicated
-    // tDelta: SmTDelta * (SmTMax * pow2(mipmapLevel))
-    float3 hTMax = GetMipmapTMax(ddaRay, step, MipmapMaxDepth);
-    float3 hTDelta = GetMipmapTDelta(smTDelta, MipmapMaxDepth);
-    DDA(ddaRay, step, hNumCells, hCellSize, hTMax, hTDelta, MipmapMaxDepth, nodeStack, stackPointer);
-    debugData.bvVoxelChecks--;
+    NodeDst InitNodeDstArr[8];
+    for (int j = 0; j < 8; j++) InitNodeDstArr[j] = InitNodeDst();
 
     uint iterationCount = 0;
     while (stackPointer > 0 && iterationCount < MAX_VOXEL_TREE_ITERATIONS) 
@@ -599,96 +402,45 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
 
             if (node8bitData == 0) continue;
 
-            if (USE_DDA)
+            uint3 basePixelID = node.xyz * 2;
+
+            // Init nodeDst array
+            NodeDst nodeDstArr[8] = InitNodeDstArr;
+            uint nodeDstLength = 0;
+
+            // Perform ray-voxel intersection tests for each non-empty child node
+            for (uint i = 0; i < 8; i++)
             {
-                float dst = RayVoxelIntersect(node.xyz, node.w, ray);
-                if (dst == 1.#INF) break;
-                Ray ddaRay2 = InitRay(ray.pos + ray.dir * dst - FluidPos, ray.dir);
-                ensureMinValue(ddaRay.dir.x);
-                ensureMinValue(ddaRay.dir.y);
-                ensureMinValue(ddaRay.dir.z);
-                ddaRay2.pos -= node.xyz * GetMipmapCellSize(node.w);
+                bool containsLeaves = ReadBit(node8bitData, i);
 
-                uint childMipmapLayer = node.w - 1;
-                float cellSize = GetMipmapCellSize(childMipmapLayer);
-                float3 tMax = GetMipmapTMax(ddaRay2, step, childMipmapLayer);
-                float3 tDelta = GetMipmapTDelta(smTDelta, childMipmapLayer);
-
-                // if (all(tMax) > 0 && all(tMax) < GetMipmapCellSize(childMipmapLayer)) debugData.errorhasOccured = true;
-                
-                DDA_2x2x2(hitInfo, ray, ddaRay2, step, 2 * node.xyz, cellSize, tMax, tDelta, childMipmapLayer, node8bitData, nodeStack, stackPointer, debugData);
-            }
-            else
-            {
-                // ----- DEPRECATED CODE: -----
-
-                uint3 basePixelID = node.xyz * 2;
-
-                // Init childPixelIDs
-                uint3 childPixelIDs[8];
-                for (int i = 0; i < 8; i++) childPixelIDs[i] = basePixelID + Offsets_2x2x2[i];
-
-                // Init distances
-                float distances[8];
-                for (i = 0; i < 8; i++) distances[i] = 1.#INF;
-
-                // Perform ddaRay-voxel intersection tests for each non-empty child node
-                for (i = 0; i < 8; i++)
+                // Push child node to the stack if it contains leaves
+                if (containsLeaves)
                 {
-                    bool containsLeaves = ReadBit(node8bitData, i);
+                    uint3 pixelID = basePixelID + Offsets_2x2x2[i];
+                    float dst = RayVoxelIntersect(pixelID, node.w - 1, ray);
 
-                    // Push child node to the stack if it contains leaves
-                    if (containsLeaves)
+                    // Add the nodeDst value if the voxel was hit
+                    if (dst < hitInfo.dst)
                     {
-                        float dst = RayVoxelIntersect(childPixelIDs[i], node.w - 1, ray);
-
-                        // Add the dst value if the voxel was hit
-                        if (dst != 1.#INF && dst < hitInfo.dst) distances[i] = dst;
-                    }
-                }
-
-                // Sort the child nodes by distance
-                SortAscendingSize8InsertionSort(distances, childPixelIDs);
-                
-                // Append childs to nodeStack in order
-                for (i = 7; i >= 0; i--)
-                {
-                    float dst = distances[i];
-                    if (dst < hitInfo.dst && dst != 1.#INF)
-                    {
-                        nodeStack[stackPointer++] = uint4(childPixelIDs[i], node.w - 1);
-                
-                        if (debugData.bvVoxelChecks >= 0) debugData.bvVoxelChecks = 0;
-                        debugData.bvVoxelChecks--;
+                        nodeDstArr[nodeDstLength++] = InitNodeDst(dst, pixelID);
                     }
                 }
             }
+
+            // Sort the child nodes by distance
+            SortDescendingBubbleSort_NodeDst8(nodeDstArr, nodeDstLength);
+            
+            // Append childs to nodeStack in order
+            for (i = 0; i < nodeDstLength; i++)
+            {
+                nodeStack[stackPointer++] = uint4(nodeDstArr[i].pixelID, node.w - 1);
+            }
+            debugData.bvVoxelChecks -= nodeDstLength;
         }
     }
 
     CheckStackOverflow(stackPointer, FLUID_NODE_STACK_LENGTH, debugData);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void TraverseAllSVHs(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
 {

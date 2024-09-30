@@ -122,6 +122,11 @@ struct DebugData
     int bvVoxelChecks;
     bool errorhasOccured;
 };
+struct NodeDst
+{
+    float dst;
+    uint3 pixelID;
+};
 
 // Basic Tri struct for marching cubes shader
 struct MCTri
@@ -230,6 +235,28 @@ DebugData InitDebugData()
     debugData.errorhasOccured = false;
  
     return debugData;
+}
+NodeDst InitNodeDst()
+{
+    NodeDst nodeDst;
+    nodeDst.dst = 1.#INF;
+    nodeDst.pixelID = 0;
+
+    return nodeDst;
+}
+NodeDst InitNodeDst(float dst, uint3 pixelID)
+{
+    NodeDst nodeDst;
+    nodeDst.dst = dst;
+    nodeDst.pixelID = pixelID;
+
+    return nodeDst;
+}
+void SwapNodeDst(inout NodeDst a, inout NodeDst b)
+{
+    NodeDst temp = a;
+    a = b;
+    b = temp;
 }
 Material2 InitMaterial()
 {

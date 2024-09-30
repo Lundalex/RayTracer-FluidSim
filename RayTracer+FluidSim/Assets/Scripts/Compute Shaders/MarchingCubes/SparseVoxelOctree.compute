@@ -8,12 +8,21 @@ const uint3 TextureMM1Dims;
 
 // Per-pass set variables
 const uint MipmapPassDepth;
+const int3 LastPassNumCells;
 
 RWTexture3D<int> SurfaceCells;
 
 uint pow2(uint exponent)
 {
     return 1 << exponent;
+}
+
+bool IsCellOutsideGrid(int3 cell)
+{
+    return (any(cell) < 0
+            || cell.x >= LastPassNumCells.x
+            || cell.y >= LastPassNumCells.y
+            || cell.z >= LastPassNumCells.z);
 }
 
 uint3 GetMipmapOffset(uint mipmapLayer)
@@ -29,6 +38,8 @@ uint3 GetMipmapOffset(uint mipmapLayer)
 
 int ReadFromMipmapLayer(uint3 pixelID, uint mipmapLayer)
 {
+    if (IsCellOutsideGrid(pixelID)) return 0;
+
     uint3 offsetPixelID = GetMipmapOffset(mipmapLayer) + pixelID;
 
     return SurfaceCells[offsetPixelID];

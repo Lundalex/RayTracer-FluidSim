@@ -364,6 +364,19 @@ namespace RendererResources
             input = maxVal;
         }
 
+        public static int3 Ceil(float3 input)
+        {
+            return new int3((int)Mathf.Ceil(input.x), (int)Mathf.Ceil(input.y), (int)Mathf.Ceil(input.z));
+        }
+        public static int2 Ceil(float2 input)
+        {
+            return new int2((int)Mathf.Ceil(input.x), (int)Mathf.Ceil(input.y));
+        }
+        public static int Ceil(float input)
+        {
+            return (int)Mathf.Ceil(input);
+        }
+
         public static float3 Avg(params float3[] inputArray)
         {
             float3 tot = 0;

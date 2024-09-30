@@ -6,8 +6,8 @@ public static class TextureUnpacker
     /// Unpacks a Texture2D into a 2D array of Vector3.
     /// </summary>
     /// <param name="sourceTexture">The Texture2D to unpack.</param>
-    /// <returns>A 2D array of Vector3 containing the unpacked data.</returns>
-    public static Vector3[,] UnpackTexture(Texture2D sourceTexture)
+    /// <returns>A 2D array of Vector3 containing the unpacked data.</returns>3
+    public static Vector3[,] UnpackTextureTo2DArray(Texture2D sourceTexture)
     {
         int width = sourceTexture.width;
         int height = sourceTexture.height;
@@ -41,7 +41,7 @@ public static class TextureUnpacker
     /// </summary>
     /// <param name="sourceTexture">The RenderTexture to unpack.</param>
     /// <returns>A 2D array of Vector3 containing the unpacked data.</returns>
-    public static Vector3[,] UnpackTexture(RenderTexture sourceTexture)
+    public static Vector3[,] UnpackTextureTo2DArray(RenderTexture sourceTexture)
     {
         int width = sourceTexture.width;
         int height = sourceTexture.height;
@@ -56,46 +56,70 @@ public static class TextureUnpacker
         RenderTexture.active = null;
 
         // Use the existing method to unpack the Texture2D
-        return UnpackTexture(tempTexture);
+        return UnpackTextureTo2DArray(tempTexture);
     }
 
-    /// <summary>
-    /// Unpacks a Texture2D into a 1D array of Vector3.
-    /// </summary>
+    /// <summary> Unpacks a Texture2D into a 1D array. </summary>
     /// <param name="sourceTexture">The Texture2D to unpack.</param>
     /// <returns>A 1D array of Vector3 containing the unpacked data.</returns>
-    public static Vector3[] UnpackTextureTo1DArray(Texture2D sourceTexture)
+    public static T[] UnpackTextureTo1DArray<T>(Texture2D sourceTexture) where T : struct
     {
         int width = sourceTexture.width;
         int height = sourceTexture.height;
 
-        // Initialize a 1D array to store the unpacked Vector3 values
-        Vector3[] normalsBuffer = new Vector3[width * height];
-
-        // Get all pixel colors from the texture
         Color[] pixels = sourceTexture.GetPixels();
 
-        // Loop through each pixel and extract the float3 values
-        for (int i = 0; i < pixels.Length; i++)
+        if (typeof(T) == typeof(float))
         {
-            Color pixel = pixels[i];
-
-            // Extract RGB values as a Vector3
-            Vector3 normal = new Vector3(pixel.r, pixel.g, pixel.b);
-
-            // Store in the 1D array
-            normalsBuffer[i] = normal;
+            float[] resultBuffer = new float[width * height];
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                Color pixel = pixels[i];
+                resultBuffer[i] = pixel.r;
+            }
+            return resultBuffer as T[];
         }
-
-        return normalsBuffer;
+        else if (typeof(T) == typeof(Vector2))
+        {
+            Vector2[] resultBuffer = new Vector2[width * height];
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                Color pixel = pixels[i];
+                resultBuffer[i] = new Vector2(pixel.r, pixel.g);
+            }
+            return resultBuffer as T[];
+        }
+        else if (typeof(T) == typeof(Vector3))
+        {
+            Vector3[] resultBuffer = new Vector3[width * height];
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                Color pixel = pixels[i];
+                resultBuffer[i] = new Vector3(pixel.r, pixel.g, pixel.b);
+            }
+            return resultBuffer as T[];
+        }
+        else if (typeof(T) == typeof(Vector4))
+        {
+            Vector4[] resultBuffer = new Vector4[width * height];
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                Color pixel = pixels[i];
+                resultBuffer[i] = new Vector4(pixel.r, pixel.g, pixel.b, pixel.a);
+            }
+            return resultBuffer as T[];
+        }
+        else
+        {
+            throw new System.ArgumentException("Unsupported type");
+        }
     }
 
-    /// <summary>
-    /// Unpacks a RenderTexture into a 1D array of Vector3.
-    /// </summary>
-    /// <param name="sourceTexture">The RenderTexture to unpack.</param>
+
+    /// <summary> Unpacks a Rendertexture into a 1D array. </summary>
+    /// <param name="sourceTexture">The Texture2D to unpack.</param>
     /// <returns>A 1D array of Vector3 containing the unpacked data.</returns>
-    public static Vector3[] UnpackTextureTo1DArray(RenderTexture sourceTexture)
+    public static T[] UnpackTextureTo1DArray<T>(RenderTexture sourceTexture) where T : struct
     {
         int width = sourceTexture.width;
         int height = sourceTexture.height;
@@ -110,6 +134,6 @@ public static class TextureUnpacker
         RenderTexture.active = null;
 
         // Use the existing method to unpack the Texture2D
-        return UnpackTextureTo1DArray(tempTexture);
+        return UnpackTextureTo1DArray<T>(tempTexture);
     }
 }

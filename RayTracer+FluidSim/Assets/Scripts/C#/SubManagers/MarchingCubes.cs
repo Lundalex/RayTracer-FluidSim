@@ -13,9 +13,7 @@ public class MarchingCubes : MonoBehaviour
     public float Threshold;
     public float DistanceMultiplier;
     public float DensityMultiplier;
-
-    public float FluidTriMeshSLBufferSafety = 1;
-    public int SurfaceCellsMipmapDepthLimit = 4;
+    [Range(0.0f, 1.0f)] public float FluidTriMeshSLBufferSafety = 1;
 
     // World transform
     public float3 FluidDims;
@@ -152,7 +150,6 @@ public class MarchingCubes : MonoBehaviour
         if (SurfaceCellsTexture == null)
         {
             (SurfaceCellsTexture, SurfaceCellsMM1Dims, SurfaceCellsMipmapDepth) = TextureHelper.CreateVoxelTexture(NumCells.xyz);
-            SurfaceCellsMipmapDepth = Mathf.Min(SurfaceCellsMipmapDepth, SurfaceCellsMipmapDepthLimit)+1;
             SurfaceCellsTexture.Create();
             mcShader.SetTexture(1, "SurfaceCells", SurfaceCellsTexture);
             mcShader.SetTexture(2, "SurfaceCells", SurfaceCellsTexture);
@@ -258,11 +255,16 @@ public class MarchingCubes : MonoBehaviour
 
     private void ConstructSparseVoxelTree()
     {
+        svoShader.SetVector("LastPassNumCells", new Vector3(NumCells.x, NumCells.y, NumCells.z));
         for (int mipmapPassDepth = 1; mipmapPassDepth <= SurfaceCellsMipmapDepth; mipmapPassDepth++)
         {
             svoShader.SetInt("MipmapPassDepth", mipmapPassDepth);
 
-            ComputeHelper.DispatchKernel(svoShader, "ConstructSparseVoxelTree", SurfaceCellsMM1Dims / Func.Pow2(mipmapPassDepth), mcShaderThreadSize);
+            int3 passNumCells = Func.Ceil((float3)NumCells.xyz / Func.Pow2(mipmapPassDepth));
+
+            ComputeHelper.DispatchKernel(svoShader, "ConstructSparseVoxelTree", passNumCells, mcShaderThreadSize);
+
+            svoShader.SetVector("LastPassNumCells", new Vector3(passNumCells.x, passNumCells.y, passNumCells.z));
         }
     }
 

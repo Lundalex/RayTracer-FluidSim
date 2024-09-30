@@ -322,10 +322,10 @@ public class TextureHelper : MonoBehaviour
     public static (RenderTexture, int3, int) CreateVoxelTexture(int3 resolution)
     {
 
-        int3 pow2Res = new int3(Func.NextPow2(resolution.x), Func.NextPow2(resolution.y), Func.NextPow2(resolution.z));
-        int maxMipmapDepth = Mathf.Min(Func.LastLog2(resolution.x), Func.LastLog2(resolution.y), Func.LastLog2(resolution.z));
+        int3 pow2Res = new(Func.NextPow2(resolution.x), Func.NextPow2(resolution.y), Func.NextPow2(resolution.z));
+        int maxMipmapDepth = Mathf.Max(Func.Log2(pow2Res.x), Func.Log2(pow2Res.y), Func.Log2(pow2Res.z));
 
-        RenderTexture texture = new RenderTexture((int)(pow2Res.x * 1.5f), pow2Res.y, 0, RenderTextureFormat.RInt)
+        RenderTexture texture = new((int)(pow2Res.x * 1.5f), pow2Res.y, 0, RenderTextureFormat.RInt)
         {
             dimension = UnityEngine.Rendering.TextureDimension.Tex3D,
             volumeDepth = pow2Res.z,

@@ -310,7 +310,7 @@ public class NewRenderer : MonoBehaviour
         rtShader.SetInt("TemporalCandidatesNum", TemporalCandidatesNum);
         rtShader.SetFloat("TemporalPrecisionThreshold", TemporalPrecisionThreshold);
 
-        // Multi compilation
+        // Multi-compilation
         if (DoVisibilityReuse) rtShader.EnableKeyword("VIS_REUSE");
         else rtShader.DisableKeyword("VIS_REUSE");
         if (DoWeightRecalc) rtShader.EnableKeyword("WEIGHT_RECALC");
@@ -441,7 +441,7 @@ public class NewRenderer : MonoBehaviour
         {
             DepthBufferTexture = new RenderTexture(Resolution.x, Resolution.y, 0, RenderTextureFormat.RFloat)
             {
-                dimension = UnityEngine.Rendering.TextureDimension.Tex2D,
+                dimension = TextureDimension.Tex2D,
                 enableRandomWrite = true,
                 filterMode = FilterMode.Bilinear
             };
@@ -459,7 +459,6 @@ public class NewRenderer : MonoBehaviour
             NormalsBufferTexture.Create();
             rtShader.SetTexture(0, "NormalsBuffer", NormalsBufferTexture);
             rtShader.SetTexture(1, "NormalsBuffer", NormalsBufferTexture);
-            // rtShader.SetTexture(4, "NormalsBuffer", NormalsBufferTexture);
         }
     }
  
@@ -487,7 +486,7 @@ public class NewRenderer : MonoBehaviour
  
     private void RunReSTIRShader()
     {
-        ComputeHelper.DispatchKernel(rtShader, "InitialTrace", Resolution, RayTracerThreadSize "USE ONLY SPARSE VOXEL TREE INSTEAD OF DDA???");
+        ComputeHelper.DispatchKernel(rtShader, "InitialTrace", Resolution, RayTracerThreadSize);
 
         // Vector3[] normalsBuffer = TextureUnpacker.UnpackTextureTo1DArray(NormalsBufferTexture);
 
