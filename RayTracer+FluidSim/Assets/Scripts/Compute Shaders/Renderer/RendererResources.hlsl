@@ -12,7 +12,7 @@ float MSDensityKernel(float dst, float radius)
 }
 
 // Sort an array of size 8 using bubble sort
-void SortDescendingBubbleSort_NodeDst8(inout NodeDst arr[8], int length)
+void SortDescending_BubbleSort_NodeDst8(inout NodeDst arr[8], int length)
 {
     for (int i = 0; i < length; i++)
     {
@@ -27,7 +27,7 @@ void SortDescendingBubbleSort_NodeDst8(inout NodeDst arr[8], int length)
 }
 
 // Sort an array of size 8 using insertion sort
-void SortDescendingInsertionSort_NodeDst8(inout NodeDst arr[8], uint length)
+void SortDescending_InsertionSort_NodeDst8(inout NodeDst arr[8], uint length)
 {
     for (int i = 1; i < length; i++)
     {

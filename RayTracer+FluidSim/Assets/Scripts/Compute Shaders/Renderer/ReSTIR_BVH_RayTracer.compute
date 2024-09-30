@@ -405,6 +405,7 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
             if (node8bitData == 0) continue;
 
             uint3 basePixelID = node.xyz * 2;
+            uint childMipmapLayer = node.w - 1;
 
             // Init nodeDst array
             NodeDst nodeDstArr[8] = InitNodeDstArr;
@@ -419,7 +420,7 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
                 if (containsLeaves)
                 {
                     uint3 pixelID = basePixelID + Offsets_2x2x2[i];
-                    float dst = RayVoxelIntersect(pixelID, node.w - 1, localRay);
+                    float dst = RayVoxelIntersect(pixelID, childMipmapLayer, localRay);
 
                     // Add the nodeDst value if the voxel was hit
                     if (dst < hitInfo.dst)
@@ -430,12 +431,13 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
             }
 
             // Sort the child nodes by distance
-            SortDescendingInsertionSort_NodeDst8(nodeDstArr, nodeDstLength TRYTHISBEFORELEAVING IT AS COMPLETE);
+            // SortDescending_BubbleSort_NodeDst8 is also available
+            SortDescending_InsertionSort_NodeDst8(nodeDstArr, nodeDstLength TRYTHISBEFORELEAVINGITASCOMPLETE);
             
             // Append childs to nodeStack in order
             for (i = 0; i < nodeDstLength; i++)
             {
-                nodeStack[stackPointer++] = uint4(nodeDstArr[i].pixelID, node.w - 1);
+                nodeStack[stackPointer++] = uint4(nodeDstArr[i].pixelID, childMipmapLayer);
             }
             debugData.bvVoxelChecks -= nodeDstLength;
         }
