@@ -1,6 +1,7 @@
 #include "../Constants.hlsl"
 #include "../Renderer/RendererDataTypes.hlsl"
-#include "LookupTableMC.hlsl"
+#include "LookupTablesMC.hlsl"
+#include "../Renderer/LookupTablesSVO.hlsl"
 
 float MSDensityKernel(float dst, float radius)
 {

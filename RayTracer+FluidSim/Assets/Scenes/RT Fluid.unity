@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.37311947, g: 0.38074014, b: 0.3587274, a: 1}
+  m_IndirectSpecularColor: {r: 0.37311953, g: 0.38074014, b: 0.3587274, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -579,7 +579,7 @@ MonoBehaviour:
   RenderAsciiArt: 0
   DebugMaxTriChecks: 100
   DebugMaxBVChecks: 100
-  DebugMaxVoxelChecks: 100
+  DebugMaxVoxelChecks: 30
   DoVisibilityReuse: 1
   DoWeightRecalc: 0
   DoBRDF: 1
@@ -994,8 +994,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   FluidTriMeshBufferACMax: 120000
-  FluidMeshLengthSafety: 1.113
-  DensityRadius: 2
+  FluidMeshLengthSafety: 1.15
+  DensityRadius: 1
   Threshold: 0.5
   DistanceMultiplier: 0.3
   DensityMultiplier: 0.2
@@ -1127,7 +1127,7 @@ MonoBehaviour:
   TimeStepsNum: 2
   SubTimeStepsNum: 3
   MaxInteractionRadius: 25
-  InteractionAttractionPower: 5
+  InteractionAttractionPower: 10
   InteractionFountainPower: 0
   InteractionTemperaturePower: 0
   shaderHelper: {fileID: 2125271848}

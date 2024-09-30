@@ -135,39 +135,6 @@ float TotWeightFromGBLookup(uint radius)
     return GBLookup3_totWeight; // radius == 3
 }
 
-static const uint3 Offsets_2x2x2[8] = {
-    uint3(0,0,0),
-    uint3(1,0,0),
-    uint3(1,0,1),
-    uint3(0,0,1),
-    uint3(0,1,0),
-    uint3(1,1,0),
-    uint3(1,1,1),
-    uint3(0,1,1)
-};
-static const uint InvOffsets_2x2x2[2][2][2] = {
-    {   // x = 0
-        {   // y = 0
-            0, // z = 0 -> Index 0: (0, 0, 0)
-            3  // z = 1 -> Index 3: (0, 0, 1)
-        },
-        {   // y = 1
-            4, // z = 0 -> Index 4: (0, 1, 0)
-            7  // z = 1 -> Index 7: (0, 1, 1)
-        }
-    },
-    {   // x = 1
-        {   // y = 0
-            1, // z = 0 -> Index 1: (1, 0, 0)
-            2  // z = 1 -> Index 2: (1, 0, 1)
-        },
-        {   // y = 1
-            5, // z = 0 -> Index 5: (1, 1, 0)
-            6  // z = 1 -> Index 6: (1, 1, 1)
-        }
-    }
-};
-
 static const float f8_INF[8] = {
     1.#INF, 1.#INF, 1.#INF, 1.#INF, 1.#INF, 1.#INF, 1.#INF, 1.#INF
 };

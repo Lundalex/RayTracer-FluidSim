@@ -9,6 +9,7 @@
 #pragma multi_compile _ BRDF
 
 #include "RendererResources.hlsl"
+#include "LookupTablesSVO.hlsl"
 #include "BRDF.hlsl"
 #include "RayIntersect.hlsl"
 
@@ -359,16 +360,16 @@ void MoveToVoxel(uint3 pixelID, uint mipmapLayer, inout Ray ray)
 
 void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
 {
-    // Initial fluid box intersection test
-    float3 fluidMin = FluidPos;
-    float3 fluidMax = FluidPos + FluidDims;
-    float dst = RayBoxIntersect(ray, fluidMin, fluidMax);
-    if (dst > hitInfo.dst || dst == 1.#INF) return;
+    // Local ray sestup
     Ray localRay = ray;
     localRay.pos -= FluidPos;
 
+    // Initial fluid box intersection test
+    float dst = RayBoxIntersect(localRay, 0, FluidDims);
+    if (dst >= hitInfo.dst) return;
+
     // Repurpose debugData.bvVoxelChecks to count voxel checks
-    if (debugData.bvVoxelChecks >= 0) debugData.bvVoxelChecks = 0;
+    if (debugData.bvVoxelChecks >= 0) debugData.bvVoxelChecks = -1;
 
     // Init nodeStack with the root node of the SVO
     // mipmap level may be redundant and able to be replaced by a variable
@@ -402,8 +403,6 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
             // RINT (8 bits total). Each bit corresponds to one of the children cells (true if the child contains leaves)
             uint node8bitData = ReadFromMipmapLayer(node.xyz, node.w);
 
-            if (node8bitData == 0) continue;
-
             uint3 basePixelID = node.xyz * 2;
             uint childMipmapLayer = node.w - 1;
 
@@ -431,8 +430,7 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
             }
 
             // Sort the child nodes by distance
-            // SortDescending_BubbleSort_NodeDst8 is also available
-            SortDescending_InsertionSort_NodeDst8(nodeDstArr, nodeDstLength TRYTHISBEFORELEAVINGITASCOMPLETE);
+            SortDescending_InsertionSort_NodeDst8(nodeDstArr, nodeDstLength);
             
             // Append childs to nodeStack in order
             for (i = 0; i < nodeDstLength; i++)

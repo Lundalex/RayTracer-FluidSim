@@ -27,7 +27,7 @@ void SortDescending_BubbleSort_NodeDst8(inout NodeDst arr[8], int length)
 }
 
 // Sort an array of size 8 using insertion sort
-void SortDescending_InsertionSort_NodeDst8(inout NodeDst arr[8], uint length)
+void SortDescending_InsertionSort_NodeDst8(inout NodeDst arr[8], int length)
 {
     for (int i = 1; i < length; i++)
     {

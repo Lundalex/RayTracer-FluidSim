@@ -46,7 +46,7 @@ public class NewRenderer : MonoBehaviour
     [Header("Debug Settings")]
     [Range(1, 100)] public int DebugMaxTriChecks;
     [Range(1, 100)] public int DebugMaxBVChecks;
-    [Range(1, 1000)] public int DebugMaxVoxelChecks;
+    [Range(1, 100)] public int DebugMaxVoxelChecks;
 
     [Header("Multi-compile Settings")]
     public bool DoVisibilityReuse;
