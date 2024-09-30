@@ -330,13 +330,13 @@ bool IsCellOutsideGrid(int3 cell, int3 numGridCells)
 float RayVoxelIntersect(uint3 pixelID, uint mipmapLayer, Ray ray)
 {
     // float3 mipmapLayerNumCells = NumCells / pow2(mipmapLayer);
-    // float3 min = FluidPos + FluidDims * (float3)pixelID / mipmapLayerNumCells;
+    // float3 min = FluidDims * (float3)pixelID / mipmapLayerNumCells;
     // float3 max = min + FluidDims / mipmapLayerNumCells;
 
     // Optimised
-    float3 invMipmapLayerNumCells = pow2(mipmapLayer) / (float3)SmNumCells;
-    float3 min = FluidPos + FluidDims * (float3)pixelID * invMipmapLayerNumCells;
-    float3 max = min + FluidDims * invMipmapLayerNumCells;
+    float3 invMipmapLayerNumCells_FluidDims = FluidDims * pow2(mipmapLayer) / (float3)SmNumCells;
+    float3 min = pixelID * invMipmapLayerNumCells_FluidDims;
+    float3 max = min + invMipmapLayerNumCells_FluidDims;
 
     float dst = RayBoxIntersect(ray, min, max);
     
@@ -364,6 +364,8 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
     float3 fluidMax = FluidPos + FluidDims;
     float dst = RayBoxIntersect(ray, fluidMin, fluidMax);
     if (dst > hitInfo.dst || dst == 1.#INF) return;
+    Ray localRay = ray;
+    localRay.pos -= FluidPos;
 
     // Repurpose debugData.bvVoxelChecks to count voxel checks
     if (debugData.bvVoxelChecks >= 0) debugData.bvVoxelChecks = 0;
@@ -417,7 +419,7 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
                 if (containsLeaves)
                 {
                     uint3 pixelID = basePixelID + Offsets_2x2x2[i];
-                    float dst = RayVoxelIntersect(pixelID, node.w - 1, ray);
+                    float dst = RayVoxelIntersect(pixelID, node.w - 1, localRay);
 
                     // Add the nodeDst value if the voxel was hit
                     if (dst < hitInfo.dst)
@@ -428,7 +430,7 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
             }
 
             // Sort the child nodes by distance
-            SortDescendingBubbleSort_NodeDst8(nodeDstArr, nodeDstLength);
+            SortDescendingInsertionSort_NodeDst8(nodeDstArr, nodeDstLength TRYTHISBEFORELEAVING IT AS COMPLETE);
             
             // Append childs to nodeStack in order
             for (i = 0; i < nodeDstLength; i++)

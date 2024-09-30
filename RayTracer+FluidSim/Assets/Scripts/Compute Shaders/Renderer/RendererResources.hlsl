@@ -26,26 +26,21 @@ void SortDescendingBubbleSort_NodeDst8(inout NodeDst arr[8], int length)
     }
 }
 
-// // Sort an array of size 8 using insertion sort
-// void SortDescendingInsertionSort_NodeDst8(inout NodeDst arr[8], uint length)
-// {
-//     for (int i = 1; i < 8; i++)
-//     {
-//         float keyDistance = distances[i];
-//         uint3 keyPixelID = pixelIDs[i];
-//         int j = i - 1;
-
-//         // Move elements greater than keyDistance to one position ahead
-//         while (j >= 0 && distances[j] > keyDistance)
-//         {
-//             distances[j + 1] = distances[j];
-//             pixelIDs[j + 1] = pixelIDs[j];
-//             j--;
-//         }
-//         distances[j + 1] = keyDistance;
-//         pixelIDs[j + 1] = keyPixelID;
-//     }
-// }
+// Sort an array of size 8 using insertion sort
+void SortDescendingInsertionSort_NodeDst8(inout NodeDst arr[8], uint length)
+{
+    for (int i = 1; i < length; i++)
+    {
+        NodeDst keyVal = arr[i];
+        int j = i - 1;
+        while (j >= 0 && arr[j].dst < keyVal.dst)
+        {
+            arr[j + 1] = arr[j];
+            j--;
+        }
+        arr[j + 1] = keyVal;
+    }
+}
 
 void ReverseArrayUint4_50(inout uint4 arr[50], uint startIndex, uint endIndex)
 {
