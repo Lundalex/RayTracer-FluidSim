@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.37311947, g: 0.38074014, b: 0.3587274, a: 1}
+  m_IndirectSpecularColor: {r: 0.37311953, g: 0.38074014, b: 0.3587274, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -684,40 +684,14 @@ MonoBehaviour:
   - {fileID: 2439891451013711600}
   FluidObjects: []
   MaterialInputs:
-  - brightness: 1000
+  - brightness: 0
     col:
-      x: 1
+      x: 0
       y: 1
-      z: 0
+      z: 1
     colTex: {fileID: 0}
     normalsTex: {fileID: 0}
-    roughness: 0
-    roughnessTex: {fileID: 0}
-    metallicity: 0
-    metallicityTex: {fileID: 0}
-    bump: 0
-    bumpTex: {fileID: 0}
-  - brightness: 10000
-    col:
-      x: 1
-      y: 1
-      z: 0
-    colTex: {fileID: 0}
-    normalsTex: {fileID: 0}
-    roughness: 0
-    roughnessTex: {fileID: 0}
-    metallicity: 0
-    metallicityTex: {fileID: 0}
-    bump: 0
-    bumpTex: {fileID: 0}
-  - brightness: 100
-    col:
-      x: 1
-      y: 1
-      z: 0
-    colTex: {fileID: 0}
-    normalsTex: {fileID: 0}
-    roughness: 0
+    roughness: 1
     roughnessTex: {fileID: 0}
     metallicity: 0
     metallicityTex: {fileID: 0}
@@ -725,14 +699,27 @@ MonoBehaviour:
     bumpTex: {fileID: 0}
   - brightness: 0
     col:
-      x: 1
+      x: 0
       y: 1
       z: 0
     colTex: {fileID: 0}
     normalsTex: {fileID: 0}
-    roughness: 0
+    roughness: 0.8
     roughnessTex: {fileID: 0}
-    metallicity: 0
+    metallicity: 1
+    metallicityTex: {fileID: 0}
+    bump: 0
+    bumpTex: {fileID: 0}
+  - brightness: 40000
+    col:
+      x: 1
+      y: 1
+      z: 1
+    colTex: {fileID: 0}
+    normalsTex: {fileID: 0}
+    roughness: 1
+    roughnessTex: {fileID: 0}
+    metallicity: 1
     metallicityTex: {fileID: 0}
     bump: 0
     bumpTex: {fileID: 0}
@@ -742,7 +729,7 @@ MonoBehaviour:
   SplitResolution: 5
   FileName: 8kScene
   BVUpdateModeSelect: 0
-  FileModeSelect: 0
+  FileModeSelect: 1
   ExtensionModeSelect: 0
   m: {fileID: 868168749}
 --- !u!1 &1164272047
@@ -973,146 +960,28 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!1 &2125271846
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2125271847}
-  - component: {fileID: 2125271849}
-  - component: {fileID: 2125271851}
-  - component: {fileID: 2125271848}
-  - component: {fileID: 2125271850}
-  m_Layer: 0
-  m_Name: Simulation
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2125271847
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2125271846}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2, y: 0, z: 7.5}
-  m_LocalScale: {x: 5, y: 5, z: 5}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2125271848
+--- !u!114 &2125271849 stripped
 MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 692955969652184789, guid: 7acf6ea39c9596c43ae94d4095001d22, type: 3}
+  m_PrefabInstance: {fileID: 7133548221922539957}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2125271846}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bdd3ea57ca30187408980f1d2503a2bf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  sim: {fileID: 2125271849}
---- !u!114 &2125271849
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2125271846}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c4e01cbd809e59f4e9d22e12742b644e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MaxInfluenceRadius: 2
-  TargetDensity: 1.6
-  PressureMultiplier: 1500
-  NearPressureMultiplier: 20
-  Damping: 0.7
-  PassiveDamping: 0
-  LookAheadFactor: 0.017
-  StateThresholdPadding: 3
-  Viscosity: 1.5
-  SpringStiffness: 2
-  TolDeformation: 0
-  Plasticity: 3
-  Gravity: 5
-  ParticlesNum: 60000
-  SpringCapacitySafety: 1000
-  MaxChunkSearchSafety: 1
-  Width: 100
-  Height: 100
-  Depth: 100
-  BorderPadding: 5
-  FixedTimeStep: 1
-  TimeStep: 0.04
-  ProgramSpeed: 2
-  TimeStepsNum: 2
-  SubTimeStepsNum: 3
-  MaxInteractionRadius: 25
-  InteractionAttractionPower: 10
-  InteractionFountainPower: 0
-  InteractionTemperaturePower: 0
-  shaderHelper: {fileID: 2125271848}
-  pSimShader: {fileID: 7200000, guid: 4c6ba7b69baa30b428d3e81f801e27b8, type: 3}
-  ssShader: {fileID: 7200000, guid: 3e99023e342e7f542b3045d213b12c03, type: 3}
-  ipsShader: {fileID: 7200000, guid: 4f1bd62c1c0e8804e89857d2d305d0db, type: 3}
---- !u!114 &2125271850
+--- !u!114 &2125271851 stripped
 MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 3859628396024981982, guid: 7acf6ea39c9596c43ae94d4095001d22, type: 3}
+  m_PrefabInstance: {fileID: 7133548221922539957}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2125271846}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6e2450ded0dde4cb7913a212c5759112, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m: {fileID: 2125271851}
---- !u!114 &2125271851
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2125271846}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: da170071670cb7348adfac942c82272e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FluidTriMeshBufferACMax: 120000
-  FluidMeshLengthSafety: 1.2
-  DensityRadius: 1
-  Threshold: 0.5
-  DistanceMultiplier: 0.3
-  DensityMultiplier: 0.2
-  FluidTriMeshSLBufferSafety: 0.4
-  FluidDims:
-    x: 5
-    y: 5
-    z: 5
-  FluidPos:
-    x: -2
-    y: 0
-    z: 7.5
-  sim: {fileID: 2125271849}
-  renderer: {fileID: 868168749}
-  shaderHelper: {fileID: 2125271850}
-  textureManager: {fileID: 473926887}
-  mcShader: {fileID: 7200000, guid: c8b0c0ed857fbca42a6211171c8e8dc1, type: 3}
-  svoShader: {fileID: 7200000, guid: ddf45746762be43468ab11ddf21b57ed, type: 3}
-  ssShader: {fileID: 7200000, guid: 238c41e2f6212784bbded3f38bf742c2, type: 3}
 --- !u!1001 &2439891451013711599
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1500,13 +1369,70 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 52f1e2443de37a04ba443fa01d725629, type: 3}
+--- !u!1001 &7133548221922539957
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2381445932684857264, guid: 7acf6ea39c9596c43ae94d4095001d22, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2381445932684857264, guid: 7acf6ea39c9596c43ae94d4095001d22, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2381445932684857264, guid: 7acf6ea39c9596c43ae94d4095001d22, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 7.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2381445932684857264, guid: 7acf6ea39c9596c43ae94d4095001d22, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2381445932684857264, guid: 7acf6ea39c9596c43ae94d4095001d22, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2381445932684857264, guid: 7acf6ea39c9596c43ae94d4095001d22, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2381445932684857264, guid: 7acf6ea39c9596c43ae94d4095001d22, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2381445932684857264, guid: 7acf6ea39c9596c43ae94d4095001d22, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2381445932684857264, guid: 7acf6ea39c9596c43ae94d4095001d22, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2381445932684857264, guid: 7acf6ea39c9596c43ae94d4095001d22, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6642828649819551448, guid: 7acf6ea39c9596c43ae94d4095001d22, type: 3}
+      propertyPath: m_Name
+      value: FluidObjectTest
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 7acf6ea39c9596c43ae94d4095001d22, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 868168748}
   - {fileID: 1049554301}
-  - {fileID: 2125271847}
+  - {fileID: 7133548221922539957}
   - {fileID: 473926886}
   - {fileID: 1164272049}
   - {fileID: 569968698}

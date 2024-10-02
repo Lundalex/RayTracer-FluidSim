@@ -8,6 +8,9 @@ using SimResources;
 public class Simulation : MonoBehaviour
 {
 #region Inspector
+    [Header("Material")]
+    public int MaterialIndex = 0;
+
     [Header("Fluid")]
     public int MaxInfluenceRadius = 2;
     public float TargetDensity = 2.0f;
@@ -48,7 +51,6 @@ public class Simulation : MonoBehaviour
     public float InteractionTemperaturePower = 0.0f;
 
     [Header("References")]
-    public SimulationShaderHelper shaderHelper;
     public ComputeShader pSimShader;
     public ComputeShader ssShader;
     public ComputeShader ipsShader;
@@ -86,6 +88,10 @@ public class Simulation : MonoBehaviour
     [NonSerialized] public int ParticleSpringsCombinedHalfLength;
 #endregion
 
+#region Run Time Set references
+    private SimulationShaderHelper shaderHelper;
+#endregion
+
 #region Other
     private PData[] PData;
     [NonSerialized] public PType[] PTypes;
@@ -97,6 +103,8 @@ public class Simulation : MonoBehaviour
 #region Simulation
     public void ScriptSetup()
     {
+        SetReferences();
+
         SetConstants();
         InitializeArrays();
         SetPTypesData();
@@ -178,6 +186,12 @@ public class Simulation : MonoBehaviour
         return FixedTimeStep
         ? TimeStep / SubTimeStepsNum
         : Time.deltaTime * ProgramSpeed / SubTimeStepsNum;
+    }
+
+    private void SetReferences()
+    {
+        shaderHelper = this.gameObject.GetComponent<SimulationShaderHelper>();
+        shaderHelper.ScriptSetup();
     }
 
     private void SetConstants()

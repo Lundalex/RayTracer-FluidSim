@@ -583,7 +583,6 @@ public class NewRenderer : MonoBehaviour
     private void OnDestroy()
     {
         ComputeHelper.Release(AllBuffers());
-        DepthBufferTexture.Release(); // Test release. 9undisposed -> works
 
         renderPipeline.colorImage.Dispose();
         renderPipeline.dst.Dispose();

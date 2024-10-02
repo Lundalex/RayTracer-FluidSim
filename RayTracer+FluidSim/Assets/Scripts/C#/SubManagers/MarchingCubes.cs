@@ -19,12 +19,6 @@ public class MarchingCubes : MonoBehaviour
     public float3 FluidDims;
     public float3 FluidPos;
 
-    // Script references
-    public Simulation sim;
-    public new NewRenderer renderer;
-    public MarchingCubesShaderHelper shaderHelper;
-    public TextureManager textureManager;
-
     // Shader references
     public ComputeShader mcShader;
     public ComputeShader svoShader;
@@ -38,12 +32,20 @@ public class MarchingCubes : MonoBehaviour
     private const int mcShaderThreadSize = 8;
     private const int mcShaderThreadSize2 = 512;
     private const int ssShaderThreadSize = 512;
+
 #region Run Time Set Variables
     [NonSerialized] public int NumPoints;
     [NonSerialized] public int NumPoints_NextPow2;
     [NonSerialized] public int FluidMeshLength = 0;
     private int LastFluidMeshLength = 0;
     private int FluidTriMeshSLLength = 0;
+#endregion
+
+#region Run Time Set references
+    [NonSerialized] public Simulation sim;
+    private MarchingCubesShaderHelper shaderHelper;
+    private new NewRenderer renderer;
+    private TextureManager textureManager;
 #endregion
 
     // Buffers and textures
@@ -53,18 +55,21 @@ public class MarchingCubes : MonoBehaviour
     public ComputeBuffer FluidTriMeshBufferAC;
     public ComputeBuffer FluidTriMeshSLBuffer;
     public ComputeBuffer FluidStartIndicesBuffer;
-    // private ComputeBuffer AC_SurfaceCells;
-    // private ComputeBuffer AC_FluidTriMesh;
-    // private ComputeBuffer CB_A;
     [NonSerialized] public RenderTexture GridDensitiesTexture;
     [NonSerialized] public RenderTexture SurfaceCellsTexture;
     [NonSerialized] public RenderTexture SurfaceCellsLookupTexture;
-    private int3 SurfaceCellsMM1Dims;
-    private int SurfaceCellsMipmapDepth;
+    [NonSerialized] public int3 SurfaceCellsMM0Dims;
+    [NonSerialized] public int SurfaceCellsMipmapDepth;
+
+    // Texture offsets
+    [NonSerialized] public int SurfaceCellsOffset;
+    [NonSerialized] public int SurfaceCellsLookupOffset;
     private bool ProgramStarted = false;
 
     public void ScriptSetup()
     {
+        SetReferences();
+
         UpdateSettings();
         InitBuffers();
         InitTextures();
@@ -75,6 +80,15 @@ public class MarchingCubes : MonoBehaviour
     private void OnValidate()
     {
         if (ProgramStarted) UpdateSettings();
+    }
+
+    private void SetReferences()
+    {
+        shaderHelper = this.gameObject.GetComponent<MarchingCubesShaderHelper>();
+        shaderHelper.ScriptSetup();
+        sim = this.gameObject.GetComponent<Simulation>();
+        renderer = GameObject.Find("Renderer").GetComponent<NewRenderer>();
+        textureManager = GameObject.Find("Texture Manager").GetComponent<TextureManager>();
     }
 
     private void UpdateSettings()
@@ -149,7 +163,8 @@ public class MarchingCubes : MonoBehaviour
         }
         if (SurfaceCellsTexture == null)
         {
-            (SurfaceCellsTexture, SurfaceCellsMM1Dims, SurfaceCellsMipmapDepth) = TextureHelper.CreateVoxelTexture(NumCells.xyz);
+            int3 a;
+            (SurfaceCellsTexture, SurfaceCellsMM0Dims, a,  SurfaceCellsMipmapDepth) = TextureHelper.CreateVoxelTexture(NumCells.xyz);
             SurfaceCellsTexture.Create();
             mcShader.SetTexture(1, "SurfaceCells", SurfaceCellsTexture);
             mcShader.SetTexture(2, "SurfaceCells", SurfaceCellsTexture);
@@ -168,11 +183,11 @@ public class MarchingCubes : MonoBehaviour
             renderer.rtShader.SetInt("MipmapMaxDepth", SurfaceCellsMipmapDepth);
 
             svoShader.SetInt("MipmapMaxDepth", SurfaceCellsMipmapDepth);
-            svoShader.SetVector("TextureMM1Dims", new Vector3(SurfaceCellsMM1Dims.x, SurfaceCellsMM1Dims.y, SurfaceCellsMM1Dims.z));
-            renderer.rtShader.SetVector("TextureMM1Dims", new Vector3(SurfaceCellsMM1Dims.x, SurfaceCellsMM1Dims.y, SurfaceCellsMM1Dims.z));
+            svoShader.SetVector("TextureMM0Dims", new Vector3(SurfaceCellsMM0Dims.x, SurfaceCellsMM0Dims.y, SurfaceCellsMM0Dims.z));
+            renderer.rtShader.SetVector("TextureMM0Dims", new Vector3(SurfaceCellsMM0Dims.x, SurfaceCellsMM0Dims.y, SurfaceCellsMM0Dims.z));
 
             // Temporary
-            textureManager.NoiseResolution = SurfaceCellsMM1Dims;
+            textureManager.NoiseResolution = SurfaceCellsMM0Dims;
             textureManager.NoiseResolution.x = (int)(textureManager.NoiseResolution.x * 1.5);
             textureManager.SetPostProcessorShaderSettings();
         }

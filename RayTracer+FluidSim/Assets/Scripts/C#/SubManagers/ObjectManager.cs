@@ -564,8 +564,8 @@ public class ObjectManager : MonoBehaviour
             // Retrieve relevant game object data
             GameObject sceneObject = SceneObjects[i];
             Transform transform = sceneObject.transform;
-            SceneObjectSettings sceneObjectSettings = sceneObject.GetComponentInChildren<SceneObjectSettings>();
-            Mesh mesh = sceneObject.GetComponentInChildren<MeshFilter>().mesh;
+            SceneObjectSettings sceneObjectSettings = sceneObject.GetComponent<SceneObjectSettings>();
+            Mesh mesh = sceneObject.GetComponent<MeshFilter>().mesh;
 
             SceneObjectData sceneObjectData = new();
 
@@ -679,7 +679,7 @@ public class ObjectManager : MonoBehaviour
 
         // --- Scene object BVHs ---
 
-        SceneObjectDatas ??= new SceneObjectData[SceneObjects.Length];
+        SceneObjectDatas ??= new SceneObjectData[SceneObjects.Length + FluidObjects.Length];
         LoadedMeshesLookup ??= new int[SceneObjects.Length];
 
         int maxBVHDepth = LoadSceneObjects();
@@ -691,8 +691,9 @@ public class ObjectManager : MonoBehaviour
         m.rtShader.SetInt("EmittingObjectsNum", emittingObjectsNum);
         LightObjects = new LightObject[emittingObjectsNum];
         int lightObjectIndex = 0;
-        foreach (SceneObjectData sceneObjectData in SceneObjectDatas)
+        for (int i = 0; i < SceneObjects.Length; i++)
         {
+            SceneObjectData sceneObjectData = SceneObjectDatas[i];
             if (GetEmittance(sceneObjectData) != 0.0f)
             {
                 LightObjects[lightObjectIndex++] = new LightObject
@@ -710,20 +711,45 @@ public class ObjectManager : MonoBehaviour
         // It may be possible to use fluids as light objects, with some changes.
         // If this is implemented, the "Load light emitting object data" should be moved to below this part of the code.
 
+        int3 composedSurfaceCellsSize = 0;
+        int3 composedSurfaceCellsLookupSize = 0;
         for (int i = 0; i < FluidObjects.Length; i++)
         {
             // Retrieve relevant game object data
             GameObject fluidObject = FluidObjects[i];
             Transform transform = fluidObject.transform;
+            Simulation simulation = fluidObject.GetComponent<Simulation>();
+            MarchingCubes mCubes = fluidObject.GetComponent<MarchingCubes>();
 
             SceneObjectData sceneObjectData = new();
 
+            // Set transformation matrices
             sceneObjectData.worldToLocalMatrix = Utils.CreateWorldToLocalMatrix(transform.position, transform.rotation.eulerAngles, transform.localScale);
             Matrix4x4 worldToLocalMatrix = sceneObjectData.worldToLocalMatrix;
             sceneObjectData.localToWorldMatrix = worldToLocalMatrix.inverse;
-            // sceneObjectSettings = fluidObject.GetComponentInChildren<SceneObjectSettings>();
-            // Mesh mesh = sceneObject.GetComponentInChildren<MeshFilter>().mesh;
+
+            // Set material
+            sceneObjectData.materialIndex = simulation.MaterialIndex;
+
+            // Mipmap values
+            (int3 mipmap0Resolution, int3 textureSize, int maxMipmapDepth) = TextureHelper.GetVoxelTextureSize(mCubes.NumCells.xyz);
+            mCubes.SurfaceCellsMM0Dims = mipmap0Resolution;
+            mCubes.SurfaceCellsMipmapDepth = maxMipmapDepth;
+
+            // Set the offsets for this fluids SVO textures
+            sceneObjectData.bvStartIndex = composedSurfaceCellsSize.y;
+            mCubes.SurfaceCellsOffset = composedSurfaceCellsSize.y;
+            mCubes.SurfaceCellsLookupOffset = composedSurfaceCellsLookupSize.y;
+
+            static void ExtendTexture(ref int3 composedSize, int3 otherSize) => composedSize = new(Mathf.Max(composedSize.x, otherSize.x), composedSize.y + otherSize.y, Mathf.Max(composedSize.z, otherSize.z));
+
+            // Update composedVoxelTextureSize with this fluids SVO textureSize
+            ExtendTexture(ref composedSurfaceCellsSize, textureSize);
+            ExtendTexture(ref composedSurfaceCellsLookupSize, textureSize);
         }
+
+        RenderTexture ComposedSurfaceCellsTexture = TextureHelper.CreateIntTexture(composedSurfaceCellsSize, 1);
+        RenderTexture ComposedSurfaceCellsLookupTexture = TextureHelper.CreateIntTexture(composedSurfaceCellsLookupSize, 2);
 
         // --- Scene BVH ---
 
@@ -759,8 +785,7 @@ public class ObjectManager : MonoBehaviour
                     localToWorldMatrix = sceneObjectData.localToWorldMatrix,
                     areaApprox = sceneObjectData.areaApprox,
                     materialIndex = sceneObjectData.materialIndex,
-                    bvStartIndex = sceneObjectData.bvStartIndex,
-                    maxDepthBVH = sceneObjectData.maxDepthBVH
+                    bvStartIndex = sceneObjectData.bvStartIndex
                 };
             });
         }

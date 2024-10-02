@@ -1,7 +1,12 @@
+using System;
 using UnityEngine;
 public class SimulationShaderHelper : MonoBehaviour
 {
-    public Simulation sim;
+    private Simulation sim;
+    public void ScriptSetup()
+    {
+        sim = this.gameObject.GetComponent<Simulation>();
+    }
     public void SetPSimShaderBuffers (ComputeShader pSimShader)
     {
         // Kernel PreCalculations

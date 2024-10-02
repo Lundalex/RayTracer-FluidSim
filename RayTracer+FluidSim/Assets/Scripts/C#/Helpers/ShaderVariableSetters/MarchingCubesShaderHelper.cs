@@ -4,7 +4,12 @@ using UnityEngine;
 
 public class MarchingCubesShaderHelper : MonoBehaviour
 {
-    public MarchingCubes m;
+    private MarchingCubes mCubes;
+
+    public void ScriptSetup()
+    {
+        mCubes = this.gameObject.GetComponent<MarchingCubes>();
+    }
 
     public void SetPPSettings (ComputeShader ppShader)
     {
@@ -18,14 +23,14 @@ public class MarchingCubesShaderHelper : MonoBehaviour
 
     public void SetSSShaderBuffers (ComputeShader ssShader)
     {
-        ssShader.SetBuffer(0, "FluidTriMeshSL", m.FluidTriMeshSLBuffer);
+        ssShader.SetBuffer(0, "FluidTriMeshSL", mCubes.FluidTriMeshSLBuffer);
 
-        ssShader.SetBuffer(1, "FluidTriMeshSL", m.FluidTriMeshSLBuffer);
-        ssShader.SetBuffer(1, "FluidStartIndices", m.FluidStartIndicesBuffer);
+        ssShader.SetBuffer(1, "FluidTriMeshSL", mCubes.FluidTriMeshSLBuffer);
+        ssShader.SetBuffer(1, "FluidStartIndices", mCubes.FluidStartIndicesBuffer);
     }
 
     public void UpdateSSShaderVariables (ComputeShader ssShader)
     {
-        ssShader.SetInt("NumCellsAll", m.NumCellsAll);
+        ssShader.SetInt("NumCellsAll", mCubes.NumCellsAll);
     }
 }

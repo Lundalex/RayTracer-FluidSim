@@ -1,0 +1,136 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &6642828649819551448
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2381445932684857264}
+  - component: {fileID: 692955969652184789}
+  - component: {fileID: 3859628396024981982}
+  - component: {fileID: 5877341876018371538}
+  - component: {fileID: 4864545162804436282}
+  m_Layer: 0
+  m_Name: FluidObjectPrefab
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2381445932684857264
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6642828649819551448}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -2, y: 0, z: 7.5}
+  m_LocalScale: {x: 5, y: 5, z: 5}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &692955969652184789
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6642828649819551448}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4e01cbd809e59f4e9d22e12742b644e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaterialIndex: 0
+  MaxInfluenceRadius: 2
+  TargetDensity: 1.6
+  PressureMultiplier: 1500
+  NearPressureMultiplier: 20
+  Damping: 0.7
+  PassiveDamping: 0
+  LookAheadFactor: 0.017
+  StateThresholdPadding: 3
+  Viscosity: 1.5
+  SpringStiffness: 2
+  TolDeformation: 0
+  Plasticity: 3
+  Gravity: 5
+  ParticlesNum: 60000
+  SpringCapacitySafety: 1000
+  MaxChunkSearchSafety: 1
+  Width: 100
+  Height: 100
+  Depth: 100
+  BorderPadding: 5
+  FixedTimeStep: 1
+  TimeStep: 0.04
+  ProgramSpeed: 2
+  TimeStepsNum: 2
+  SubTimeStepsNum: 3
+  MaxInteractionRadius: 25
+  InteractionAttractionPower: 10
+  InteractionFountainPower: 0
+  InteractionTemperaturePower: 0
+  pSimShader: {fileID: 7200000, guid: 4c6ba7b69baa30b428d3e81f801e27b8, type: 3}
+  ssShader: {fileID: 7200000, guid: 3e99023e342e7f542b3045d213b12c03, type: 3}
+  ipsShader: {fileID: 7200000, guid: 4f1bd62c1c0e8804e89857d2d305d0db, type: 3}
+--- !u!114 &3859628396024981982
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6642828649819551448}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da170071670cb7348adfac942c82272e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  FluidTriMeshBufferACMax: 120000
+  FluidMeshLengthSafety: 1.2
+  DensityRadius: 1
+  Threshold: 0.5
+  DistanceMultiplier: 0.3
+  DensityMultiplier: 0.2
+  FluidTriMeshSLBufferSafety: 0.4
+  FluidDims:
+    x: 5
+    y: 5
+    z: 5
+  FluidPos:
+    x: -2
+    y: 0
+    z: 7.5
+  mcShader: {fileID: 7200000, guid: c8b0c0ed857fbca42a6211171c8e8dc1, type: 3}
+  svoShader: {fileID: 7200000, guid: ddf45746762be43468ab11ddf21b57ed, type: 3}
+  ssShader: {fileID: 7200000, guid: 238c41e2f6212784bbded3f38bf742c2, type: 3}
+--- !u!114 &5877341876018371538
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6642828649819551448}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdd3ea57ca30187408980f1d2503a2bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &4864545162804436282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6642828649819551448}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e2450ded0dde4cb7913a212c5759112, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

@@ -86,20 +86,18 @@ RWTexture2D<float4> DebugOverlay;
 RWTexture2D<float3> RayHitPointsA; // double buffer A
 RWTexture2D<float3> RayHitPointsB; // double buffer B
 
-// Fluids
-Texture3D<int2> SurfaceCellsLookup;
-Texture3D<int> SurfaceCells;
-
-const uint3 TextureMM0Dims;
-const uint StaticVerticesNum;
-const uint StaticTrisNum;
-const uint MipmapMaxDepth;
-
-// Other
 Texture2D<float4> TextureAtlas;
 Texture2D<float4> EnvironmentMap; // float4(r, g, b, brightness)
 const float2 TextureAtlasDims;
 const float2 EnvironmentMapTexDims;
+
+// Fluid mesh test
+Texture3D<int2> SurfaceCellsLookup;
+Texture3D<int> SurfaceCells;
+const uint3 TextureMM1Dims;
+const uint StaticVerticesNum;
+const uint StaticTrisNum;
+const uint MipmapMaxDepth;
 
 // Fluid world transform & grid
 const float3 FluidDims;
@@ -225,8 +223,8 @@ uint3 GetMipmapOffset(uint mipmapLayer)
     if (mipmapLayer == 0) return 0;
     
     uint3 offset = 0;
-    offset.x = TextureMM0Dims.x;
-    if (mipmapLayer > 1) offset.y = TextureMM0Dims.y - TextureMM0Dims.y / pow2(mipmapLayer-1);
+    offset.x = TextureMM1Dims.x;
+    if (mipmapLayer > 1) offset.y = TextureMM1Dims.y - TextureMM1Dims.y / pow2(mipmapLayer-1);
 
     return offset;
 }
@@ -420,10 +418,10 @@ void TraverseSceneBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
                 {
                     TraverseTrisBVH(localHitInfo, debugData, localRay, sceneObject.bvStartIndex);
                 }
-                // else
-                // {
-                //     TraverseSVH(localHitInfo, debugData, localRay);
-                // }
+                else
+                {
+                    TraverseSVH(localHitInfo, debugData, localRay);
+                }
 
                 Material2 material = Materials[sceneObject.materialIndex];
                 if (all(material.normalsTexLoc != -1)) localHitInfo.normal = SampleTexture(localHitInfo.uv, material.normalsTexLoc, material.normalsTexDims, TextureAtlas) * 2 - 1;

@@ -31,7 +31,6 @@ struct SceneObject
     float areaApprox;
     int materialIndex;
     int bvStartIndex;
-    int maxDepthBVH;
 };
 struct LightObject
 {

@@ -4,7 +4,7 @@
 
 // Sparse voxel octree settings
 const uint MipmapMaxDepth;
-const uint3 TextureMM1Dims;
+const uint3 TextureMM0Dims;
 
 // Per-pass set variables
 const uint MipmapPassDepth;
@@ -30,8 +30,8 @@ uint3 GetMipmapOffset(uint mipmapLayer)
     if (mipmapLayer == 0) return 0;
     
     uint3 offset = 0;
-    offset.x += TextureMM1Dims.x;
-    if (mipmapLayer > 1) offset.y = TextureMM1Dims.y - TextureMM1Dims.y / pow2(mipmapLayer-1);
+    offset.x += TextureMM0Dims.x;
+    if (mipmapLayer > 1) offset.y = TextureMM0Dims.y - TextureMM0Dims.y / pow2(mipmapLayer-1);
 
     return offset;
 }

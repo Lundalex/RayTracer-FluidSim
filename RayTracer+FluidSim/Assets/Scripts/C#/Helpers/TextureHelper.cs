@@ -317,25 +317,66 @@ public class TextureHelper : MonoBehaviour
             return texture;
         }
     }
+
+    public static (int3 mipmap0Resolution, int3 textureSize, int maxMipmapDepth) GetVoxelTextureSize(int3 resolution)
+    {
+        int3 mipmap0Resolution = new(Func.NextPow2(resolution.x), Func.NextPow2(resolution.y), Func.NextPow2(resolution.z));
+        int3 textureSize = new((int)(mipmap0Resolution.x * 1.5f), mipmap0Resolution.y, mipmap0Resolution.z);
+        int maxMipmapDepth = Mathf.Max(Func.Log2(mipmap0Resolution.x), Func.Log2(mipmap0Resolution.y), Func.Log2(mipmap0Resolution.z));
+
+        return (mipmap0Resolution, textureSize, maxMipmapDepth);
+    }
+
     /// <summary>Creates a 3D render texture intended for voxel tree uses</summary>
     /// <returns>Texture3D without ref</returns>
-    public static (RenderTexture, int3, int) CreateVoxelTexture(int3 resolution)
+    public static (RenderTexture texture, int3 mipmap0Resolution, int3 textureSize, int maxMipmapDepth) CreateVoxelTexture(int3 resolution)
     {
+        (int3 mipmap0Resolution, int3 textureSize, int maxMipmapDepth) = GetVoxelTextureSize(resolution);
 
-        int3 pow2Res = new(Func.NextPow2(resolution.x), Func.NextPow2(resolution.y), Func.NextPow2(resolution.z));
-        int maxMipmapDepth = Mathf.Max(Func.Log2(pow2Res.x), Func.Log2(pow2Res.y), Func.Log2(pow2Res.z));
-
-        RenderTexture texture = new((int)(pow2Res.x * 1.5f), pow2Res.y, 0, RenderTextureFormat.RInt)
+        RenderTexture texture = new(textureSize.x, textureSize.y, 0, RenderTextureFormat.RInt)
         {
             dimension = UnityEngine.Rendering.TextureDimension.Tex3D,
-            volumeDepth = pow2Res.z,
+            volumeDepth = textureSize.z,
             enableRandomWrite = true,
             wrapMode = TextureWrapMode.Clamp,
             filterMode = FilterMode.Point
         };
         texture.Create();
 
-        return (texture, pow2Res, maxMipmapDepth);
+        return (texture, mipmap0Resolution, textureSize, maxMipmapDepth);
+    }
+
+    /// <summary>Creates a 2D texture array (sliced 3D texture) texture intended for voxel tree uses</summary>
+    /// <returns>Texture3D without ref</returns>
+    public static (Texture2DArray, int3, int) CreateVoxelTextureArray(int3 resolution)
+    {
+        int3 pow2Res = new(Func.NextPow2(resolution.x), Func.NextPow2(resolution.y), Func.NextPow2(resolution.z));
+        int maxMipmapDepth = Mathf.Max(Func.Log2(pow2Res.x), Func.Log2(pow2Res.y), Func.Log2(pow2Res.z));
+
+        // RInt is not supported, but the texture can still be used like an <int> texture
+        Texture2DArray textureArray = new((int)(pow2Res.x * 1.5f), pow2Res.y, pow2Res.z, TextureFormat.RFloat, false)
+        {
+            wrapMode = TextureWrapMode.Clamp,
+            filterMode = FilterMode.Point
+        };
+
+        return (textureArray, pow2Res, maxMipmapDepth);
+    }
+
+    /// <summary>Copies the dimensions of a Texture2DArray and creates a RenderTexture3D with those same dimensions</summary>
+    public static RenderTexture TextureArrayToRenderTexture(Texture2DArray textureArray)
+    {
+        RenderTexture renderTexture = new(textureArray.width, textureArray.height, 0, RenderTextureFormat.RFloat)
+        {
+            dimension = UnityEngine.Rendering.TextureDimension.Tex3D,
+            volumeDepth = textureArray.depth,
+            enableRandomWrite = true,
+            wrapMode = TextureWrapMode.Clamp,
+            filterMode = FilterMode.Point,
+        };
+        renderTexture.Create();
+
+        return renderTexture;
     }
 
     /// <summary>NOT TESTED! Creates a color map froma render texture.</summary>

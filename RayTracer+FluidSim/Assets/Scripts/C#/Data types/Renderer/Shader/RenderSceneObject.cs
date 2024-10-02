@@ -1,5 +1,5 @@
 using Unity.Mathematics;
-
+[System.Serializable]
 public struct RenderSceneObject
 {
     public float4x4 worldToLocalMatrix;
@@ -7,5 +7,4 @@ public struct RenderSceneObject
     public float areaApprox;
     public int materialIndex;
     public int bvStartIndex;
-    public int maxDepthBVH;
 };
