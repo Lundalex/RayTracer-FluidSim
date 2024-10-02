@@ -207,12 +207,7 @@ public class MarchingCubes : MonoBehaviour
 
     public void SetMCFluidVariables()
     {
-        mcShader.SetInt("StaticVerticesNum", renderer.StaticVerticesNum);
         mcShader.SetInt("StaticTrisNum", renderer.StaticTrisNum);
-
-        // Temp - test
-        renderer.rtShader.SetInt("StaticTrisNum", renderer.StaticTrisNum);
-        renderer.rtShader.SetInt("StaticVerticesNum", renderer.StaticVerticesNum);
     }
 
     public void RunMCShaders()

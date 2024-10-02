@@ -318,20 +318,20 @@ public class TextureHelper : MonoBehaviour
         }
     }
 
-    public static (int3 mipmap0Resolution, int3 textureSize, int maxMipmapDepth) GetVoxelTextureSize(int3 resolution)
+    public static (int3 mipmap0Resolution, int3 textureSize, int mipmapDepth) GetVoxelTextureSize(int3 resolution)
     {
         int3 mipmap0Resolution = new(Func.NextPow2(resolution.x), Func.NextPow2(resolution.y), Func.NextPow2(resolution.z));
         int3 textureSize = new((int)(mipmap0Resolution.x * 1.5f), mipmap0Resolution.y, mipmap0Resolution.z);
-        int maxMipmapDepth = Mathf.Max(Func.Log2(mipmap0Resolution.x), Func.Log2(mipmap0Resolution.y), Func.Log2(mipmap0Resolution.z));
+        int mipmapDepth = Mathf.Max(Func.Log2(mipmap0Resolution.x), Func.Log2(mipmap0Resolution.y), Func.Log2(mipmap0Resolution.z));
 
-        return (mipmap0Resolution, textureSize, maxMipmapDepth);
+        return (mipmap0Resolution, textureSize, mipmapDepth);
     }
 
     /// <summary>Creates a 3D render texture intended for voxel tree uses</summary>
     /// <returns>Texture3D without ref</returns>
-    public static (RenderTexture texture, int3 mipmap0Resolution, int3 textureSize, int maxMipmapDepth) CreateVoxelTexture(int3 resolution)
+    public static (RenderTexture texture, int3 mipmap0Resolution, int3 textureSize, int mipmapDepth) CreateVoxelTexture(int3 resolution)
     {
-        (int3 mipmap0Resolution, int3 textureSize, int maxMipmapDepth) = GetVoxelTextureSize(resolution);
+        (int3 mipmap0Resolution, int3 textureSize, int mipmapDepth) = GetVoxelTextureSize(resolution);
 
         RenderTexture texture = new(textureSize.x, textureSize.y, 0, RenderTextureFormat.RInt)
         {
@@ -343,7 +343,7 @@ public class TextureHelper : MonoBehaviour
         };
         texture.Create();
 
-        return (texture, mipmap0Resolution, textureSize, maxMipmapDepth);
+        return (texture, mipmap0Resolution, textureSize, mipmapDepth);
     }
 
     /// <summary>Creates a 2D texture array (sliced 3D texture) texture intended for voxel tree uses</summary>

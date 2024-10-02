@@ -19,7 +19,6 @@ const float DistanceMultiplier;
 const float DensityMultiplier;
 
 // Num variables
-const uint StaticVerticesNum;
 const uint StaticTrisNum;
 const uint FluidVerticesNum;
 const uint FluidTrisNum;

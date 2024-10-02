@@ -711,6 +711,7 @@ public class ObjectManager : MonoBehaviour
         // It may be possible to use fluids as light objects, with some changes.
         // If this is implemented, the "Load light emitting object data" should be moved to below this part of the code.
 
+        int maxMipmapDepth = 0;
         int3 composedSurfaceCellsSize = 0;
         int3 composedSurfaceCellsLookupSize = 0;
         for (int i = 0; i < FluidObjects.Length; i++)
@@ -732,9 +733,11 @@ public class ObjectManager : MonoBehaviour
             sceneObjectData.materialIndex = simulation.MaterialIndex;
 
             // Mipmap values
-            (int3 mipmap0Resolution, int3 textureSize, int maxMipmapDepth) = TextureHelper.GetVoxelTextureSize(mCubes.NumCells.xyz);
+            (int3 mipmap0Resolution, int3 textureSize, int mipmapDepth) = TextureHelper.GetVoxelTextureSize(mCubes.NumCells.xyz);
             mCubes.SurfaceCellsMM0Dims = mipmap0Resolution;
             mCubes.SurfaceCellsMipmapDepth = maxMipmapDepth;
+            mCubes.SurfaceCellsMipmapDepth = mipmapDepth;
+            maxMipmapDepth = Mathf.Max(maxMipmapDepth, mipmapDepth);
 
             // Set the offsets for this fluids SVO textures
             sceneObjectData.bvStartIndex = composedSurfaceCellsSize.y;

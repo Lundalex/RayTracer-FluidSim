@@ -91,8 +91,6 @@ Texture3D<int2> SurfaceCellsLookup;
 Texture3D<int> SurfaceCells;
 
 const uint3 TextureMM0Dims;
-const uint StaticVerticesNum;
-const uint StaticTrisNum;
 const uint MipmapMaxDepth;
 
 // Other
@@ -300,9 +298,9 @@ void MoveToVoxel(uint3 pixelID, uint mipmapLayer, inout Ray ray)
     MoveToBox(ray, min, max);
 }
 
-void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
+void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray, uint mipmapMaxDepth)
 {
-    // Local ray sestup
+    // Local ray setup
     Ray localRay = ray;
     localRay.pos -= FluidPos;
 
@@ -317,7 +315,7 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
     // mipmap level may be redundant and able to be replaced by a variable
     uint4 nodeStack[FLUID_NODE_STACK_LENGTH]; // uint4(pixelID: xyz, mipmap level: w)
     uint stackPointer = 0;
-    nodeStack[stackPointer++] = uint4(0, 0, 0, MipmapMaxDepth);
+    nodeStack[stackPointer++] = uint4(0, 0, 0, mipmapMaxDepth);
 
     NodeDst InitNodeDstArr[8];
     for (int j = 0; j < 8; j++) InitNodeDstArr[j] = InitNodeDst();
@@ -422,7 +420,7 @@ void TraverseSceneBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
                 }
                 // else
                 // {
-                //     TraverseSVH(localHitInfo, debugData, localRay);
+                //     TraverseSVH(localHitInfo, debugData, localRay, MipmapMaxDepth);
                 // }
 
                 Material2 material = Materials[sceneObject.materialIndex];
@@ -468,7 +466,7 @@ void TraverseAllSVHs(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
     HitInfo localHitInfo = InitHitInfo();
     localHitInfo.dst = hitInfo.dst;
 
-    TraverseSVH(localHitInfo, debugData, ray);
+    TraverseSVH(localHitInfo, debugData, ray, MipmapMaxDepth);
 
     uint fluidMaterialIndex = 0;
 
