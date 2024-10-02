@@ -13,6 +13,10 @@ struct Vertex2
     float3 pos;
     float2 uv;
 };
+struct Vertex3
+{
+    float3 pos;
+};
 struct BV
 {
     float3 min;
@@ -144,11 +148,10 @@ struct NearInfo
  
 // --- Init functions ---
 
-Vertex2 InitVertex(float3 pos, float2 uv)
+Vertex3 InitVertex3(float3 pos)
 {
-    Vertex2 vertex;
+    Vertex3 vertex;
     vertex.pos = pos;
-    vertex.uv = uv;
 
     return vertex;
 }

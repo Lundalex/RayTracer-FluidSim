@@ -8,6 +8,7 @@ public class RendererShaderHelper : MonoBehaviour
         m.rtShader.SetBuffer(0, "Materials", materialBuffer);
         m.rtShader.SetBuffer(4, "Materials", materialBuffer);
     }
+
     public void SetTriBuffer(ComputeBuffer renderTriangleBuffer)
     {
         m.rtShader.SetBuffer(0, "Triangles", renderTriangleBuffer);
@@ -18,19 +19,28 @@ public class RendererShaderHelper : MonoBehaviour
         m.pcShader.SetInt("TrianglesNum", m.RenderTriangles.Length);
         m.rtShader.SetInt("TrianglesNum", m.RenderTriangles.Length);
     }
-    public void SetVertexBuffer(ComputeBuffer vertexBuffer)
+
+    public void SetStaticVertexBuffer(ComputeBuffer staticVertexBuffer)
     {
-        m.rtShader.SetBuffer(0, "Vertices", vertexBuffer);
-        m.rtShader.SetBuffer(4, "Vertices", vertexBuffer);
-        m.pcShader.SetBuffer(0, "Vertices", vertexBuffer);
-        m.mCubes.mcShader.SetBuffer(5, "Vertices", vertexBuffer);
+        m.rtShader.SetBuffer(0, "StaticVertices", staticVertexBuffer);
+        m.rtShader.SetBuffer(4, "StaticVertices", staticVertexBuffer);
+        m.pcShader.SetBuffer(0, "StaticVertices", staticVertexBuffer);
     }
+
+    public void SetDynamicVertexBuffer(ComputeBuffer dynamicVertexBuffer)
+    {
+        m.rtShader.SetBuffer(0, "DynamicVertices", dynamicVertexBuffer);
+        m.rtShader.SetBuffer(4, "DynamicVertices", dynamicVertexBuffer);
+        m.mCubes.mcShader.SetBuffer(5, "DynamicVertices", dynamicVertexBuffer);
+    }
+
     public void SetBVBuffer(ComputeBuffer bvBuffer)
     {
         m.rtShader.SetBuffer(0, "BVs", bvBuffer);
         m.rtShader.SetBuffer(4, "BVs", bvBuffer);
         m.rtShader.SetInt("BVsNum", m.BVs.Length);
     }
+
     public void SetSceneObjectDataBuffer(ComputeBuffer sceneObjectDataBuffer)
     {
         m.rtShader.SetBuffer(0, "SceneObjects", sceneObjectDataBuffer);

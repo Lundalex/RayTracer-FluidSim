@@ -41,7 +41,7 @@ RWStructuredBuffer<MCTri> FluidTriMeshSL;
 RWStructuredBuffer<int> FluidStartIndices;
 
 RWStructuredBuffer<Triangle> Triangles;
-RWStructuredBuffer<Vertex2> Vertices;
+RWStructuredBuffer<Vertex3> DynamicVertices;
 
 RWTexture3D<float> GridDensities;
 RWTexture3D<int> SurfaceCells;
@@ -333,7 +333,7 @@ void TransferToRenderer (uint3 id : SV_DispatchThreadID)
 
     if (i >= FluidTrisNum)
     {
-        // Uncomment this line if triangles stop disappearing
+        // Uncomment this line if unused triangles stop despawning
         // Triangles[i + StaticTrisNum] = InitTriangle();
         return;
     }
@@ -345,11 +345,11 @@ void TransferToRenderer (uint3 id : SV_DispatchThreadID)
     FluidVertexToWorldSpace(mcTri.vertex1);
     FluidVertexToWorldSpace(mcTri.vertex2);
 
-    uint vertexBaseIndex = 3 * i + StaticVerticesNum;
+    uint vertexBaseIndex = 3 * i;
 
-    Vertices[vertexBaseIndex] = InitVertex(mcTri.vertex0, float2(-1, -1));
-    Vertices[vertexBaseIndex + 1] = InitVertex(mcTri.vertex1, float2(-1, -1));
-    Vertices[vertexBaseIndex + 2] = InitVertex(mcTri.vertex2, float2(-1, -1));
+    DynamicVertices[vertexBaseIndex] = InitVertex3(mcTri.vertex0);
+    DynamicVertices[vertexBaseIndex + 1] = InitVertex3(mcTri.vertex1);
+    DynamicVertices[vertexBaseIndex + 2] = InitVertex3(mcTri.vertex2);
 
     float3 localNormal = GetPlaneNormal(mcTri);
     float area = GetMCTriArea(mcTri);

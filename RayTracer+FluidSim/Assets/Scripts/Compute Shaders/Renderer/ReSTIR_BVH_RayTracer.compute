@@ -75,8 +75,9 @@ StructuredBuffer<LightObject> LightObjects;
 StructuredBuffer<Material2> Materials;
 
 StructuredBuffer<Triangle> Triangles;
-StructuredBuffer<Vertex2> Vertices;
- 
+StructuredBuffer<Vertex2> StaticVertices;
+StructuredBuffer<Vertex3> DynamicVertices;
+
 // RW textures
 RWTexture2D<float4> Result;
 RWTexture2D<float> DepthBuffer;
@@ -104,8 +105,6 @@ const float3 FluidPos;
 const uint3 SmNumCells;
 const float SmCellSize;
 
-const float3 TEMP;
-
 float3 SampleTexture(float2 uv, uint2 texLoc, uint2 texDims, Texture2D tex)
 {
     uint2 texelCoord = texLoc + (uint2)(uv * float2(texDims.x, texDims.y));
@@ -131,7 +130,7 @@ float3 SampleEnvironmentMap(float3 dir)
     return col;
 }
 
-bool TestTriangles(inout HitInfo hitInfo, inout DebugData debugData, Ray ray, uint startIndex, uint endIndex)
+bool TestTriangles(inout HitInfo hitInfo, inout DebugData debugData, Ray ray, uint startIndex, uint endIndex, bool static_dynamic)
 {
     bool didHit = false;
     for (uint triIndex = startIndex; triIndex < endIndex; triIndex++)
@@ -139,24 +138,32 @@ bool TestTriangles(inout HitInfo hitInfo, inout DebugData debugData, Ray ray, ui
         Triangle tri = Triangles[triIndex];
         if (dot(tri.localNormal, ray.dir) <= 0)
         {
-            Vertex2 v0 = Vertices[tri.vertex0Index];
-            Vertex2 v1 = Vertices[tri.vertex1Index];
-            Vertex2 v2 = Vertices[tri.vertex2Index];
+            TriHitInfo triHitInfo;
 
-            TriHitInfo triHitInfo = RayTriangleIntersect(ray, v0, v1, v2);
-            debugData.triChecks++;
-
-            if (triHitInfo.didHit)
+            if (static_dynamic)
             {
-                didHit = true;
-
-                if (triHitInfo.dst < hitInfo.dst)
-                {
-                    hitInfo.dst = triHitInfo.dst;
-                    hitInfo.uv = triHitInfo.uv;
-                    hitInfo.normal = tri.localNormal;
-                }
+                Vertex2 v0 = StaticVertices[tri.vertex0Index];
+                Vertex2 v1 = StaticVertices[tri.vertex1Index];
+                Vertex2 v2 = StaticVertices[tri.vertex2Index];
+    
+                triHitInfo = RayStaticTriangleIntersect(ray, v0, v1, v2);
             }
+            else
+            {
+                Vertex3 v0 = DynamicVertices[tri.vertex0Index];
+                Vertex3 v1 = DynamicVertices[tri.vertex1Index];
+                Vertex3 v2 = DynamicVertices[tri.vertex2Index];
+    
+                triHitInfo = RayDynamicTriangleIntersect(ray, v0, v1, v2);
+            }
+
+            if (triHitInfo.didHit && triHitInfo.dst < hitInfo.dst)
+            {
+                hitInfo.dst = triHitInfo.dst;
+                hitInfo.uv = triHitInfo.uv;
+                hitInfo.normal = tri.localNormal;
+            }
+            debugData.triChecks++;
         }
     }
     return didHit;
@@ -183,7 +190,7 @@ void TraverseTrisBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray, 
         
         if (isLeaf)
         {
-            TestTriangles(hitInfo, debugData, ray, bv.indexA, bv.indexA + bv.indexB);
+            TestTriangles(hitInfo, debugData, ray, bv.indexA, bv.indexA + bv.indexB, true);
         }
         else
         {
@@ -358,6 +365,19 @@ void MoveToVoxel(uint3 pixelID, uint mipmapLayer, inout Ray ray)
     MoveToBox(ray, min, max);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
 {
     // Local ray sestup
@@ -393,7 +413,7 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
             // uint2(triStartPos, numTris)
             uint2 nodeContents = SurfaceCellsLookup[node.xyz];
 
-            bool didHit = TestTriangles(hitInfo, debugData, ray, nodeContents.x, nodeContents.x + nodeContents.y);
+            bool didHit = TestTriangles(hitInfo, debugData, ray, nodeContents.x, nodeContents.x + nodeContents.y, false);
 
             // If the appending of nodes is not handled correctly, this early exit may cause visual artifacts
             if (didHit) return;
@@ -499,9 +519,9 @@ int LightObjectReservoirSample(inout uint state)
 
 float GetTriArea(Triangle tri)
 {
-    float3 v0 = Vertices[tri.vertex0Index].pos;
-    float3 v1 = Vertices[tri.vertex1Index].pos;
-    float3 v2 = Vertices[tri.vertex2Index].pos;
+    float3 v0 = StaticVertices[tri.vertex0Index].pos;
+    float3 v1 = StaticVertices[tri.vertex1Index].pos;
+    float3 v2 = StaticVertices[tri.vertex2Index].pos;
 
     float3 ab = v1 - v0;
     float3 ac = v2 - v0;
@@ -546,9 +566,9 @@ float2 GenerateCandidateWeight(float sqrDst, float hitAngleDot, float3 incomingD
 
 float3 GetRandWorldPointTri(Triangle tri, float4x4 localToWorldMatrix, inout uint state)
 {
-    float3 v0 = Vertices[tri.vertex0Index].pos;
-    float3 v1 = Vertices[tri.vertex1Index].pos;
-    float3 v2 = Vertices[tri.vertex2Index].pos;
+    float3 v0 = StaticVertices[tri.vertex0Index].pos;
+    float3 v1 = StaticVertices[tri.vertex1Index].pos;
+    float3 v2 = StaticVertices[tri.vertex2Index].pos;
 
     float r1 = randNormalized(state);
     float r2 = randNormalized(state);

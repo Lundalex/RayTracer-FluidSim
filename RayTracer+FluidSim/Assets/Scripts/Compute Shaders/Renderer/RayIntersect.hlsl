@@ -1,4 +1,4 @@
-TriHitInfo RayTriangleIntersect(Ray ray, Vertex2 v0, Vertex2 v1, Vertex2 v2)
+TriHitInfo RayStaticTriangleIntersect(Ray ray, Vertex2 v0, Vertex2 v1, Vertex2 v2)
 {
     float3 edgeAB = v1.pos - v0.pos;
     float3 edgeAC = v2.pos - v0.pos;
@@ -19,6 +19,31 @@ TriHitInfo RayTriangleIntersect(Ray ray, Vertex2 v0, Vertex2 v1, Vertex2 v2)
     TriHitInfo triHitInfo;
     triHitInfo.didHit = determinant >= 1E-8 && dst >= 0 && u >= 0 && v >= 0 && w >= 0;
     triHitInfo.uv = triHitInfo.didHit ? v0.uv * w + v1.uv * u + v2.uv * v : float2(0, 0);
+    triHitInfo.dst = dst;
+    return triHitInfo;
+}
+
+TriHitInfo RayDynamicTriangleIntersect(Ray ray, Vertex3 v0, Vertex3 v1, Vertex3 v2)
+{
+    float3 edgeAB = v1.pos - v0.pos;
+    float3 edgeAC = v2.pos - v0.pos;
+    float3 normalVector = cross(edgeAB, edgeAC);
+    float3 ao = ray.pos - v0.pos;
+    float3 dao = cross(ao, ray.dir);
+ 
+    float determinant = -dot(ray.dir, normalVector);
+    float invDet = 1 / determinant;
+ 
+    // Calculate dst to tri & barycentric coordinates of intersection point
+    float dst = dot(ao, normalVector) * invDet;
+    float u = dot(edgeAC, dao) * invDet;
+    float v = -dot(edgeAB, dao) * invDet;
+    float w = 1 - u - v;
+ 
+    // Initialize tri hit info
+    TriHitInfo triHitInfo;
+    triHitInfo.didHit = determinant >= 1E-8 && dst >= 0 && u >= 0 && v >= 0 && w >= 0;
+    triHitInfo.uv = float2(0, 0);
     triHitInfo.dst = dst;
     return triHitInfo;
 }

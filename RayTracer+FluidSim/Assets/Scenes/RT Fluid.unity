@@ -546,10 +546,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1059782422ce97346a2af3422f9d5bbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  TEMP:
-    x: 0
-    y: 0
-    z: 0
   CameraMoveSpeed: 8
   CameraPanSpeed: 8
   fieldOfView: 70

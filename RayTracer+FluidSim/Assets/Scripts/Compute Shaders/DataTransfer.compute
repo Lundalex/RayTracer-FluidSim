@@ -19,34 +19,6 @@ int Extract_PType(int LastChunkKey_PType_POrder)
     return ((uint)LastChunkKey_PType_POrder % (ChunksNumAll * PTypesNum)) / ChunksNumAll;
 }
 
-// Rotates around the center of the sim boundrary dims
-float3 ApplyTransform(float3 rot, float3 point2)
-{
-    point2 -= SimBoundraryDims * 0.5;
-
-    float cosX = cos(rot.x);
-    float sinX = sin(rot.x);
-    float cosY = cos(rot.y);
-    float sinY = sin(rot.y);
-    float cosZ = cos(rot.z);
-    float sinZ = sin(rot.z);
-
-    // Combine rotation matrices into a single matrix
-    float3x3 rotationMatrix = float3x3(
-        cosY * cosZ,                             cosY * sinZ,                           -sinY,
-        sinX * sinY * cosZ - cosX * sinZ,   sinX * sinY * sinZ + cosX * cosZ,  sinX * cosY,
-        cosX * sinY * cosZ + sinX * sinZ,   cosX * sinY * sinZ - sinX * cosZ,  cosX * cosY
-    );
-
-    // Apply the combined rotation matrix to each vertex
-    float3 transformedPos = mul(rotationMatrix, point2);
-
-    transformedPos += SimBoundraryDims * 0.5;
-
-    return transformedPos;
-}
-
-
 [numthreads(TN_DT,1,1)]
 void TransferParticleData (uint3 id : SV_DispatchThreadID)
 {

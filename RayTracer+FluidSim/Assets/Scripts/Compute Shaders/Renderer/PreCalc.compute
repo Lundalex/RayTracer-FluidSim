@@ -5,14 +5,14 @@
 const uint TrianglesNum;
 
 RWStructuredBuffer<Triangle> Triangles;
-RWStructuredBuffer<Vertex2> Vertices;
+RWStructuredBuffer<Vertex2> StaticVertices;
 RWStructuredBuffer<SceneObject> SceneObjects;
 
 float3 GetPlaneNormal (Triangle tri)
 {
-    float3 v0 = Vertices[tri.vertex0Index].pos;
-    float3 v1 = Vertices[tri.vertex1Index].pos;
-    float3 v2 = Vertices[tri.vertex2Index].pos;
+    float3 v0 = StaticVertices[tri.vertex0Index].pos;
+    float3 v1 = StaticVertices[tri.vertex1Index].pos;
+    float3 v2 = StaticVertices[tri.vertex2Index].pos;
 
     float3 ab = v1 - v0;
     float3 ac = v2 - v0;
@@ -22,9 +22,9 @@ float3 GetPlaneNormal (Triangle tri)
 
 float3 GetPlaneNormalTransformed (Triangle tri, float4x4 transform)
 {
-    float3 v0 = Vertices[tri.vertex0Index].pos;
-    float3 v1 = Vertices[tri.vertex1Index].pos;
-    float3 v2 = Vertices[tri.vertex2Index].pos;
+    float3 v0 = StaticVertices[tri.vertex0Index].pos;
+    float3 v1 = StaticVertices[tri.vertex1Index].pos;
+    float3 v2 = StaticVertices[tri.vertex2Index].pos;
 
     float3 ab = v1 - v0;
     float3 ac = v2 - v0;

@@ -6,7 +6,6 @@ using UnityEngine.Rendering;
 public class NewRenderer : MonoBehaviour
 {
 #region Inspector
-    public float3 TEMP;
 
     [Header("Camera Settings")]
     public float CameraMoveSpeed;
@@ -84,13 +83,14 @@ public class NewRenderer : MonoBehaviour
     private int PreCalcThreadSize = 256;
     [NonSerialized] public Material2[] Material2s;
     [NonSerialized] public RenderTriangle[] RenderTriangles;
-    [NonSerialized] public Vertex[] Vertices;
+    [NonSerialized] public Vertex[] StaticVertices;
     [NonSerialized] public SceneObjectData[] SceneObjectDatas;
     [NonSerialized] public LightObject[] LightObjects;
     [NonSerialized] public RenderBV[] BVs;
     private ComputeBuffer BVBuffer;
-    public ComputeBuffer RenderTriangleBuffer; // "public" is temp!
-    public ComputeBuffer VertexBuffer; // "public" is temp!
+    private ComputeBuffer RenderTriangleBuffer;
+    private ComputeBuffer StaticVertexBuffer;
+    private ComputeBuffer DynamicVertexBuffer;
     private ComputeBuffer SceneObjectDataBuffer;
     private ComputeBuffer LightObjectBuffer;
     private ComputeBuffer MaterialBuffer;
@@ -334,8 +334,6 @@ public class NewRenderer : MonoBehaviour
         rtShader.SetVector("FluidPos", new Vector3(mCubes.FluidPos.x, mCubes.FluidPos.y, mCubes.FluidPos.z));
         rtShader.SetVector("SmNumCells", new Vector3(mCubes.NumCells.x, mCubes.NumCells.y, mCubes.NumCells.z));
         rtShader.SetFloat("SmCellSize", mCubes.sim.MaxInfluenceRadius);
-
-        rtShader.SetVector("TEMP", new Vector3(TEMP.x, TEMP.y, TEMP.z));
  
         Debug.Log("Internal program settings updated");
     }
@@ -356,7 +354,7 @@ public class NewRenderer : MonoBehaviour
         ComputeHelper.Release(AllBuffers());
 
         // Construct BVH
-        (BVs, Vertices, RenderTriangles, SceneObjectDatas, LightObjects, TextureAtlas, Material2s, StaticVerticesNum, StaticTrisNum) = objectManager.ConstructScene();
+        (BVs, StaticVertices, RenderTriangles, SceneObjectDatas, LightObjects, TextureAtlas, Material2s, StaticTrisNum) = objectManager.ConstructScene();
 
         MaterialBuffer = ComputeHelper.CreateStructuredBuffer<Material2>(Material2s);
         shaderHelper.SetMaterialBuffer(MaterialBuffer);
@@ -370,8 +368,10 @@ public class NewRenderer : MonoBehaviour
         shaderHelper.SetSceneObjectDataBuffer(SceneObjectDataBuffer);
         RenderTriangleBuffer = ComputeHelper.CreateStructuredBuffer<RenderTriangle>(RenderTriangles, StaticTrisNum + mCubes.FluidTriMeshBufferACMax);
         shaderHelper.SetTriBuffer(RenderTriangleBuffer);
-        VertexBuffer = ComputeHelper.CreateStructuredBuffer<Vertex>(Vertices, StaticVerticesNum + 3 * mCubes.FluidTriMeshBufferACMax);
-        shaderHelper.SetVertexBuffer(VertexBuffer);
+        StaticVertexBuffer = ComputeHelper.CreateStructuredBuffer<Vertex>(StaticVertices);
+        shaderHelper.SetStaticVertexBuffer(StaticVertexBuffer);
+        DynamicVertexBuffer = ComputeHelper.CreateStructuredBuffer<Vertex>(3 * mCubes.FluidTriMeshBufferACMax);
+        shaderHelper.SetDynamicVertexBuffer(DynamicVertexBuffer);
         RunPreCalcShader();
  
         // Set LightObjects data
@@ -578,7 +578,7 @@ public class NewRenderer : MonoBehaviour
         else asciiManager.Asciitext.enabled = false;
     }
  
-    private ComputeBuffer[] AllBuffers() => new ComputeBuffer[] { BVBuffer, RenderTriangleBuffer, VertexBuffer, SceneObjectDataBuffer, LightObjectBuffer, MaterialBuffer, CandidateBuffer, CandidateReuseBuffer, TemporalFrameBuffer, HitInfoBuffer };
+    private ComputeBuffer[] AllBuffers() => new ComputeBuffer[] { BVBuffer, RenderTriangleBuffer, StaticVertexBuffer, DynamicVertexBuffer, SceneObjectDataBuffer, LightObjectBuffer, MaterialBuffer, CandidateBuffer, CandidateReuseBuffer, TemporalFrameBuffer, HitInfoBuffer };
  
     private void OnDestroy()
     {
