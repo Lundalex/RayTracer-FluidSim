@@ -20,7 +20,7 @@ public class ObjectManager : MonoBehaviour
     public int SplitResolution; // ex. 10 -> Each BV split will test 10 increments for each component x,y,z (30 tests total)
     public string FileName;
     public BVUpdateMode BVUpdateModeSelect;
-    public DataMode FileModeSelect;
+    public FileDataMode FileDataModeSelect;
     public ExtensionMode ExtensionModeSelect;
     public NewRenderer m;
 
@@ -512,7 +512,7 @@ public class ObjectManager : MonoBehaviour
         m.rtShader.SetFloat("TotArea", loadContainer.GetFloatByKey("totArea"));
 
         DebugUtils.LogStopWatch("Data fetching", ref stopwatch);
-        FileModeSelect = DataMode.Disabled;
+        FileDataModeSelect = FileDataMode.Disabled;
 
         return loadContainer;
     }
@@ -551,7 +551,7 @@ public class ObjectManager : MonoBehaviour
         Utils.RemoveFromEndOfArray(ref LoadedComponentDatas, LastSceneBVHLength);
         LastSceneBVHLength = 0;
 
-        FileModeSelect = DataMode.Disabled;
+        FileDataModeSelect = FileDataMode.Disabled;
     }
 
     private int LoadSceneObjects()
@@ -670,7 +670,7 @@ public class ObjectManager : MonoBehaviour
         if (textureAtlas == null || resetMaterials) { (textureAtlas, materials) = ConstructTextureAtlas(); resetMaterials = false; }
 
         // Fetch data
-        if (FileModeSelect == DataMode.LoadExistingFile)
+        if (FileDataModeSelect == FileDataMode.LoadExistingFile)
         {
             MultiArrayContainer loadContainer = LoadFromFile(FileName);
 
@@ -716,9 +716,10 @@ public class ObjectManager : MonoBehaviour
         int3 composedSurfaceCellsLookupSize = 0;
         for (int i = 0; i < FluidObjects.Length; i++)
         {
-            // Retrieve relevant game object data
+            // Retrieve relevant fluid object data
             GameObject fluidObject = FluidObjects[i];
             Transform transform = fluidObject.transform;
+            FluidManager fluidManager = fluidObject.GetComponent<FluidManager>();
             Simulation simulation = fluidObject.GetComponent<Simulation>();
             MarchingCubes mCubes = fluidObject.GetComponent<MarchingCubes>();
 
@@ -730,7 +731,7 @@ public class ObjectManager : MonoBehaviour
             sceneObjectData.localToWorldMatrix = worldToLocalMatrix.inverse;
 
             // Set material
-            sceneObjectData.materialIndex = simulation.MaterialIndex;
+            sceneObjectData.materialIndex = fluidManager.MaterialIndex;
 
             // Mipmap values
             (int3 mipmap0Resolution, int3 textureSize, int mipmapDepth) = TextureHelper.GetVoxelTextureSize(mCubes.NumCells.xyz);
@@ -794,7 +795,7 @@ public class ObjectManager : MonoBehaviour
         }
 
         // Save Data
-        if (FileModeSelect == DataMode.GenerateNewFile) SaveToFile(FileName, maxBVHDepth, emittingObjectsNum, sceneBVHStartIndex, totArea);
+        if (FileDataModeSelect == FileDataMode.GenerateNewFile) SaveToFile(FileName, maxBVHDepth, emittingObjectsNum, sceneBVHStartIndex, totArea);
 
         return (LoadedBVs, LoadedVertices, RenderTriangles, RenderSceneObjects, LightObjects, textureAtlas, materials, RenderTriangles.Length);
     }

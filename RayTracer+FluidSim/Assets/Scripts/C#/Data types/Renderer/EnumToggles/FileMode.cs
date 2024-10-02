@@ -1,4 +1,4 @@
-public enum DataMode
+public enum FileDataMode
 {
     GenerateNewFile,
     LoadExistingFile,

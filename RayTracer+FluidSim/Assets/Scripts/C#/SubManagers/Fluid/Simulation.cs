@@ -8,9 +8,6 @@ using SimResources;
 public class Simulation : MonoBehaviour
 {
 #region Inspector
-    [Header("Material")]
-    public int MaterialIndex = 0;
-
     [Header("Fluid")]
     public int MaxInfluenceRadius = 2;
     public float TargetDensity = 2.0f;
