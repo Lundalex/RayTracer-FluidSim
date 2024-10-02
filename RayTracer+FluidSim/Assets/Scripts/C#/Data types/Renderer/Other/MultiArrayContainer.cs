@@ -17,7 +17,7 @@ public class KeyedFloat
 public class MultiArrayContainer
 {
     public Triangle[] loadedTriangles;
-    public SceneObjectData[] sceneObjectDatas;
+    public RenderSceneObject[] renderSceneObjects;
     public LightObject[] lightObjects;
     public int[] loadedMeshesLookup;
     public int2[] loadedComponentDatas;

@@ -41,12 +41,12 @@ public class RendererShaderHelper : MonoBehaviour
         m.rtShader.SetInt("BVsNum", m.BVs.Length);
     }
 
-    public void SetSceneObjectDataBuffer(ComputeBuffer sceneObjectDataBuffer)
+    public void SetRenderSceneObjectBuffer(ComputeBuffer renderSceneObjectBuffer)
     {
-        m.rtShader.SetBuffer(0, "SceneObjects", sceneObjectDataBuffer);
-        m.rtShader.SetBuffer(4, "SceneObjects", sceneObjectDataBuffer);
-        m.pcShader.SetBuffer(0, "SceneObjects", sceneObjectDataBuffer);
-        m.rtShader.SetInt("SceneObjectsNum", m.SceneObjectDatas.Length);
+        m.rtShader.SetBuffer(0, "SceneObjects", renderSceneObjectBuffer);
+        m.rtShader.SetBuffer(4, "SceneObjects", renderSceneObjectBuffer);
+        m.pcShader.SetBuffer(0, "SceneObjects", renderSceneObjectBuffer);
+        m.rtShader.SetInt("SceneObjectsNum", m.RenderSceneObjects.Length);
     }
 
     public void SetLightObjectBuffer(ComputeBuffer lightObjectBuffer)

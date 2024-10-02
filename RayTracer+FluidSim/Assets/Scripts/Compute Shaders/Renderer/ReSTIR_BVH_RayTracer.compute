@@ -217,73 +217,6 @@ void TraverseTrisBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray, 
 
     CheckStackOverflow(stackPointer, BVH_NODE_STACK_LENGTH, debugData);
 }
- 
-void TraverseSceneBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
-{
-    uint bvStack[BVH_NODE_STACK_LENGTH];
-    uint stackPointer = 0;
-    bvStack[stackPointer++] = SceneBVHStartIndex;
- 
-    while (stackPointer > 0 && stackPointer < BVH_NODE_STACK_LENGTH)
-    {
-        BV bv = BVs[bvStack[--stackPointer]];
-        
-        bool isLeaf = bv.indexA >= 0;
-        bv.indexA = abs(bv.indexA);
-        bv.indexB = abs(bv.indexB);
-        
-        if (isLeaf)
-        {
-            for (int sceneObjectIndex = bv.indexA; sceneObjectIndex < bv.indexA + bv.indexB; sceneObjectIndex++)
-            {
-                SceneObject sceneObject = SceneObjects[sceneObjectIndex];
- 
-                Ray localRay;
-                localRay.pos = mul(sceneObject.worldToLocalMatrix, float4(ray.pos, 1)).xyz;
-                localRay.dir = mul(sceneObject.worldToLocalMatrix, float4(ray.dir, 0)).xyz;
-                localRay.invDir = 1 / localRay.dir;
-        
-                HitInfo localHitInfo = InitHitInfo();
-        
-                TraverseTrisBVH(localHitInfo, debugData, localRay, sceneObject.bvStartIndex);
-                
-                Material2 material = Materials[sceneObject.materialIndex];
-                if (all(material.normalsTexLoc != -1)) localHitInfo.normal = SampleTexture(localHitInfo.uv, material.normalsTexLoc, material.normalsTexDims, TextureAtlas) * 2 - 1;
-
-                if (localHitInfo.dst < hitInfo.dst)
-                {
-                    hitInfo.dst = localHitInfo.dst;
-                    hitInfo.normal = normalize(mul(sceneObject.localToWorldMatrix, float4(localHitInfo.normal, 0)).xyz);
-                    hitInfo.hitPoint = ray.pos + ray.dir * localHitInfo.dst;
-                    hitInfo.uv = localHitInfo.uv;
-                    hitInfo.materialIndex = sceneObject.materialIndex;
-                }
-            }
-        }
-        else
-        {
-            // Check child BV intersections
-            BV bvA = BVs[bv.indexA];
-            float dstA = RayBVIntersect(ray, bvA); debugData.bvVoxelChecks++;
-            BV bvB = BVs[bv.indexB];
-            float dstB = RayBVIntersect(ray, bvB); debugData.bvVoxelChecks++;
- 
-            // Push the nearest BV last, to avaluate it first
-            if (dstA < dstB)
-            {
-                if (dstB < hitInfo.dst) bvStack[stackPointer++] = bv.indexB;
-                if (dstA < hitInfo.dst) bvStack[stackPointer++] = bv.indexA;
-            }
-            else
-            {
-                if (dstA < hitInfo.dst) bvStack[stackPointer++] = bv.indexA;
-                if (dstB < hitInfo.dst) bvStack[stackPointer++] = bv.indexB;
-            }
-        }
-    }
-
-    CheckStackOverflow(stackPointer, BVH_NODE_STACK_LENGTH, debugData);
-}
 
 uint3 GetMipmapOffset(uint mipmapLayer)
 {
@@ -364,19 +297,6 @@ void MoveToVoxel(uint3 pixelID, uint mipmapLayer, inout Ray ray)
 
     MoveToBox(ray, min, max);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
 {
@@ -463,10 +383,85 @@ void TraverseSVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
 
     CheckStackOverflow(stackPointer, FLUID_NODE_STACK_LENGTH, debugData);
 }
+ 
+void TraverseSceneBVH(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
+{
+    uint bvStack[BVH_NODE_STACK_LENGTH];
+    uint stackPointer = 0;
+    bvStack[stackPointer++] = SceneBVHStartIndex;
+ 
+    while (stackPointer > 0 && stackPointer < BVH_NODE_STACK_LENGTH)
+    {
+        BV bv = BVs[bvStack[--stackPointer]];
+        
+        bool isLeaf = bv.indexA >= 0;
+        bv.indexA = abs(bv.indexA);
+        bv.indexB = abs(bv.indexB);
+        
+        if (isLeaf)
+        {
+            for (int sceneObjectIndex = bv.indexA; sceneObjectIndex < bv.indexA + bv.indexB; sceneObjectIndex++)
+            {
+                SceneObject sceneObject = SceneObjects[sceneObjectIndex];
+ 
+                Ray localRay;
+                localRay.pos = mul(sceneObject.worldToLocalMatrix, float4(ray.pos, 1)).xyz;
+                localRay.dir = mul(sceneObject.worldToLocalMatrix, float4(ray.dir, 0)).xyz;
+                localRay.invDir = 1 / localRay.dir;
+        
+                HitInfo localHitInfo = InitHitInfo();
+                localHitInfo.dst = hitInfo.dst;
+
+                bool rigidBody_fluid = true;
+                if (rigidBody_fluid)
+                {
+                    TraverseTrisBVH(localHitInfo, debugData, localRay, sceneObject.bvStartIndex);
+                }
+                else
+                {
+                    TraverseSVH(localHitInfo, debugData, localRay);
+                }
+                
+                Material2 material = Materials[sceneObject.materialIndex];
+                if (all(material.normalsTexLoc != -1)) localHitInfo.normal = SampleTexture(localHitInfo.uv, material.normalsTexLoc, material.normalsTexDims, TextureAtlas) * 2 - 1;
+
+                if (localHitInfo.dst < hitInfo.dst)
+                {
+                    hitInfo.dst = localHitInfo.dst;
+                    hitInfo.normal = normalize(mul(sceneObject.localToWorldMatrix, float4(localHitInfo.normal, 0)).xyz);
+                    hitInfo.hitPoint = ray.pos + ray.dir * localHitInfo.dst;
+                    hitInfo.uv = localHitInfo.uv;
+                    hitInfo.materialIndex = sceneObject.materialIndex;
+                }
+            }
+        }
+        else
+        {
+            // Check child BV intersections
+            BV bvA = BVs[bv.indexA];
+            float dstA = RayBVIntersect(ray, bvA); debugData.bvVoxelChecks++;
+            BV bvB = BVs[bv.indexB];
+            float dstB = RayBVIntersect(ray, bvB); debugData.bvVoxelChecks++;
+ 
+            // Push the nearest BV last, to avaluate it first
+            if (dstA < dstB)
+            {
+                if (dstB < hitInfo.dst) bvStack[stackPointer++] = bv.indexB;
+                if (dstA < hitInfo.dst) bvStack[stackPointer++] = bv.indexA;
+            }
+            else
+            {
+                if (dstA < hitInfo.dst) bvStack[stackPointer++] = bv.indexA;
+                if (dstB < hitInfo.dst) bvStack[stackPointer++] = bv.indexB;
+            }
+        }
+    }
+
+    CheckStackOverflow(stackPointer, BVH_NODE_STACK_LENGTH, debugData);
+}
 
 void TraverseAllSVHs(inout HitInfo hitInfo, inout DebugData debugData, Ray ray)
 {
-    // NO DST ORDER BETWEEN BVHs AND SVOs
     HitInfo localHitInfo = InitHitInfo();
     localHitInfo.dst = hitInfo.dst;
 

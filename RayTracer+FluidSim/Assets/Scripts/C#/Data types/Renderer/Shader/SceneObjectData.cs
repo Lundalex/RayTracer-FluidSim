@@ -6,10 +6,10 @@ public struct SceneObjectData : IBVHComponent
 {
     public float4x4 worldToLocalMatrix;
     public float4x4 localToWorldMatrix;
+    public float areaApprox;
     public int materialIndex;
     public int bvStartIndex;
     public int maxDepthBVH;
-    public float areaApprox;
     public float3 min;
     public float3 max;
     public readonly float3 GetMin() => min;

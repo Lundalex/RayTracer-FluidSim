@@ -28,7 +28,7 @@ public static class FileLoader
         string folderPath = Path.Combine(Application.persistentDataPath, baseFileName);
 
         SaveArrayToJsonFile(container.loadedTriangles, folderPath, "loadedTriangles");
-        SaveArrayToJsonFile(container.sceneObjectDatas, folderPath, "sceneObjectDatas");
+        SaveArrayToJsonFile(container.renderSceneObjects, folderPath, "renderSceneObjects");
         SaveArrayToJsonFile(container.lightObjects, folderPath, "lightObjects");
         SaveArrayToJsonFile(container.loadedMeshesLookup, folderPath, "loadedMeshesLookup");
         SaveArrayToJsonFile(container.loadedComponentDatas, folderPath, "loadedComponentDatas");
@@ -73,7 +73,7 @@ public static class FileLoader
         var container = new MultiArrayContainer
         {
             loadedTriangles = LoadArrayFromJsonFile<Triangle>(folderPath, "loadedTriangles"),
-            sceneObjectDatas = LoadArrayFromJsonFile<SceneObjectData>(folderPath, "sceneObjectDatas"),
+            renderSceneObjects = LoadArrayFromJsonFile<RenderSceneObject>(folderPath, "renderSceneObjects"),
             lightObjects = LoadArrayFromJsonFile<LightObject>(folderPath, "lightObjects"),
             loadedMeshesLookup = LoadArrayFromJsonFile<int>(folderPath, "loadedMeshesLookup"),
             loadedComponentDatas = LoadArrayFromJsonFile<int2>(folderPath, "loadedComponentDatas"),

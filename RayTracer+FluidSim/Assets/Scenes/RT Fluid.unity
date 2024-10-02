@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.37311953, g: 0.38074014, b: 0.3587274, a: 1}
+  m_IndirectSpecularColor: {r: 0.37311947, g: 0.38074014, b: 0.3587274, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -584,7 +584,7 @@ MonoBehaviour:
   pcShader: {fileID: 7200000, guid: 8b6e58497c2f7da409da1927d115d6dc, type: 3}
   shaderHelper: {fileID: 868168750}
   textureManager: {fileID: 473926887}
-  mCubes: {fileID: 1604392132}
+  mCubes: {fileID: 2125271851}
   objectManager: {fileID: 1049554302}
   asciiManager: {fileID: 569968697}
   EnvironmentMapTexture: {fileID: 2800000, guid: 45c2c1c4ef5242945bc5b3eaa0e9442e, type: 3}
@@ -679,18 +679,45 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 50865f9ac78796340889fddf05264e95, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sceneObjects:
-  - {fileID: 2439891451013711600}
+  SceneObjects:
   - {fileID: 4565288040932495236}
-  materialInputs:
-  - brightness: 0
+  - {fileID: 2439891451013711600}
+  FluidObjects: []
+  MaterialInputs:
+  - brightness: 1000
     col:
-      x: 0
+      x: 1
       y: 1
-      z: 1
+      z: 0
     colTex: {fileID: 0}
     normalsTex: {fileID: 0}
-    roughness: 1
+    roughness: 0
+    roughnessTex: {fileID: 0}
+    metallicity: 0
+    metallicityTex: {fileID: 0}
+    bump: 0
+    bumpTex: {fileID: 0}
+  - brightness: 10000
+    col:
+      x: 1
+      y: 1
+      z: 0
+    colTex: {fileID: 0}
+    normalsTex: {fileID: 0}
+    roughness: 0
+    roughnessTex: {fileID: 0}
+    metallicity: 0
+    metallicityTex: {fileID: 0}
+    bump: 0
+    bumpTex: {fileID: 0}
+  - brightness: 100
+    col:
+      x: 1
+      y: 1
+      z: 0
+    colTex: {fileID: 0}
+    normalsTex: {fileID: 0}
+    roughness: 0
     roughnessTex: {fileID: 0}
     metallicity: 0
     metallicityTex: {fileID: 0}
@@ -698,27 +725,14 @@ MonoBehaviour:
     bumpTex: {fileID: 0}
   - brightness: 0
     col:
-      x: 0
+      x: 1
       y: 1
       z: 0
     colTex: {fileID: 0}
     normalsTex: {fileID: 0}
-    roughness: 0.8
+    roughness: 0
     roughnessTex: {fileID: 0}
-    metallicity: 1
-    metallicityTex: {fileID: 0}
-    bump: 0
-    bumpTex: {fileID: 0}
-  - brightness: 40000
-    col:
-      x: 1
-      y: 1
-      z: 1
-    colTex: {fileID: 0}
-    normalsTex: {fileID: 0}
-    roughness: 1
-    roughnessTex: {fileID: 0}
-    metallicity: 1
+    metallicity: 0
     metallicityTex: {fileID: 0}
     bump: 0
     bumpTex: {fileID: 0}
@@ -728,7 +742,7 @@ MonoBehaviour:
   SplitResolution: 5
   FileName: 8kScene
   BVUpdateModeSelect: 0
-  FileModeSelect: 1
+  FileModeSelect: 0
   ExtensionModeSelect: 0
   m: {fileID: 868168749}
 --- !u!1 &1164272047
@@ -762,7 +776,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sim: {fileID: 2125271849}
-  mCubes: {fileID: 1604392132}
+  mCubes: {fileID: 2125271851}
   newRenderer: {fileID: 868168749}
   textureManager: {fileID: 473926887}
   shaderHelper: {fileID: 1164272050}
@@ -959,86 +973,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!1 &1604392131
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1604392133}
-  - component: {fileID: 1604392132}
-  - component: {fileID: 1604392134}
-  m_Layer: 0
-  m_Name: Marching Cubes
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1604392132
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1604392131}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: da170071670cb7348adfac942c82272e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  FluidTriMeshBufferACMax: 120000
-  FluidMeshLengthSafety: 1.15
-  DensityRadius: 1
-  Threshold: 0.5
-  DistanceMultiplier: 0.3
-  DensityMultiplier: 0.2
-  FluidTriMeshSLBufferSafety: 0.4
-  FluidDims:
-    x: 5
-    y: 5
-    z: 5
-  FluidPos:
-    x: -2
-    y: 0
-    z: 7.5
-  sim: {fileID: 2125271849}
-  renderer: {fileID: 868168749}
-  shaderHelper: {fileID: 1604392134}
-  textureManager: {fileID: 473926887}
-  mcShader: {fileID: 7200000, guid: c8b0c0ed857fbca42a6211171c8e8dc1, type: 3}
-  svoShader: {fileID: 7200000, guid: ddf45746762be43468ab11ddf21b57ed, type: 3}
-  ssShader: {fileID: 7200000, guid: 238c41e2f6212784bbded3f38bf742c2, type: 3}
---- !u!4 &1604392133
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1604392131}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1604392134
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1604392131}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6e2450ded0dde4cb7913a212c5759112, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m: {fileID: 1604392132}
 --- !u!1 &2125271846
 GameObject:
   m_ObjectHideFlags: 0
@@ -1049,7 +983,9 @@ GameObject:
   m_Component:
   - component: {fileID: 2125271847}
   - component: {fileID: 2125271849}
+  - component: {fileID: 2125271851}
   - component: {fileID: 2125271848}
+  - component: {fileID: 2125271850}
   m_Layer: 0
   m_Name: Simulation
   m_TagString: Untagged
@@ -1066,8 +1002,8 @@ Transform:
   m_GameObject: {fileID: 2125271846}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -2, y: 0, z: 7.5}
+  m_LocalScale: {x: 5, y: 5, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -1130,6 +1066,53 @@ MonoBehaviour:
   pSimShader: {fileID: 7200000, guid: 4c6ba7b69baa30b428d3e81f801e27b8, type: 3}
   ssShader: {fileID: 7200000, guid: 3e99023e342e7f542b3045d213b12c03, type: 3}
   ipsShader: {fileID: 7200000, guid: 4f1bd62c1c0e8804e89857d2d305d0db, type: 3}
+--- !u!114 &2125271850
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2125271846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e2450ded0dde4cb7913a212c5759112, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m: {fileID: 2125271851}
+--- !u!114 &2125271851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2125271846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da170071670cb7348adfac942c82272e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  FluidTriMeshBufferACMax: 120000
+  FluidMeshLengthSafety: 1.2
+  DensityRadius: 1
+  Threshold: 0.5
+  DistanceMultiplier: 0.3
+  DensityMultiplier: 0.2
+  FluidTriMeshSLBufferSafety: 0.4
+  FluidDims:
+    x: 5
+    y: 5
+    z: 5
+  FluidPos:
+    x: -2
+    y: 0
+    z: 7.5
+  sim: {fileID: 2125271849}
+  renderer: {fileID: 868168749}
+  shaderHelper: {fileID: 2125271850}
+  textureManager: {fileID: 473926887}
+  mcShader: {fileID: 7200000, guid: c8b0c0ed857fbca42a6211171c8e8dc1, type: 3}
+  svoShader: {fileID: 7200000, guid: ddf45746762be43468ab11ddf21b57ed, type: 3}
+  ssShader: {fileID: 7200000, guid: 238c41e2f6212784bbded3f38bf742c2, type: 3}
 --- !u!1001 &2439891451013711599
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1523,7 +1506,6 @@ SceneRoots:
   m_Roots:
   - {fileID: 868168748}
   - {fileID: 1049554301}
-  - {fileID: 1604392133}
   - {fileID: 2125271847}
   - {fileID: 473926886}
   - {fileID: 1164272049}

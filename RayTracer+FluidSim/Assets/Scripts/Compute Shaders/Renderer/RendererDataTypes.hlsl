@@ -28,12 +28,10 @@ struct SceneObject
 {
     float4x4 worldToLocalMatrix;
     float4x4 localToWorldMatrix;
+    float areaApprox;
     int materialIndex;
     int bvStartIndex;
     int maxDepthBVH;
-    float areaApprox;
-    float3 min; // Unused?
-    float3 max; // Unused?
 };
 struct LightObject
 {

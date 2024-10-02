@@ -11,8 +11,9 @@ using RendererResources;
 
 public class ObjectManager : MonoBehaviour
 {
-    public GameObject[] sceneObjects;
-    public MaterialInput[] materialInputs;
+    public GameObject[] SceneObjects;
+    public GameObject[] FluidObjects;
+    public MaterialInput[] MaterialInputs;
     public bool DesignatedVertices;
     public int MaxAtlasDims;
     public int MaxDepthSceneBVH;
@@ -33,6 +34,7 @@ public class ObjectManager : MonoBehaviour
     private Vertex[] LoadedVertices = new Vertex[0];
     private Triangle[] LoadedTriangles = new Triangle[0];
     private RenderTriangle[] RenderTriangles;
+    private RenderSceneObject[] RenderSceneObjects;
     private int[] LoadedMeshesLookup;
     private int LastSceneBVHLength = 0;
     private int LoadedVerticesNum;
@@ -354,22 +356,22 @@ public class ObjectManager : MonoBehaviour
     {
         SceneObjectSettings sceneObjectSettings = sceneObject.GetComponentInChildren<SceneObjectSettings>();
         int materialIndex = sceneObjectSettings.MaterialIndex;
-        float brightness = materialInputs[materialIndex].brightness;
+        float brightness = MaterialInputs[materialIndex].brightness;
         return brightness;
     }
     private float GetEmittance(SceneObjectData sceneObjectData)
     {
         int materialIndex = sceneObjectData.materialIndex;
-        float brightness = materialInputs[materialIndex].brightness;
+        float brightness = MaterialInputs[materialIndex].brightness;
         return brightness;
     }
 
-    private int GetEmittingObjectsNum(GameObject[] sceneObjects) => sceneObjects.Count(obj => GetEmittance(obj) != 0.0f);
+    private int GetEmittingObjectsNum(GameObject[] SceneObjects) => SceneObjects.Count(obj => GetEmittance(obj) != 0.0f);
 
     private (Texture2D, Material2[]) ConstructTextureAtlas()
     {
         List<Texture2D> textures = new List<Texture2D>();
-        foreach (MaterialInput mat in materialInputs)
+        foreach (MaterialInput mat in MaterialInputs)
         {
             if (mat.colTex != null) textures.Add(mat.colTex);
             if (mat.bumpTex != null) textures.Add(mat.bumpTex);
@@ -386,11 +388,11 @@ public class ObjectManager : MonoBehaviour
         int2 GetTexDims(int rectIndex) => new((int)(rects[rectIndex].width * atlas.width), (int)(rects[rectIndex].height * atlas.height));
 
         int rectIndex = 0;
-        Material2[] renderMaterials = new Material2[materialInputs.Length];
-        for (int i = 0; i < materialInputs.Length; i++)
+        Material2[] renderMaterials = new Material2[MaterialInputs.Length];
+        for (int i = 0; i < MaterialInputs.Length; i++)
         {
             Material2 renderMat = new Material2();
-            MaterialInput mat = materialInputs[i];
+            MaterialInput mat = MaterialInputs[i];
 
             // Brightness
             renderMat.brightness = mat.brightness;
@@ -496,7 +498,7 @@ public class ObjectManager : MonoBehaviour
         MultiArrayContainer loadContainer = ExtensionModeSelect == ExtensionMode.Json ? FileLoader.LoadMultiArrayContainerFromJsonFiles(fileName) : FileLoader.LoadArraysFromBinFile(fileName);
 
         LoadedTriangles = loadContainer.loadedTriangles;
-        SceneObjectDatas = loadContainer.sceneObjectDatas;
+        RenderSceneObjects = loadContainer.renderSceneObjects;
         LightObjects = loadContainer.lightObjects;
         LoadedMeshesLookup = loadContainer.loadedMeshesLookup;
         LoadedComponentDatas = loadContainer.loadedComponentDatas;
@@ -522,7 +524,7 @@ public class ObjectManager : MonoBehaviour
         var saveContainer = new MultiArrayContainer
         {
             loadedTriangles = LoadedTriangles,
-            sceneObjectDatas = SceneObjectDatas,
+            renderSceneObjects = RenderSceneObjects,
             lightObjects = LightObjects,
             loadedMeshesLookup = LoadedMeshesLookup,
             loadedComponentDatas = LoadedComponentDatas,
@@ -554,18 +556,18 @@ public class ObjectManager : MonoBehaviour
 
     private int LoadSceneObjects()
     {
-        int[] BVHDepths = new int[sceneObjects.Length + 1];
-        BVHDepths[sceneObjects.Length] = MaxDepthSceneBVH;
+        int[] BVHDepths = new int[SceneObjects.Length + 1];
+        BVHDepths[SceneObjects.Length] = MaxDepthSceneBVH;
 
-        for (int i = 0; i < sceneObjects.Length; i++)
+        for (int i = 0; i < SceneObjects.Length; i++)
         {
             // Retrieve relevant game object data
-            GameObject sceneObject = sceneObjects[i];
+            GameObject sceneObject = SceneObjects[i];
             Transform transform = sceneObject.transform;
             SceneObjectSettings sceneObjectSettings = sceneObject.GetComponentInChildren<SceneObjectSettings>();
             Mesh mesh = sceneObject.GetComponentInChildren<MeshFilter>().mesh;
 
-            SceneObjectData sceneObjectData = new SceneObjectData();
+            SceneObjectData sceneObjectData = new();
 
             // Set transformation matrices
             sceneObjectData.worldToLocalMatrix = Utils.CreateWorldToLocalMatrix(transform.position, transform.rotation.eulerAngles, transform.localScale);
@@ -614,7 +616,7 @@ public class ObjectManager : MonoBehaviour
 
         // Calculate area related values to be used by RT shader
         float totArea = 0.0f;
-        Parallel.For(0, sceneObjects.Length, i =>
+        Parallel.For(0, SceneObjects.Length, i =>
         {
             Matrix4x4 localToWorldMatrix = SceneObjectDatas[i].localToWorldMatrix;
             Triangle[] sceneObjectTriangles = LoadedMeshes[LoadedMeshesLookup[i]].triangles;
@@ -662,7 +664,7 @@ public class ObjectManager : MonoBehaviour
         return (sceneBVHStartIndex, totArea);
     }
 
-    public (RenderBV[], Vertex[], RenderTriangle[], SceneObjectData[], LightObject[], Texture2D, Material2[], int) ConstructScene()
+    public (RenderBV[], Vertex[], RenderTriangle[], RenderSceneObject[], LightObject[], Texture2D, Material2[], int) ConstructScene()
     {
         // Pack material textures into atlas
         if (textureAtlas == null || resetMaterials) { (textureAtlas, materials) = ConstructTextureAtlas(); resetMaterials = false; }
@@ -672,26 +674,20 @@ public class ObjectManager : MonoBehaviour
         {
             MultiArrayContainer loadContainer = LoadFromFile(FileName);
 
-            return (loadContainer.loadedBVs, loadContainer.loadedVertices, loadContainer.renderTriangles, loadContainer.sceneObjectDatas, loadContainer.lightObjects, textureAtlas, materials, loadContainer.renderTriangles.Length);
+            return (loadContainer.loadedBVs, loadContainer.loadedVertices, loadContainer.renderTriangles, loadContainer.renderSceneObjects, loadContainer.lightObjects, textureAtlas, materials, loadContainer.renderTriangles.Length);
         }
 
         // --- Scene object BVHs ---
 
-        SceneObjectDatas ??= new SceneObjectData[sceneObjects.Length];
-        LoadedMeshesLookup ??= new int[sceneObjects.Length];
+        SceneObjectDatas ??= new SceneObjectData[SceneObjects.Length];
+        LoadedMeshesLookup ??= new int[SceneObjects.Length];
 
         int maxBVHDepth = LoadSceneObjects();
 
         m.rtShader.SetInt("MaxBVHDepth", maxBVHDepth);
 
-        // --- Scene BVH ---
-
-        int sceneBVHStartIndex;
-        float totArea;
-        (sceneBVHStartIndex, totArea) = ConstructSceneBVH();
-
         // Load light emitting object data
-        int emittingObjectsNum = GetEmittingObjectsNum(sceneObjects);
+        int emittingObjectsNum = GetEmittingObjectsNum(SceneObjects);
         m.rtShader.SetInt("EmittingObjectsNum", emittingObjectsNum);
         LightObjects = new LightObject[emittingObjectsNum];
         int lightObjectIndex = 0;
@@ -703,14 +699,39 @@ public class ObjectManager : MonoBehaviour
                 {
                     localToWorldMatrix = sceneObjectData.localToWorldMatrix,
                     areaApprox = sceneObjectData.areaApprox,
-                    brightness = materialInputs[sceneObjectData.materialIndex].brightness,
+                    brightness = MaterialInputs[sceneObjectData.materialIndex].brightness,
                     triStart = LoadedComponentDatas[sceneObjectData.bvStartIndex].x,
                     totTris = LoadedComponentDatas[sceneObjectData.bvStartIndex].y
                 };
             }
         }
 
-        // Transfer data to shader friendly struct
+        // --- Add fluid objects ---
+        // It may be possible to use fluids as light objects, with some changes.
+        // If this is implemented, the "Load light emitting object data" should be moved to below this part of the code.
+
+        for (int i = 0; i < FluidObjects.Length; i++)
+        {
+            // Retrieve relevant game object data
+            GameObject fluidObject = FluidObjects[i];
+            Transform transform = fluidObject.transform;
+
+            SceneObjectData sceneObjectData = new();
+
+            sceneObjectData.worldToLocalMatrix = Utils.CreateWorldToLocalMatrix(transform.position, transform.rotation.eulerAngles, transform.localScale);
+            Matrix4x4 worldToLocalMatrix = sceneObjectData.worldToLocalMatrix;
+            sceneObjectData.localToWorldMatrix = worldToLocalMatrix.inverse;
+            // sceneObjectSettings = fluidObject.GetComponentInChildren<SceneObjectSettings>();
+            // Mesh mesh = sceneObject.GetComponentInChildren<MeshFilter>().mesh;
+        }
+
+        // --- Scene BVH ---
+
+        int sceneBVHStartIndex;
+        float totArea;
+        (sceneBVHStartIndex, totArea) = ConstructSceneBVH();
+
+        // Transfer data to shader friendly structs
         if (RenderTriangles == null)
         {
             RenderTriangles = new RenderTriangle[LoadedTriangles.Length];
@@ -726,13 +747,27 @@ public class ObjectManager : MonoBehaviour
                 };
             });
         }
-
-        // // Sort Triangle & Vertex data to decrease the amount of cache misses in th shader
-        // (LoadedVertices, RenderTriangles) = SortTrian2glesVertices(LoadedVertices, RenderTriangles);
+        if (SceneObjectDatas != null)
+        {
+            RenderSceneObjects = new RenderSceneObject[SceneObjectDatas.Length];
+            Parallel.For(0, RenderSceneObjects.Length, i =>
+            {
+                SceneObjectData sceneObjectData = SceneObjectDatas[i];
+                RenderSceneObjects[i] = new RenderSceneObject
+                {
+                    worldToLocalMatrix = sceneObjectData.worldToLocalMatrix,
+                    localToWorldMatrix = sceneObjectData.localToWorldMatrix,
+                    areaApprox = sceneObjectData.areaApprox,
+                    materialIndex = sceneObjectData.materialIndex,
+                    bvStartIndex = sceneObjectData.bvStartIndex,
+                    maxDepthBVH = sceneObjectData.maxDepthBVH
+                };
+            });
+        }
 
         // Save Data
         if (FileModeSelect == DataMode.GenerateNewFile) SaveToFile(FileName, maxBVHDepth, emittingObjectsNum, sceneBVHStartIndex, totArea);
 
-        return (LoadedBVs, LoadedVertices, RenderTriangles, SceneObjectDatas, LightObjects, textureAtlas, materials, RenderTriangles.Length);
+        return (LoadedBVs, LoadedVertices, RenderTriangles, RenderSceneObjects, LightObjects, textureAtlas, materials, RenderTriangles.Length);
     }
 }

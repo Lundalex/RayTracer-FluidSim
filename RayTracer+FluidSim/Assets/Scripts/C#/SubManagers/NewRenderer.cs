@@ -84,14 +84,14 @@ public class NewRenderer : MonoBehaviour
     [NonSerialized] public Material2[] Material2s;
     [NonSerialized] public RenderTriangle[] RenderTriangles;
     [NonSerialized] public Vertex[] StaticVertices;
-    [NonSerialized] public SceneObjectData[] SceneObjectDatas;
+    [NonSerialized] public RenderSceneObject[] RenderSceneObjects;
     [NonSerialized] public LightObject[] LightObjects;
     [NonSerialized] public RenderBV[] BVs;
     private ComputeBuffer BVBuffer;
     private ComputeBuffer RenderTriangleBuffer;
     private ComputeBuffer StaticVertexBuffer;
     private ComputeBuffer DynamicVertexBuffer;
-    private ComputeBuffer SceneObjectDataBuffer;
+    private ComputeBuffer RenderSceneObjectBuffer;
     private ComputeBuffer LightObjectBuffer;
     private ComputeBuffer MaterialBuffer;
  
@@ -354,7 +354,7 @@ public class NewRenderer : MonoBehaviour
         ComputeHelper.Release(AllBuffers());
 
         // Construct BVH
-        (BVs, StaticVertices, RenderTriangles, SceneObjectDatas, LightObjects, TextureAtlas, Material2s, StaticTrisNum) = objectManager.ConstructScene();
+        (BVs, StaticVertices, RenderTriangles, RenderSceneObjects, LightObjects, TextureAtlas, Material2s, StaticTrisNum) = objectManager.ConstructScene();
 
         MaterialBuffer = ComputeHelper.CreateStructuredBuffer<Material2>(Material2s);
         shaderHelper.SetMaterialBuffer(MaterialBuffer);
@@ -364,8 +364,8 @@ public class NewRenderer : MonoBehaviour
         shaderHelper.SetBVBuffer(BVBuffer);
  
         // Set SceneObjects & Tris data
-        SceneObjectDataBuffer = ComputeHelper.CreateStructuredBuffer<SceneObjectData>(SceneObjectDatas);
-        shaderHelper.SetSceneObjectDataBuffer(SceneObjectDataBuffer);
+        RenderSceneObjectBuffer = ComputeHelper.CreateStructuredBuffer<RenderSceneObject>(RenderSceneObjects);
+        shaderHelper.SetRenderSceneObjectBuffer(RenderSceneObjectBuffer);
         RenderTriangleBuffer = ComputeHelper.CreateStructuredBuffer<RenderTriangle>(RenderTriangles, StaticTrisNum + mCubes.FluidTriMeshBufferACMax);
         shaderHelper.SetTriBuffer(RenderTriangleBuffer);
         StaticVertexBuffer = ComputeHelper.CreateStructuredBuffer<Vertex>(StaticVertices);
@@ -578,7 +578,7 @@ public class NewRenderer : MonoBehaviour
         else asciiManager.Asciitext.enabled = false;
     }
  
-    private ComputeBuffer[] AllBuffers() => new ComputeBuffer[] { BVBuffer, RenderTriangleBuffer, StaticVertexBuffer, DynamicVertexBuffer, SceneObjectDataBuffer, LightObjectBuffer, MaterialBuffer, CandidateBuffer, CandidateReuseBuffer, TemporalFrameBuffer, HitInfoBuffer };
+    private ComputeBuffer[] AllBuffers() => new ComputeBuffer[] { BVBuffer, RenderTriangleBuffer, StaticVertexBuffer, DynamicVertexBuffer, RenderSceneObjectBuffer, LightObjectBuffer, MaterialBuffer, CandidateBuffer, CandidateReuseBuffer, TemporalFrameBuffer, HitInfoBuffer };
  
     private void OnDestroy()
     {

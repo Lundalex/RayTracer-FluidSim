@@ -68,7 +68,7 @@ public class NewRenderPipeline : RenderPipeline
             // Immediate API: Convert RenderTexture to NativeArray
             if (renderTexture != null && doDenoisingPass)
             {
-            Stopwatch stopwatch = Stopwatch.StartNew();
+                Stopwatch stopwatch = Stopwatch.StartNew();
 
                 // Get pixels from RenderTexture (GPU to CPU transfer)
                 RenderTexture.active = renderTexture;
@@ -78,8 +78,8 @@ public class NewRenderPipeline : RenderPipeline
                 // Copy pixels to NativeArray
                 colorImage.CopyFrom(tempTexture.GetRawTextureData<Vector4>());
 
-            if (doLogPerformance) DebugUtils.LogStopWatch("Denoiser - read data to NativeArray(s)", ref stopwatch); // 4ms
-            stopwatch = Stopwatch.StartNew();
+                if (doLogPerformance) DebugUtils.LogStopWatch("Denoiser - read data to NativeArray(s)", ref stopwatch); // 4ms
+                stopwatch = Stopwatch.StartNew();
 
                 // Initialize the denoiser
                 // TEST OPTIX or RADION FOR NVIDIA CARD
