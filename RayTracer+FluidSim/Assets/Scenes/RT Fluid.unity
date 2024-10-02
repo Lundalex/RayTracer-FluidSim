@@ -729,7 +729,7 @@ MonoBehaviour:
   SplitResolution: 5
   FileName: 8kScene
   BVUpdateModeSelect: 0
-  FileDataModeSelect: 0
+  FileDataModeSelect: 1
   ExtensionModeSelect: 0
   m: {fileID: 868168749}
 --- !u!1 &1164272047
@@ -989,6 +989,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Suzanne1k
       objectReference: {fileID: 0}
+    - target: {fileID: 1000775648037021062, guid: 4337a9c4d0e11ca4dac130321aa433e3, type: 3}
+      propertyPath: m_TagString
+      value: RigidBody
+      objectReference: {fileID: 0}
     - target: {fileID: 2819723658756106318, guid: 4337a9c4d0e11ca4dac130321aa433e3, type: 3}
       propertyPath: m_LocalScale.x
       value: 2
@@ -1123,6 +1127,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Sponza
       objectReference: {fileID: 0}
+    - target: {fileID: 2824312912536312766, guid: 9f4cfc65d63d9b4419fc1396a3da5211, type: 3}
+      propertyPath: m_TagString
+      value: RigidBody
+      objectReference: {fileID: 0}
     - target: {fileID: 8882545263209882753, guid: 9f4cfc65d63d9b4419fc1396a3da5211, type: 3}
       propertyPath: MaxDepthBVH
       value: 20
@@ -1200,6 +1208,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Bike400k
       objectReference: {fileID: 0}
+    - target: {fileID: 8933926797593179807, guid: 3047357e90ecf734b90f9d87f4268dad, type: 3}
+      propertyPath: m_TagString
+      value: RigidBody
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1268,6 +1280,10 @@ PrefabInstance:
     - target: {fileID: 2700935931099460490, guid: 49109c01bb31884459234917c7cccf0f, type: 3}
       propertyPath: m_Name
       value: Dragon8k
+      objectReference: {fileID: 0}
+    - target: {fileID: 2700935931099460490, guid: 49109c01bb31884459234917c7cccf0f, type: 3}
+      propertyPath: m_TagString
+      value: RigidBody
       objectReference: {fileID: 0}
     - target: {fileID: 8723327965099134133, guid: 49109c01bb31884459234917c7cccf0f, type: 3}
       propertyPath: MaxDepthBVH
@@ -1359,6 +1375,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Dragon80k
       objectReference: {fileID: 0}
+    - target: {fileID: 8409242006498289557, guid: 52f1e2443de37a04ba443fa01d725629, type: 3}
+      propertyPath: m_TagString
+      value: RigidBody
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1414,7 +1434,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6642828649819551448, guid: 7acf6ea39c9596c43ae94d4095001d22, type: 3}
       propertyPath: m_Name
-      value: Fluid_60000
+      value: Fluid
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

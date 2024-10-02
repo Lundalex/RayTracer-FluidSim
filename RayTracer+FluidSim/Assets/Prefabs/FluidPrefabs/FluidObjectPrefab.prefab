@@ -18,7 +18,7 @@ GameObject:
   - component: {fileID: 8582956329658628338}
   m_Layer: 0
   m_Name: FluidObjectPrefab
-  m_TagString: Untagged
+  m_TagString: Fluid
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -50,6 +50,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 00cf6584708433e46b1f29a4b7a478ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  MaterialIndex: 0
 --- !u!114 &692955969652184789
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -62,7 +63,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c4e01cbd809e59f4e9d22e12742b644e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MaterialIndex: 0
   MaxInfluenceRadius: 2
   TargetDensity: 1.6
   PressureMultiplier: 1500
