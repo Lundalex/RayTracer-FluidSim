@@ -729,7 +729,7 @@ MonoBehaviour:
   SplitResolution: 5
   FileName: 8kScene
   BVUpdateModeSelect: 0
-  FileDataModeSelect: 1
+  FileDataModeSelect: 0
   ExtensionModeSelect: 0
   m: {fileID: 868168749}
 --- !u!1 &1164272047
@@ -803,6 +803,10 @@ PrefabInstance:
     - target: {fileID: 3366899329529593370, guid: 105974badd4021d41b0ca06b9e8941be, type: 3}
       propertyPath: m_Name
       value: RenderStreaming
+      objectReference: {fileID: 0}
+    - target: {fileID: 3366899329529593370, guid: 105974badd4021d41b0ca06b9e8941be, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4139912509474957669, guid: 105974badd4021d41b0ca06b9e8941be, type: 3}
       propertyPath: fullScreenCamera
@@ -1447,10 +1451,10 @@ SceneRoots:
   m_Roots:
   - {fileID: 868168748}
   - {fileID: 1049554301}
-  - {fileID: 7133548221922539957}
   - {fileID: 473926886}
   - {fileID: 1164272049}
   - {fileID: 569968698}
   - {fileID: 1560758227}
+  - {fileID: 7133548221922539957}
   - {fileID: 112890861}
   - {fileID: 1193916694}

@@ -488,15 +488,13 @@ public class NewRenderer : MonoBehaviour
     {
         ComputeHelper.DispatchKernel(rtShader, "InitialTrace", Resolution, RayTracerThreadSize);
 
-        // Vector3[] normalsBuffer = TextureUnpacker.UnpackTextureTo1DArray(NormalsBufferTexture);
-
         if (TemporalReuseWeight > 0) ComputeHelper.DispatchKernel(rtShader, "TemporalReuse", Resolution, RayTracerThreadSize);
 
         if (SpatialReuseIterations > 0) SpatialReuse();
  
         ComputeHelper.DispatchKernel(rtShader, "TraceRays", Resolution, RayTracerThreadSize);
     }
- 
+
     private void RunPostProcessingShader()
     {
         // Accumulate ray tracer output data between frames

@@ -711,49 +711,52 @@ public class ObjectManager : MonoBehaviour
         // It may be possible to use fluids as light objects, with some changes.
         // If this is implemented, the "Load light emitting object data" should be moved to below this part of the code.
 
-        int maxMipmapDepth = 0;
-        int3 composedSurfaceCellsSize = 0;
-        int3 composedSurfaceCellsLookupSize = 0;
-        for (int i = 0; i < FluidObjects.Length; i++)
+        if (FluidObjects.Length > 0)
         {
-            // Retrieve relevant fluid object data
-            GameObject fluidObject = FluidObjects[i];
-            Transform transform = fluidObject.transform;
-            FluidManager fluidManager = fluidObject.GetComponent<FluidManager>();
-            Simulation simulation = fluidObject.GetComponent<Simulation>();
-            MarchingCubes mCubes = fluidObject.GetComponent<MarchingCubes>();
+            int maxMipmapDepth = 0;
+            int3 composedSurfaceCellsSize = 0;
+            int3 composedSurfaceCellsLookupSize = 0;
+            for (int i = 0; i < FluidObjects.Length; i++)
+            {
+                // Retrieve relevant fluid object data
+                GameObject fluidObject = FluidObjects[i];
+                Transform transform = fluidObject.transform;
+                FluidManager fluidManager = fluidObject.GetComponent<FluidManager>();
+                Simulation simulation = fluidObject.GetComponent<Simulation>();
+                MarchingCubes mCubes = fluidObject.GetComponent<MarchingCubes>();
 
-            SceneObjectData sceneObjectData = new();
+                SceneObjectData sceneObjectData = new();
 
-            // Set transformation matrices
-            sceneObjectData.worldToLocalMatrix = Utils.CreateWorldToLocalMatrix(transform.position, transform.rotation.eulerAngles, transform.localScale);
-            Matrix4x4 worldToLocalMatrix = sceneObjectData.worldToLocalMatrix;
-            sceneObjectData.localToWorldMatrix = worldToLocalMatrix.inverse;
+                // Set transformation matrices
+                sceneObjectData.worldToLocalMatrix = Utils.CreateWorldToLocalMatrix(transform.position, transform.rotation.eulerAngles, transform.localScale);
+                Matrix4x4 worldToLocalMatrix = sceneObjectData.worldToLocalMatrix;
+                sceneObjectData.localToWorldMatrix = worldToLocalMatrix.inverse;
 
-            // Set material
-            sceneObjectData.materialIndex = fluidManager.MaterialIndex;
+                // Set material
+                sceneObjectData.materialIndex = fluidManager.MaterialIndex;
 
-            // Mipmap values
-            (int3 mipmap0Resolution, int3 textureSize, int mipmapDepth) = TextureHelper.GetVoxelTextureSize(mCubes.NumCells.xyz);
-            mCubes.SurfaceCellsMM0Dims = mipmap0Resolution;
-            mCubes.SurfaceCellsMipmapDepth = maxMipmapDepth;
-            mCubes.SurfaceCellsMipmapDepth = mipmapDepth;
-            maxMipmapDepth = Mathf.Max(maxMipmapDepth, mipmapDepth);
+                // Mipmap values
+                (int3 mipmap0Resolution, int3 textureSize, int mipmapDepth) = TextureHelper.GetVoxelTextureSize(mCubes.NumCells.xyz);
+                mCubes.SurfaceCellsMM0Dims = mipmap0Resolution;
+                mCubes.SurfaceCellsMipmapDepth = maxMipmapDepth;
+                mCubes.SurfaceCellsMipmapDepth = mipmapDepth;
+                maxMipmapDepth = Mathf.Max(maxMipmapDepth, mipmapDepth);
 
-            // Set the offsets for this fluids SVO textures
-            sceneObjectData.bvStartIndex = composedSurfaceCellsSize.y;
-            mCubes.SurfaceCellsOffset = composedSurfaceCellsSize.y;
-            mCubes.SurfaceCellsLookupOffset = composedSurfaceCellsLookupSize.y;
+                // Set the offsets for this fluids SVO textures
+                sceneObjectData.bvStartIndex = composedSurfaceCellsSize.y;
+                mCubes.SurfaceCellsOffset = composedSurfaceCellsSize.y;
+                mCubes.SurfaceCellsLookupOffset = composedSurfaceCellsLookupSize.y;
 
-            static void ExtendTexture(ref int3 composedSize, int3 otherSize) => composedSize = new(Mathf.Max(composedSize.x, otherSize.x), composedSize.y + otherSize.y, Mathf.Max(composedSize.z, otherSize.z));
+                static void ExtendTexture(ref int3 composedSize, int3 otherSize) => composedSize = new(Mathf.Max(composedSize.x, otherSize.x), composedSize.y + otherSize.y, Mathf.Max(composedSize.z, otherSize.z));
 
-            // Update composedVoxelTextureSize with this fluids SVO textureSize
-            ExtendTexture(ref composedSurfaceCellsSize, textureSize);
-            ExtendTexture(ref composedSurfaceCellsLookupSize, textureSize);
+                // Update composedVoxelTextureSize with this fluids SVO textureSize
+                ExtendTexture(ref composedSurfaceCellsSize, textureSize);
+                ExtendTexture(ref composedSurfaceCellsLookupSize, textureSize);
+            }
+
+            RenderTexture ComposedSurfaceCellsTexture = TextureHelper.CreateIntTexture(composedSurfaceCellsSize, 1);
+            RenderTexture ComposedSurfaceCellsLookupTexture = TextureHelper.CreateIntTexture(composedSurfaceCellsLookupSize, 2);
         }
-
-        RenderTexture ComposedSurfaceCellsTexture = TextureHelper.CreateIntTexture(composedSurfaceCellsSize, 1);
-        RenderTexture ComposedSurfaceCellsLookupTexture = TextureHelper.CreateIntTexture(composedSurfaceCellsLookupSize, 2);
 
         // --- Scene BVH ---
 
