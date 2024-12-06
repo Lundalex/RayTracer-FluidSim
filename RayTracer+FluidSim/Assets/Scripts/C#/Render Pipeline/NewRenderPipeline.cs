@@ -54,6 +54,8 @@ public class NewRenderPipeline : RenderPipeline
     {
         foreach (var camera in cameras)
         {
+            if (camera.cameraType == CameraType.SceneView) continue;
+
             context.SetupCameraProperties(camera);
 
             CommandBuffer cmd = new CommandBuffer { name = "Render Scene" };
@@ -62,54 +64,38 @@ public class NewRenderPipeline : RenderPipeline
             context.ExecuteCommandBuffer(cmd);
             cmd.Clear();
 
+            // Draw skybox (no submit here)
             context.DrawSkybox(camera);
-            context.Submit();
 
-            // Immediate API: Convert RenderTexture to NativeArray
-            if (renderTexture != null && doDenoisingPass)
-            {
-                Stopwatch stopwatch = Stopwatch.StartNew();
-
-                // Get pixels from RenderTexture (GPU to CPU transfer)
-                RenderTexture.active = renderTexture;
-                tempTexture.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
-                RenderTexture.active = null;
-
-                // Copy pixels to NativeArray
-                colorImage.CopyFrom(tempTexture.GetRawTextureData<Vector4>());
-
-                if (doLogPerformance) DebugUtils.LogStopWatch("Denoiser - read data to NativeArray(s)", ref stopwatch); // 4ms
-                stopwatch = Stopwatch.StartNew();
-
-                // Initialize the denoiser
-                // TEST OPTIX or RADION FOR NVIDIA CARD
-                Denoiser.State result = denoiser.Init(DenoiserType.Optix, renderTexture.width, renderTexture.height);
-                Assert.AreEqual(Denoiser.State.Success, result);
-
-                // Denoise the image using Immediate API
-                result = denoiser.DenoiseRequest("color", colorImage);
-                Assert.AreEqual(Denoiser.State.Success, result);
-
-                // Retrieve denoising results
-                result = denoiser.GetResults(dst); // 140ms
-                Assert.AreEqual(Denoiser.State.Success, result);
-
-            if (doLogPerformance) DebugUtils.LogStopWatch("Denoiser - Execute denoising algorithm", ref stopwatch); // 140ms
-
-                // Copy results back to RenderTexture
-                tempTexture.LoadRawTextureData(dst);
-                tempTexture.Apply();
-
-                // Copy the denoised texture back to the render texture
-                Graphics.Blit(tempTexture, renderTexture);
-            }
-
-            // Blit the denoised RenderTexture to the screen
+            // Final blit to camera target
             cmd.Blit(renderTexture, BuiltinRenderTextureType.CameraTarget);
             context.ExecuteCommandBuffer(cmd);
+
+            // Now submit once, at the end
             context.Submit();
 
             cmd.Release();
         }
     }
 }
+
+//                 // Copy pixels to NativeArray
+//                 colorImage.CopyFrom(tempTexture.GetRawTextureData<Vector4>());
+
+//                 if (doLogPerformance) DebugUtils.LogStopWatch("Denoiser - read data to NativeArray(s)", ref stopwatch); // 4ms
+//                 stopwatch = Stopwatch.StartNew();
+
+//                 // Initialize the denoiser
+//                 // TEST OPTIX or RADION FOR NVIDIA CARD
+//                 Denoiser.State result = denoiser.Init(DenoiserType.Optix, renderTexture.width, renderTexture.height);
+//                 Assert.AreEqual(Denoiser.State.Success, result);
+
+//                 // Denoise the image using Immediate API
+//                 result = denoiser.DenoiseRequest("color", colorImage);
+//                 Assert.AreEqual(Denoiser.State.Success, result);
+
+//                 // Retrieve denoising results
+//                 result = denoiser.GetResults(dst); // 140ms
+//                 Assert.AreEqual(Denoiser.State.Success, result);
+
+//                 if (doLogPerformance) DebugUtils.LogStopWatch("Denoiser - Execute denoising algorithm", ref stopwatch); // 140ms

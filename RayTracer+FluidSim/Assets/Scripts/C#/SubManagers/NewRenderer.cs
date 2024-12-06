@@ -106,10 +106,6 @@ public class NewRenderer : MonoBehaviour
     private RenderTexture NormalsBufferTexture;
     private Texture2D TextureAtlas;
  
-    // Camera data records
-    private Vector3 lastCameraPosition;
-    private Quaternion lastCameraRotation;
- 
     // Script-specific variables
     private bool ProgramPaused = false;
     private bool FrameStep = false;
@@ -123,11 +119,9 @@ public class NewRenderer : MonoBehaviour
     public void ScriptSetup()
     {
         Resolution = new int2(Screen.width, Screen.height);
-        lastCameraPosition = transform.position;
-        lastCameraRotation = transform.rotation;
         
         UpdatePerFrame();
-        UpdateSettings(true);
+        UpdateSettings(true, true);
         SetCameraData();
         CreateTextures();
  
@@ -188,7 +182,7 @@ public class NewRenderer : MonoBehaviour
             // Pipeline
             ConfigureRenderPipeline();
  
-            if (DoUpdateSettings) { DoUpdateSettings = false; UpdateSettings(DoReloadData); DoReloadData = false; }
+            if (DoUpdateSettings) { DoUpdateSettings = false; UpdateSettings(DoReloadData, false); DoReloadData = false; }
         }
         else RenderThisFrame = false;
     }
@@ -270,11 +264,11 @@ public class NewRenderer : MonoBehaviour
         if (ProgramStarted) { DoUpdateSettings = true; DoReloadData = true; }
     }
  
-    public void UpdateSettings(bool resetBufferData)
+    public void UpdateSettings(bool resetBufferData, bool doResetAll)
     {
         FrameCount = 0;
         AccFrameCount = 0;
-        if (resetBufferData) SetData();
+        if (resetBufferData) SetData(doResetAll);
 
         // Camera & display
         int[] resolutionArray = new int[] { Resolution.x, Resolution.y };
@@ -318,17 +312,6 @@ public class NewRenderer : MonoBehaviour
         if (DoBRDF) rtShader.EnableKeyword("BRDF");
         else rtShader.DisableKeyword("BRDF");
 
-        // Object textures
-        int[] textureAtlasDims = new int[] { TextureAtlas.width, TextureAtlas.height };
-        rtShader.SetInts("TextureAtlasDims", textureAtlasDims);
-        rtShader.SetTexture(0, "TextureAtlas", TextureAtlas);
-        rtShader.SetTexture(4, "TextureAtlas", TextureAtlas);
- 
-        // Environment map texture
-        int[] environmentMapTexDims = new int[] { EnvironmentMapTexture.width, EnvironmentMapTexture.height };
-        rtShader.SetInts("EnvironmentMapTexDims", environmentMapTexDims);
-        rtShader.SetTexture(4, "EnvironmentMap", EnvironmentMapTexture);
-
         // Marching cubes - fluid transform
         rtShader.SetVector("FluidDims", new Vector3(mCubes.FluidDims.x, mCubes.FluidDims.y, mCubes.FluidDims.z));
         rtShader.SetVector("FluidPos", new Vector3(mCubes.FluidPos.x, mCubes.FluidPos.y, mCubes.FluidPos.z));
@@ -349,31 +332,51 @@ public class NewRenderer : MonoBehaviour
         }
     }
  
-    private void SetData()
+    private void SetData(bool doResetAll)
     {
-        ComputeHelper.Release(AllBuffers());
+        ComputeHelper.Release(new ComputeBuffer[] { BVBuffer, RenderSceneObjectBuffer, LightObjectBuffer, MaterialBuffer, CandidateBuffer, CandidateReuseBuffer, TemporalFrameBuffer, HitInfoBuffer });
 
         // Construct BVH
         (BVs, StaticVertices, RenderTriangles, RenderSceneObjects, LightObjects, TextureAtlas, Material2s, StaticTrisNum) = objectManager.ConstructScene();
 
+        // Object textures
+        int[] textureAtlasDims = new int[] { TextureAtlas.width, TextureAtlas.height };
+        rtShader.SetInts("TextureAtlasDims", textureAtlasDims);
+        rtShader.SetTexture(0, "TextureAtlas", TextureAtlas);
+        rtShader.SetTexture(4, "TextureAtlas", TextureAtlas);
+
+        // Environment map texture
+        int[] environmentMapTexDims = new int[] { EnvironmentMapTexture.width, EnvironmentMapTexture.height };
+        rtShader.SetInts("EnvironmentMapTexDims", environmentMapTexDims);
+        rtShader.SetTexture(4, "EnvironmentMap", EnvironmentMapTexture);
+            
         MaterialBuffer = ComputeHelper.CreateStructuredBuffer<Material2>(Material2s);
         shaderHelper.SetMaterialBuffer(MaterialBuffer);
         
         // Set BVH data
         BVBuffer = ComputeHelper.CreateStructuredBuffer<RenderBV>(BVs);
         shaderHelper.SetBVBuffer(BVBuffer);
- 
+
         // Set SceneObjects & Tris data
         RenderSceneObjectBuffer = ComputeHelper.CreateStructuredBuffer<RenderSceneObject>(RenderSceneObjects);
         shaderHelper.SetRenderSceneObjectBuffer(RenderSceneObjectBuffer);
-        RenderTriangleBuffer = ComputeHelper.CreateStructuredBuffer<RenderTriangle>(RenderTriangles, StaticTrisNum + mCubes.FluidTriMeshBufferACMax);
-        shaderHelper.SetTriBuffer(RenderTriangleBuffer);
-        StaticVertexBuffer = ComputeHelper.CreateStructuredBuffer<Vertex>(StaticVertices);
-        shaderHelper.SetStaticVertexBuffer(StaticVertexBuffer);
-        DynamicVertexBuffer = ComputeHelper.CreateStructuredBuffer<Vertex>(3 * mCubes.FluidTriMeshBufferACMax);
-        shaderHelper.SetDynamicVertexBuffer(DynamicVertexBuffer);
-        RunPreCalcShader();
- 
+        if (doResetAll)
+        {
+            ComputeHelper.Release(RenderTriangleBuffer);
+            RenderTriangleBuffer = ComputeHelper.CreateStructuredBuffer<RenderTriangle>(RenderTriangles, StaticTrisNum + mCubes.FluidTriMeshBufferACMax);
+            shaderHelper.SetTriBuffer(RenderTriangleBuffer);
+
+            ComputeHelper.Release(StaticVertexBuffer);
+            StaticVertexBuffer = ComputeHelper.CreateStructuredBuffer<Vertex>(StaticVertices);
+            shaderHelper.SetStaticVertexBuffer(StaticVertexBuffer);
+
+            ComputeHelper.Release(DynamicVertexBuffer);
+            DynamicVertexBuffer = ComputeHelper.CreateStructuredBuffer<Vertex>(3 * mCubes.FluidTriMeshBufferACMax);
+            shaderHelper.SetDynamicVertexBuffer(DynamicVertexBuffer);
+
+            RunPreCalcShader();
+        }
+
         // Set LightObjects data
         LightObjectBuffer = ComputeHelper.CreateStructuredBuffer<LightObject>(LightObjects);
         shaderHelper.SetLightObjectBuffer(LightObjectBuffer);
@@ -389,7 +392,7 @@ public class NewRenderer : MonoBehaviour
         HitInfoBuffer = ComputeHelper.CreateStructuredBuffer<HitInfo>(Resolution.x * Resolution.y);
         shaderHelper.SetHitInfoBuffer(HitInfoBuffer);
     }
- 
+
     private void CreateTextures()
     {
         // Ray tracer result texture
